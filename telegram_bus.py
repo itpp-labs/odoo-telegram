@@ -30,7 +30,7 @@ def hashable(key):
 
 class ImBus(models.Model):
 
-    _name = 'bus.bus'
+    _name = 'telegram.bus'
 
     create_date = fields.Datetime('Create date')
     channel = fields.Char('Channel')
