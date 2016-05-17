@@ -1,0 +1,42 @@
+<openerp>
+    <data>
+        <record id="account_invoice_export_1c_view" model="ir.ui.view">
+            <field name="name">Selected invoices to export</field>
+            <field name="model">account.invoice.export.1c</field>
+            <field name="arch" type="xml">
+                <form string="Export in excel this">
+                    <p>Bank account:
+                        <field name="bank_acc" required='1'/>
+                    </p>
+                    <field name="invisible" readonly="1" invisible="1"/>
+                    <field name="line_ids">
+                        <tree editable="top" create="false" delete="false">
+                            <field name="partner_id"/>
+                            <field name="date_invoice"/>
+                            <field name="state"/>
+                        </tree>
+                    </field>
+                    <p attrs="{'invisible': [('invisible','=',True)]}">Press Make file button:</p>
+                    <footer>
+                        <p attrs="{'invisible': [('invisible','=',False)]}">
+                            <field name="mdata" readonly="1" filename="fname"/>
+                            - файл для клиент банка
+                        </p>
+                        <button name="open_website_url" string="Make file" type="object" class="btn-primary"
+                                attrs="{'invisible': [('invisible','=',True)]}"/>
+                        <button string="Cancel" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        <act_window id="export_invoices_1c"
+                    multi="True"
+                    key2="client_action_multi"
+                    name="Export Invoices for 1C Client Bank"
+                    res_model="account.invoice.export.1c"
+                    src_model="account.invoice"
+                    view_mode="form"
+                    target="new"
+                    view_type="form"/>
+    </data>
+</openerp>
