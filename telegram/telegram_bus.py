@@ -15,7 +15,6 @@ _logger = logging.getLogger(__name__)
 
 # longpolling timeout connection
 TIMEOUT = 50
-
 #----------------------------------------------------------
 # Bus
 #----------------------------------------------------------
@@ -28,7 +27,7 @@ def hashable(key):
     return key
 
 
-class ImBus(models.Model):
+class TelegramImBus(models.Model):
 
     _name = 'telegram.bus'
 
@@ -62,7 +61,8 @@ class ImBus(models.Model):
             # and the longpolling will return no notification.
             def notify():
                 with openerp.sql_db.db_connect('postgres').cursor() as cr:
-                    cr.execute("notify imbus, %s", (json_dump(list(channels)),))
+                    print '# NOTIFYED'
+                    cr.execute("notify telegram_bus, %s", (json_dump(list(channels)),))
             self._cr.after('commit', notify)
 
     @api.model
@@ -105,7 +105,7 @@ class ImBus(models.Model):
 #----------------------------------------------------------
 # Dispatcher
 #----------------------------------------------------------
-class ImDispatch(object):
+class TelegramImDispatch(object):
     def __init__(self):
         self.channels = {}
 
@@ -145,7 +145,7 @@ class ImDispatch(object):
         _logger.info("Bus.loop listen imbus on db postgres")
         with openerp.sql_db.db_connect('postgres').cursor() as cr:
             conn = cr._cnx
-            cr.execute("listen imbus")
+            cr.execute("listen telegram_bus")
             cr.commit();
             while True:
                 if select.select([conn], [], [], TIMEOUT) == ([], [], []):
@@ -158,8 +158,10 @@ class ImDispatch(object):
                     # dispatch to local threads/greenlets
                     events = set()
                     for channel in channels:
+                        print '# ', channel
                         events.update(self.channels.pop(hashable(channel), []))
                     for event in events:
+                        print '# ', events
                         event.set()
 
     def run(self):
@@ -171,20 +173,29 @@ class ImDispatch(object):
                 time.sleep(TIMEOUT)
 
     def start(self):
-        if openerp.evented:
-            # gevent mode
-            import gevent
-            self.Event = gevent.event.Event
-            gevent.spawn(self.run)
-        elif openerp.multi_process:
-            # disabled in prefork mode
-            return
-        else:
-            # threaded mode
-            self.Event = threading.Event
-            t = threading.Thread(name="%s.Bus" % __name__, target=self.run)
-            t.daemon = True
-            t.start()
+        self.Event = threading.Event
+        t = threading.Thread(name="%s.Bus" % __name__, target=self.run)
+        t.daemon = True
+        t.start()
         return self
 
-dispatch = ImDispatch().start()
+def dumpclean(obj):
+    if type(obj) == dict:
+        for k, v in obj.items():
+            if hasattr(v, '__iter__'):
+                print k
+                dumpclean(v)
+            else:
+                print '%s : %s' % (k, v)
+    elif type(obj) == list:
+        for v in obj:
+            if hasattr(v, '__iter__'):
+                dumpclean(v)
+            else:
+                print v
+    else:
+        print obj
+
+def dump(obj):
+  for attr in dir(obj):
+    print "obj.%s = %s" % (attr, getattr(obj, attr))
