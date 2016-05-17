@@ -1,4 +1,6 @@
 # -*- encoding: utf-8 -*-
+import main
+import telegram_bus
 
 import openerp
 from openerp.service.server import Worker
@@ -10,7 +12,6 @@ import traceback
 import time
 import os
 import threading
-import main
 import psutil
 import pprint
 from multiprocessing import Process
