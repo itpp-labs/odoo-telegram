@@ -15,6 +15,7 @@ import threading
 import psutil
 import pprint
 from multiprocessing import Process
+from openerp.addons.telegram.models.bus import dispatch
 
 
 def telegram_worker():
@@ -47,7 +48,7 @@ class WorkerTelegram(Worker):
         bot = telebot.TeleBot(token, threaded=True)
         def mod_listener(messages):
             with openerp.api.Environment.manage():
-                self.registry['telegram.command'].listener(self.db.cursor(), SUPERUSER_ID, messages, bot)
+                self.registry['telegram.command'].telegram_listener(self.db.cursor(), SUPERUSER_ID, messages, bot)
         bot.set_update_listener(mod_listener)
         threading.currentThread().bot = bot
         bt = BotThread(1)
@@ -73,6 +74,7 @@ class WorkerTelegram(Worker):
         telegram_process = True
         self.registry = openerp.registry(self.db_name)
 
+
 class BotThread(threading.Thread):
     def __init__(self, interval):
         threading.Thread.__init__(self, name='tele_wdt_thread')
@@ -84,6 +86,22 @@ class BotThread(threading.Thread):
         print '# Telegram bot thread started'
         self.bot.polling()
 
+
+class OdooThread(threading.Thread):
+    def __init__(self, interval):
+        threading.Thread.__init__(self, name='tele_wdt_thread')
+        self.daemon = True
+        self.interval = interval
+        self.bot = None
+
+    def run(self, dbname, channels, last, options):
+        def listener(messages):
+            with openerp.api.Environment.manage():
+                self.registry['telegram.command'].odoo_listener(self.db.cursor(), SUPERUSER_ID, messages, bot)
+
+        while True:
+            res = dispatch.poll(dbname, channels, last, options)
+            self.worker_pool.put(listener, *[res, self.bot])
 
 def _db_list(self):
     if config['db_name']:
