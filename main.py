@@ -46,10 +46,11 @@ class TelegramLogin(http.Controller):
             tele_user_obj = pool['telegram.user'].browse(cr, SUPERUSER_ID, tele_user_id)
             tele_user_obj.res_user = pool['res.users'].browse(cr, SUPERUSER_ID, uid)
             tele_user_obj.logged_in = True
-            # TMP
-            token = '223555999:AAFJlG9UMLSlZIf9uqpHiOkilyDJrqAU5hA'
-            bot = telebot.TeleBot(token, threaded=True)
-            bot.send_message(tele_user_obj.chat_id, 'Logged successfully!')
+            pool['telegram.bus'].sendone(cr, SUPERUSER_ID, 'telegram_chanel', 'check_messages')
+            # # TMP
+            # token = '223555999:AAFJlG9UMLSlZIf9uqpHiOkilyDJrqAU5hA'
+            # bot = telebot.TeleBot(token, threaded=True)
+            # bot.send_message(tele_user_obj.chat_id, 'Logged successfully!')
         return werkzeug.utils.redirect('/web/')
 
 class TelegramUser(models.Model):

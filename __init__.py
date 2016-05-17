@@ -52,6 +52,8 @@ class WorkerTelegram(Worker):
         threading.currentThread().bot = bot
         bt = BotThread(1)
         bt.bot = bot
+        dispatch = telegram_bus.TelegramImDispatch().start()
+        print '# ', dispatch
         bt.start()
 
     def process_work(self):
@@ -68,6 +70,7 @@ class WorkerTelegram(Worker):
         self.db = openerp.sql_db.db_connect(self.db_name)
         # self.cr = db.cursor()
         super(WorkerTelegram, self).__init__(multi)
+        telegram_process = True
         self.registry = openerp.registry(self.db_name)
 
 class BotThread(threading.Thread):
