@@ -11,6 +11,11 @@ import telebot.util as util
 import openerp.tools.config as config
 from openerp import SUPERUSER_ID
 import threading
+import logging
+import time
+from telebot import apihelper, types, util
+
+logger = logging.getLogger('Telegram')
 # from openerp.addons.telegram import dispatch
 
 def telegram_worker():
@@ -82,7 +87,7 @@ class BotThread(threading.Thread):
         self.bot.polling()
 
 
-class OdooThread(threading.Thread):
+class OdooThread:
     def __init__(self, interval, bot, dispatch, db_name):
         threading.Thread.__init__(self, name='tele_wdt_thread')
         self.daemon = True
@@ -93,8 +98,47 @@ class OdooThread(threading.Thread):
         self.worker_pool = util.ThreadPool()
         self.__stop_polling = threading.Event()
 
-    def run(self):
-        print '# OdooThread started'
+    def run(self, none_stop=False, interval=0, timeout=3):
+        logger.info('Started OdooThread polling.')
+        self.__stop_polling.clear()
+        error_interval = .25
+
+        polling_thread = util.WorkerThread(name="OdooTelegramPollingThread")
+        or_event = util.OrEvent(
+            polling_thread.done_event,
+            polling_thread.exception_event,
+            self.worker_pool.exception_event
+        )
+
+        while not self.__stop_polling.wait(interval):
+            or_event.clear()
+            try:
+                polling_thread.put(self.__retrieve_updates, timeout)
+
+                or_event.wait()  # wait for polling thread finish, polling thread error or thread pool error
+
+                polling_thread.raise_exceptions()
+                self.worker_pool.raise_exceptions()
+
+                error_interval = .25
+            except apihelper.ApiException as e:
+                logger.error(e)
+                if not none_stop:
+                    self.__stop_polling.set()
+                    logger.info("Exception occurred. Stopping.")
+                else:
+                    polling_thread.clear_exceptions()
+                    self.worker_pool.clear_exceptions()
+                    logger.info("Waiting for {0} seconds until retry".format(error_interval))
+                    time.sleep(error_interval)
+                    error_interval *= 2
+            except KeyboardInterrupt:
+                logger.info("KeyboardInterrupt received.")
+                self.__stop_polling.set()
+                polling_thread.stop()
+                break
+
+    def __retrieve_updates(self):
         def listener(messages):
             with openerp.api.Environment.manage():
                 self.registry['telegram.command'].odoo_listener(self.db.cursor(), SUPERUSER_ID, messages, self.bot)
