@@ -121,8 +121,9 @@ class TelegramImDispatch(object):
 
         # immediatly returns if past notifications exist
         with registry.cursor() as cr:
-            notifications = registry['telegram.bus'].poll(cr, openerp.SUPERUSER_ID, channels, last, options)
-            print '# NOTES', notifications
+            with openerp.api.Environment.manage():
+                notifications = registry['telegram.bus'].poll(cr, openerp.SUPERUSER_ID, channels, last, options)
+                print '# NOTES', notifications
         # or wait for future ones
         if not notifications:
             event = self.Event()
