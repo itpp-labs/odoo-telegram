@@ -105,7 +105,6 @@ class TelegramImDispatch(object):
         self.channels = {}
 
     def poll(self, dbname, channels, last, options=None, timeout=TIMEOUT):
-        print '# poll'
         if options is None:
             options = {}
         # Dont hang ctrl-c for a poll request, we need to bypass private
@@ -123,7 +122,6 @@ class TelegramImDispatch(object):
         with registry.cursor() as cr:
             with openerp.api.Environment.manage():
                 notifications = registry['telegram.bus'].poll(cr, openerp.SUPERUSER_ID, channels, last, options)
-                print '# NOTES', notifications
         # or wait for future ones
         if not notifications:
             event = self.Event()
