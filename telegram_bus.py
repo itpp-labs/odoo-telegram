@@ -59,7 +59,6 @@ class TelegramImBus(models.Model):
             # and the longpolling will return no notification.
             def notify():
                 with openerp.sql_db.db_connect('postgres').cursor() as cr:
-                    print '# NOTIFYED'
                     cr.execute("notify telegram_bus, %s", (json_dump(list(channels)),))
             self._cr.after('commit', notify)
 
@@ -107,18 +106,12 @@ class TelegramImDispatch(object):
     def poll(self, dbname, channels, last, options=None, timeout=TIMEOUT):
         if options is None:
             options = {}
-        # Dont hang ctrl-c for a poll request, we need to bypass private
-        # attribute access because we dont know before starting the thread that
-        # it will handle a longpolling request
         if not openerp.evented:
             current = threading.current_thread()
             current._Thread__daemonic = True
             # rename the thread to avoid tests waiting for a longpolling
             current.setName("openerp.longpolling.request.%s" % current.ident)
-
         registry = openerp.registry(dbname)
-
-        # immediatly returns if past notifications exist
         with registry.cursor() as cr:
             with openerp.api.Environment.manage():
                 notifications = registry['telegram.bus'].poll(cr, openerp.SUPERUSER_ID, channels, last, options)
@@ -147,7 +140,6 @@ class TelegramImDispatch(object):
                 if select.select([conn], [], [], TIMEOUT) == ([], [], []):
                     pass
                 else:
-                    print '# go to poll'
                     conn.poll()
                     channels = []
                     while conn.notifies:
@@ -155,10 +147,8 @@ class TelegramImDispatch(object):
                     # dispatch to local threads/greenlets
                     events = set()
                     for channel in channels:
-                        print '# ', channel
                         events.update(self.channels.pop(hashable(channel), []))
                     for event in events:
-                        print '# ', events
                         event.set()
 
     def run(self):

@@ -55,7 +55,7 @@ class WorkerTelegram(Worker):
         dispatch = telegram_bus.TelegramImDispatch().start()
         threading.currentThread().bot = bot
         bot_thread = BotPollingThread(1, bot)
-        odoo_thread = OdooThread(1, bot, dispatch,  self.db_name)
+        odoo_thread = OdooThread(1, bot, dispatch,  self.db, self.db_name)
         bot_thread.start()
         odoo_thread.run()
 
@@ -88,27 +88,30 @@ class BotPollingThread(threading.Thread):
 
 
 class OdooThread(threading.Thread):
-    def __init__(self, interval, bot, dispatch, db_name):
+    def __init__(self, interval, bot, dispatch, db, db_name):
         threading.Thread.__init__(self, name='tele_wdt_thread')
         self.daemon = True
         self.interval = interval
         self.bot = bot
+        self.db = db
         self.db_name = db_name
         self.dispatch = dispatch
         self.worker_pool = util.ThreadPool()
+        self.registry = openerp.registry(self.db_name)
+        self.last = 0
 
     def run(self):
-        print '# OdooThread started'
 
         def listener(messages, bot):
             with openerp.api.Environment.manage(), self.db.cursor() as cr:
-                print '# listener poped'
-                self.registry['telegram.command'].odoo_listener(cr, SUPERUSER_ID, messages, bot)
+                self.registry['telegram.command'].odoo_listener(messages, bot)
 
         while True:
-            res = self.dispatch.poll(dbname=self.db_name, channels=['telegram_channel'], last=0)
-            print '# worker_pool.put'
+            res = self.dispatch.poll(dbname=self.db_name, channels=['telegram_channel'], last=self.last)
+            self.last += 1
             self.worker_pool.put(listener, res, self.bot)
+            if self.worker_pool.exception_event.wait(0):
+                self.worker_pool.raise_exceptions()
 
 
 def _db_list(self):
