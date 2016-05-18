@@ -54,13 +54,13 @@ class WorkerTelegram(Worker):
         bot.set_update_listener(listener)
         dispatch = telegram_bus.TelegramImDispatch().start()
         threading.currentThread().bot = bot
-        bot_thread = BotThread(1, bot)
+        bot_thread = BotPollingThread(1, bot)
         odoo_thread = OdooThread(1, bot, dispatch,  self.db_name)
         bot_thread.start()
-        odoo_thread.start()
+        odoo_thread.run()
 
     def process_work(self):
-        self.sleep()
+        time.sleep(2)
 
     def get_telegram_token(self, cr):
         icp = self.registry['ir.config_parameter']
@@ -75,7 +75,7 @@ class WorkerTelegram(Worker):
         self.registry = openerp.registry(self.db_name)
 
 
-class BotThread(threading.Thread):
+class BotPollingThread(threading.Thread):
     def __init__(self, interval, bot):
         threading.Thread.__init__(self, name='tele_wdt_thread')
         self.daemon = True
@@ -87,7 +87,7 @@ class BotThread(threading.Thread):
         self.bot.polling()
 
 
-class OdooThread:
+class OdooThread(threading.Thread):
     def __init__(self, interval, bot, dispatch, db_name):
         threading.Thread.__init__(self, name='tele_wdt_thread')
         self.daemon = True
@@ -96,99 +96,19 @@ class OdooThread:
         self.db_name = db_name
         self.dispatch = dispatch
         self.worker_pool = util.ThreadPool()
-        self.__stop_polling = threading.Event()
 
-    def __threaded_polling(self, none_stop=False, interval=0, timeout=3):
-        logger.info('Started polling.')
-        self.__stop_polling.clear()
-        error_interval = .25
+    def run(self):
+        print '# OdooThread started'
 
-        polling_thread = util.WorkerThread(name="OdooTelePollingThread")
-        or_event = util.OrEvent(
-            polling_thread.done_event,
-            polling_thread.exception_event,
-            self.worker_pool.exception_event
-        )
+        def listener(messages, bot):
+            with openerp.api.Environment.manage(), self.db.cursor() as cr:
+                print '# listener poped'
+                self.registry['telegram.command'].odoo_listener(cr, SUPERUSER_ID, messages, bot)
 
-        while not self.__stop_polling.wait(interval):
-            or_event.clear()
-            try:
-                polling_thread.put(self.__retrieve_updates, timeout)
-
-                or_event.wait()  # wait for polling thread finish, polling thread error or thread pool error
-
-                polling_thread.raise_exceptions()
-                self.worker_pool.raise_exceptions()
-
-                error_interval = .25
-            except apihelper.ApiException as e:
-                logger.error(e)
-                if not none_stop:
-                    self.__stop_polling.set()
-                    logger.info("Exception occurred. Stopping.")
-                else:
-                    polling_thread.clear_exceptions()
-                    self.worker_pool.clear_exceptions()
-                    logger.info("Waiting for {0} seconds until retry".format(error_interval))
-                    time.sleep(error_interval)
-                    error_interval *= 2
-            except KeyboardInterrupt:
-                logger.info("KeyboardInterrupt received.")
-                self.__stop_polling.set()
-                polling_thread.stop()
-                break
-
-        logger.info('Stopped polling.')
-
-    def __exec_task(self, task, *args, **kwargs):
-        self.worker_pool.put(task, *args, **kwargs)
-
-    def __retrieve_updates(self, timeout=20):
-        """
-        Retrieves any updates from the Telegram API.
-        Registered listeners and applicable message handlers will be notified when a new message arrives.
-        :raises ApiException when a call has failed.
-        """
-        if self.skip_pending:
-            logger.debug('Skipped {0} pending messages'.format(self.__skip_updates()))
-            self.skip_pending = False
-        updates = self.get_updates(offset=(self.last_update_id + 1), timeout=timeout)
-        self.process_new_updates(updates)
-
-
-    def process_new_updates(self, updates):
-        new_messages = []
-        new_inline_querys = []
-        new_chosen_inline_results = []
-        new_callback_querys = []
-        for update in updates:
-            if update.update_id > self.last_update_id:
-                self.last_update_id = update.update_id
-            if update.message:
-                new_messages.append(update.message)
-            if update.inline_query:
-                new_inline_querys.append(update.inline_query)
-            if update.chosen_inline_result:
-                new_chosen_inline_results.append(update.chosen_inline_result)
-            if update.callback_query:
-                new_callback_querys.append(update.callback_query)
-        logger.debug('Received {0} new updates'.format(len(updates)))
-        if len(new_messages) > 0:
-            self.process_new_messages(new_messages)
-        if len(new_inline_querys) > 0:
-            self.process_new_inline_query(new_inline_querys)
-        if len(new_chosen_inline_results) > 0:
-            self.process_new_chosen_inline_query(new_chosen_inline_results)
-        if len(new_callback_querys) > 0:
-            self.process_new_callback_query(new_callback_querys)
-
-
-    def process_new_messages(self, new_messages):
-        self._append_pre_next_step_handler()
-        self.__notify_update(new_messages)
-        self._notify_command_handlers(self.message_handlers, new_messages)
-        self._notify_message_subscribers(new_messages)
-        self._notify_message_next_handler(new_messages)
+        while True:
+            res = self.dispatch.poll(dbname=self.db_name, channels=['telegram_channel'], last=0)
+            print '# worker_pool.put'
+            self.worker_pool.put(listener, res, self.bot)
 
 
 def _db_list(self):
