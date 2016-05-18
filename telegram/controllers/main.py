@@ -16,7 +16,7 @@ class TelegramLogin(http.Controller):
             tele_user_obj = pool['telegram.user'].browse(cr, SUPERUSER_ID, tele_user_id)
             tele_user_obj.res_user = pool['res.users'].browse(cr, SUPERUSER_ID, uid)
             tele_user_obj.logged_in = True
-            pool['telegram.bus'].sendone(cr, SUPERUSER_ID, 'telegram_chanel', 'check_messages')
+            pool['telegram.bus'].sendone(cr, SUPERUSER_ID, 'telegram_channel', 'check_messages')
             # # TMP
             # token = '223555999:AAFJlG9UMLSlZIf9uqpHiOkilyDJrqAU5hA'
             # bot = telebot.TeleBot(token, threaded=True)
