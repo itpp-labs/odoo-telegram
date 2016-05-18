@@ -28,7 +28,7 @@ class TelegramCommand(models.Model):
                     bot.send_message(m.chat.id, 'You say ' + m.text)
 
     def odoo_listener(self, messages, bot):
-        print '# NEED PROCEED MESSAGE'
+        dumpclean(messages)
         #проверить сообщение
         #отправить что то телеграму через бот
 
