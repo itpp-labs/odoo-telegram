@@ -98,12 +98,12 @@ class OdooThread:
         self.worker_pool = util.ThreadPool()
         self.__stop_polling = threading.Event()
 
-    def run(self, none_stop=False, interval=0, timeout=3):
-        logger.info('Started OdooThread polling.')
+    def __threaded_polling(self, none_stop=False, interval=0, timeout=3):
+        logger.info('Started polling.')
         self.__stop_polling.clear()
         error_interval = .25
 
-        polling_thread = util.WorkerThread(name="OdooTelegramPollingThread")
+        polling_thread = util.WorkerThread(name="OdooTelePollingThread")
         or_event = util.OrEvent(
             polling_thread.done_event,
             polling_thread.exception_event,
@@ -138,15 +138,57 @@ class OdooThread:
                 polling_thread.stop()
                 break
 
-    def __retrieve_updates(self):
-        def listener(messages):
-            with openerp.api.Environment.manage():
-                self.registry['telegram.command'].odoo_listener(self.db.cursor(), SUPERUSER_ID, messages, self.bot)
+        logger.info('Stopped polling.')
 
-        while True:
-            res = self.dispatch.poll(dbname=self.db_name, channels=['telegram_chanel'], last=0)
-            print '# worker_pool.put'
-            self.worker_pool.put(listener, *[res, self.bot])
+    def __exec_task(self, task, *args, **kwargs):
+        self.worker_pool.put(task, *args, **kwargs)
+
+    def __retrieve_updates(self, timeout=20):
+        """
+        Retrieves any updates from the Telegram API.
+        Registered listeners and applicable message handlers will be notified when a new message arrives.
+        :raises ApiException when a call has failed.
+        """
+        if self.skip_pending:
+            logger.debug('Skipped {0} pending messages'.format(self.__skip_updates()))
+            self.skip_pending = False
+        updates = self.get_updates(offset=(self.last_update_id + 1), timeout=timeout)
+        self.process_new_updates(updates)
+
+
+    def process_new_updates(self, updates):
+        new_messages = []
+        new_inline_querys = []
+        new_chosen_inline_results = []
+        new_callback_querys = []
+        for update in updates:
+            if update.update_id > self.last_update_id:
+                self.last_update_id = update.update_id
+            if update.message:
+                new_messages.append(update.message)
+            if update.inline_query:
+                new_inline_querys.append(update.inline_query)
+            if update.chosen_inline_result:
+                new_chosen_inline_results.append(update.chosen_inline_result)
+            if update.callback_query:
+                new_callback_querys.append(update.callback_query)
+        logger.debug('Received {0} new updates'.format(len(updates)))
+        if len(new_messages) > 0:
+            self.process_new_messages(new_messages)
+        if len(new_inline_querys) > 0:
+            self.process_new_inline_query(new_inline_querys)
+        if len(new_chosen_inline_results) > 0:
+            self.process_new_chosen_inline_query(new_chosen_inline_results)
+        if len(new_callback_querys) > 0:
+            self.process_new_callback_query(new_callback_querys)
+
+
+    def process_new_messages(self, new_messages):
+        self._append_pre_next_step_handler()
+        self.__notify_update(new_messages)
+        self._notify_command_handlers(self.message_handlers, new_messages)
+        self._notify_message_subscribers(new_messages)
+        self._notify_message_next_handler(new_messages)
 
 
 def _db_list(self):
