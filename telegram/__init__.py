@@ -10,8 +10,7 @@ import telebot
 import openerp.tools.config as config
 from openerp import SUPERUSER_ID
 import threading
-from openerp.addons.telegram.telegram_bus import TelegramImDispatch
-
+# from openerp.addons.telegram import dispatch
 
 def telegram_worker():
     old_process_spawn = PreforkServer.process_spawn
@@ -39,28 +38,27 @@ def telegram_worker():
 class WorkerTelegram(Worker):
     def start(self):
         # token = self.get_telegram_token()
-        token = '223555999:AAFJlG9UMLSlZIf9uqpHiOkilyDJrqAU5hA'
-        bot = telebot.TeleBot(token, threaded=True)
+        # token = '223555999:AAFJlG9UMLSlZIf9uqpHiOkilyDJrqAU5hA'
+        with openerp.api.Environment.manage(), self.db.cursor() as cr:
+            token = self.get_telegram_token(cr)
+            bot = telebot.TeleBot(token, threaded=True)
         def listener(messages):
-            with openerp.api.Environment.manage():
-                self.registry['telegram.command'].telegram_listener(self.db.cursor(), SUPERUSER_ID, messages, bot)
+            with openerp.api.Environment.manage(), self.db.cursor() as cr:
+                self.registry['telegram.command'].telegram_listener(cr, SUPERUSER_ID, messages, bot)
         bot.set_update_listener(listener)
-        threading.currentThread().bot = bot
-        bot_thread = BotThread(1)
-        odoo_thread = OdooThread(1)
-        bot_thread.bot = bot
-        odoo_thread.bot = bot
         dispatch = telegram_bus.TelegramImDispatch().start()
+        threading.currentThread().bot = bot
+        bot_thread = BotThread(1, bot)
+        odoo_thread = OdooThread(1, bot, dispatch,  self.db_name)
         bot_thread.start()
         odoo_thread.start()
 
     def process_work(self):
         self.sleep()
 
-    def get_telegram_token(self):
-        # get token from config
-        self.cr.execute()
-        res = self.cr.fetchone()
+    def get_telegram_token(self, cr):
+        icp = self.registry['ir.config_parameter']
+        res = icp.get_param(cr, SUPERUSER_ID, 'telegram.token')
         return res
 
     def __init__(self, multi):
@@ -72,11 +70,11 @@ class WorkerTelegram(Worker):
 
 
 class BotThread(threading.Thread):
-    def __init__(self, interval):
+    def __init__(self, interval, bot):
         threading.Thread.__init__(self, name='tele_wdt_thread')
         self.daemon = True
         self.interval = interval
-        self.bot = None
+        self.bot = bot
 
     def run(self):
         print '# Telegram bot thread started'
@@ -84,11 +82,13 @@ class BotThread(threading.Thread):
 
 
 class OdooThread(threading.Thread):
-    def __init__(self, interval):
+    def __init__(self, interval, bot, dispatch, db_name):
         threading.Thread.__init__(self, name='tele_wdt_thread')
         self.daemon = True
         self.interval = interval
-        self.bot = None
+        self.bot = bot
+        self.db_name = db_name
+        self.dispatch = dispatch
 
     def run(self):
         def listener(messages):
@@ -96,7 +96,7 @@ class OdooThread(threading.Thread):
                 self.registry['telegram.command'].odoo_listener(self.db.cursor(), SUPERUSER_ID, messages, self.bot)
 
         while True:
-            res = TelegramImDispatch.poll(dbname=self.dbname, channels=['telegram_chanel'], last=0)
+            res = self.dispatch.poll(dbname=self.db_name, channels=['telegram_chanel'], last=0)
             self.worker_pool.put(listener, *[res, self.bot])
 
 

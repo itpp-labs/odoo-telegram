@@ -16,7 +16,7 @@ class TelegramCommand(models.Model):
                     # TODO check if already exists
                     vals = {'chat_id': m.chat.id, 'token': login_token}
                     new_tele_user = self.env['telegram.user'].create(vals)
-                    self._cr.commit()
+                    # self._cr.commit()
                     bot.send_message(m.chat.id, 'http://o9_t/web/login/telegram?token=' + login_token)
                 elif m.text == '/users':
                     users_logintime_list = [str(r.name) + ', last login at: ' + str(r.login_date) for r in
