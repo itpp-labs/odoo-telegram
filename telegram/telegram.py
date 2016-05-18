@@ -1,16 +1,7 @@
 # -*- coding:utf-8 -*-
 
 from openerp import api, models, fields
-import threading
-import os
-import time
 import openerp.addons.auth_signup.res_users as res_users
-from openerp import http
-from openerp.http import request
-import werkzeug
-import openerp
-from openerp import SUPERUSER_ID
-import telebot
 
 
 class TelegramCommand(models.Model):
@@ -37,6 +28,7 @@ class TelegramCommand(models.Model):
                     bot.send_message(m.chat.id, 'You say ' + m.text)
 
     def odoo_listener(self, messages, bot):
+        print '# NEED PROCEED MESSAGE'
         #проверить сообщение
         #отправить что то телеграму через бот
 

@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
-import main
+import telegram
 import telegram_bus
+import controllers
 
 import openerp
 from openerp.service.server import Worker
@@ -8,14 +9,8 @@ from openerp.service.server import PreforkServer
 import telebot
 import openerp.tools.config as config
 from openerp import SUPERUSER_ID
-import traceback
-import time
-import os
 import threading
-import psutil
-import pprint
-from multiprocessing import Process
-from openerp.addons.telegram.models.bus import dispatch
+from openerp.addons.telegram.telegram_bus import TelegramImDispatch
 
 
 def telegram_worker():
@@ -46,16 +41,18 @@ class WorkerTelegram(Worker):
         # token = self.get_telegram_token()
         token = '223555999:AAFJlG9UMLSlZIf9uqpHiOkilyDJrqAU5hA'
         bot = telebot.TeleBot(token, threaded=True)
-        def mod_listener(messages):
+        def listener(messages):
             with openerp.api.Environment.manage():
                 self.registry['telegram.command'].telegram_listener(self.db.cursor(), SUPERUSER_ID, messages, bot)
-        bot.set_update_listener(mod_listener)
+        bot.set_update_listener(listener)
         threading.currentThread().bot = bot
-        bt = BotThread(1)
-        bt.bot = bot
+        bot_thread = BotThread(1)
+        odoo_thread = OdooThread(1)
+        bot_thread.bot = bot
+        odoo_thread.bot = bot
         dispatch = telegram_bus.TelegramImDispatch().start()
-        print '# ', dispatch
-        bt.start()
+        bot_thread.start()
+        odoo_thread.start()
 
     def process_work(self):
         self.sleep()
@@ -71,7 +68,6 @@ class WorkerTelegram(Worker):
         self.db = openerp.sql_db.db_connect(self.db_name)
         # self.cr = db.cursor()
         super(WorkerTelegram, self).__init__(multi)
-        telegram_process = True
         self.registry = openerp.registry(self.db_name)
 
 
@@ -94,14 +90,15 @@ class OdooThread(threading.Thread):
         self.interval = interval
         self.bot = None
 
-    def run(self, dbname, channels, last, options):
+    def run(self):
         def listener(messages):
             with openerp.api.Environment.manage():
-                self.registry['telegram.command'].odoo_listener(self.db.cursor(), SUPERUSER_ID, messages, bot)
+                self.registry['telegram.command'].odoo_listener(self.db.cursor(), SUPERUSER_ID, messages, self.bot)
 
         while True:
-            res = dispatch.poll(dbname, channels, last, options)
+            res = TelegramImDispatch.poll(dbname=self.dbname, channels=['telegram_chanel'], last=0)
             self.worker_pool.put(listener, *[res, self.bot])
+
 
 def _db_list(self):
     if config['db_name']:

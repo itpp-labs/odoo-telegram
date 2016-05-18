@@ -15,9 +15,7 @@ _logger = logging.getLogger(__name__)
 
 # longpolling timeout connection
 TIMEOUT = 50
-#----------------------------------------------------------
-# Bus
-#----------------------------------------------------------
+
 def json_dump(v):
     return json.dumps(v, separators=(',', ':'))
 
@@ -102,9 +100,6 @@ class TelegramImBus(models.Model):
         return result
 
 
-#----------------------------------------------------------
-# Dispatcher
-#----------------------------------------------------------
 class TelegramImDispatch(object):
     def __init__(self):
         self.channels = {}
@@ -126,7 +121,7 @@ class TelegramImDispatch(object):
 
         # immediatly returns if past notifications exist
         with registry.cursor() as cr:
-            notifications = registry['bus.bus'].poll(cr, openerp.SUPERUSER_ID, channels, last, options)
+            notifications = registry['telegram.bus'].poll(cr, openerp.SUPERUSER_ID, channels, last, options)
             print '# NOTES', notifications
         # or wait for future ones
         if not notifications:
@@ -136,7 +131,7 @@ class TelegramImDispatch(object):
             try:
                 event.wait(timeout=timeout)
                 with registry.cursor() as cr:
-                    notifications = registry['bus.bus'].poll(cr, openerp.SUPERUSER_ID, channels, last, options, force_status=True)
+                    notifications = registry['telegram.bus'].poll(cr, openerp.SUPERUSER_ID, channels, last, options, force_status=True)
             except Exception:
                 # timeout
                 pass
