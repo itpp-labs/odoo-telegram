@@ -7,6 +7,7 @@ import openerp
 from openerp.service.server import Worker
 from openerp.service.server import PreforkServer
 import telebot
+import telebot.util as util
 import openerp.tools.config as config
 from openerp import SUPERUSER_ID
 import threading
@@ -89,14 +90,18 @@ class OdooThread(threading.Thread):
         self.bot = bot
         self.db_name = db_name
         self.dispatch = dispatch
+        self.worker_pool = util.ThreadPool()
+        self.__stop_polling = threading.Event()
 
     def run(self):
+        print '# OdooThread started'
         def listener(messages):
             with openerp.api.Environment.manage():
                 self.registry['telegram.command'].odoo_listener(self.db.cursor(), SUPERUSER_ID, messages, self.bot)
 
         while True:
             res = self.dispatch.poll(dbname=self.db_name, channels=['telegram_chanel'], last=0)
+            print '# worker_pool.put'
             self.worker_pool.put(listener, *[res, self.bot])
 
 
