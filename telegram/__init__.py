@@ -57,7 +57,7 @@ class WorkerTelegram(Worker):
         bot_thread = BotPollingThread(1, bot)
         odoo_thread = OdooThread(1, bot, dispatch,  self.db, self.db_name)
         bot_thread.start()
-        odoo_thread.run()
+        odoo_thread.start()
 
     def process_work(self):
         time.sleep(2)
@@ -99,19 +99,26 @@ class OdooThread(threading.Thread):
         self.worker_pool = util.ThreadPool()
         self.registry = openerp.registry(self.db_name)
         self.last = 0
+        self.proceeded_messages = []
 
     def run(self):
 
-        def listener(messages, bot):
+        def listener(message, bot):
             with openerp.api.Environment.manage(), self.db.cursor() as cr:
-                self.registry['telegram.command'].odoo_listener(messages, bot)
+                self.registry['telegram.command'].odoo_listener(message, bot)
 
         while True:
             res = self.dispatch.poll(dbname=self.db_name, channels=['telegram_channel'], last=self.last)
-            self.last += 1
-            self.worker_pool.put(listener, res, self.bot)
-            if self.worker_pool.exception_event.wait(0):
-                self.worker_pool.raise_exceptions()
+            for r in res:
+                if r not in self.proceeded_messages:
+                    self.proceeded_messages.append(r)
+                    if r['id'] > self.last:
+                        self.last = r['id']
+                    self.worker_pool.put(listener, r, self.bot)
+                    if self.worker_pool.exception_event.wait(0):
+                        self.worker_pool.raise_exceptions()
+                else:
+                    print '# skipped'
 
 
 def _db_list(self):
