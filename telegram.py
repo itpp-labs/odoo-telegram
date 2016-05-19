@@ -9,6 +9,7 @@ class TelegramCommand(models.Model):
 
     @api.model
     def telegram_listener(self, messages, bot):
+        print '# bot', bot
         for m in messages:
             if m.content_type == 'text':
                 if m.text == '/login':
@@ -27,11 +28,14 @@ class TelegramCommand(models.Model):
                 else:
                     bot.send_message(m.chat.id, 'You say ' + m.text)
 
-    def odoo_listener(self, messages, bot):
-        dumpclean(messages)
-        #проверить сообщение
-        #отправить что то телеграму через бот
-
+    def odoo_listener(self, message, bot):
+        # TODO exceptions ?
+        m = message['message']
+        print '# m:', m
+        print '# if:', m['action'] == 'login'
+        if m['action'] == 'login':
+            bot.send_message(m['chat_id'], 'Hello %s !' % m['odoo_user_name'])
+            #если тут возникает ошибка то она даже в логе не отображается
 
 class TelegramUser(models.Model):
     _name = "telegram.user"

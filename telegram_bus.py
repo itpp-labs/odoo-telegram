@@ -82,6 +82,7 @@ class TelegramImBus(models.Model):
         # list of notification to return
         result = []
         for notif in notifications:
+            print '# notif ', notif
             result.append({
                 'id': notif['id'],
                 'channel': json.loads(notif['channel']),
