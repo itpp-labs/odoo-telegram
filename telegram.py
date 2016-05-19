@@ -31,8 +31,6 @@ class TelegramCommand(models.Model):
     def odoo_listener(self, message, bot):
         # TODO exceptions ?
         m = message['message']
-        print '# m:', m
-        print '# if:', m['action'] == 'login'
         if m['action'] == 'login':
             bot.send_message(m['chat_id'], 'Hello %s !' % m['odoo_user_name'])
             #если тут возникает ошибка то она даже в логе не отображается
