@@ -23,13 +23,9 @@ def telegram_worker():
 
     def process_spawn(self):
         old_process_spawn(self)
-        db_names = _db_list(self)
-        for db_name in db_names:
-            self.db_name = db_name
-
-            while len(self.workers_telegram) < self.telegram_population:
-                worker = self.worker_spawn(WorkerTelegram, self.workers_telegram)
-                worker.db_name = db_name
+        while len(self.workers_telegram) < self.telegram_population:
+            # only 1 telegram process we create.
+            worker = self.worker_spawn(WorkerTelegram, self.workers_telegram)
 
     PreforkServer.process_spawn = process_spawn
     old_init = PreforkServer.__init__
@@ -43,6 +39,7 @@ def telegram_worker():
 
 class WorkerTelegram(Worker):
     def start(self):
+        # called once on worker start
         with openerp.api.Environment.manage(), self.db.cursor() as cr:
             token = self.get_telegram_token(cr)
             bot = telebot.TeleBot(token, threaded=True)
@@ -52,13 +49,17 @@ class WorkerTelegram(Worker):
         bot.set_update_listener(listener)
         dispatch = telegram_bus.TelegramImDispatch().start()
         threading.currentThread().bot = bot
-        bot_thread = BotPollingThread(1, bot)
-        odoo_thread = OdooThread(1, bot, dispatch,  self.db, self.db_name)
+        bot_thread = BotPollingThread(self.interval, bot)
+        odoo_thread = OdooThread(self.interval, bot, dispatch,  self.db, self.db_name)
         bot_thread.start()
         odoo_thread.start()
 
     def process_work(self):
-        time.sleep(2)
+        # this called by run() in while self.alive cycle
+        # only one process and threads as many as bases
+        time.sleep(self.interval/2)
+        bases = _db_list(self)
+        # Here could be a checker, that looking for databases that have telegram token, but doesn't have process yet
 
     def get_telegram_token(self, cr):
         icp = self.registry['ir.config_parameter']
@@ -68,9 +69,9 @@ class WorkerTelegram(Worker):
     def __init__(self, multi):
         self.db_name = multi.db_name
         self.db = openerp.sql_db.db_connect(self.db_name)
-        # self.cr = db.cursor()
         super(WorkerTelegram, self).__init__(multi)
         self.registry = openerp.registry(self.db_name)
+        self.interval = 10
 
 
 class BotPollingThread(threading.Thread):
@@ -81,7 +82,6 @@ class BotPollingThread(threading.Thread):
         self.bot = bot
 
     def run(self):
-        print '# Telegram bot thread started'
         self.bot.polling()
 
 
@@ -116,7 +116,7 @@ class OdooThread(threading.Thread):
                     if self.worker_pool.exception_event.wait(0):
                         self.worker_pool.raise_exceptions()
                 else:
-                    print '# skipped'
+                    pass
 
 
 def _db_list(self):
