@@ -38,41 +38,51 @@ def telegram_worker():
 
 
 class WorkerTelegram(Worker):
-    def start(self):
-        # called once on worker start
-        with openerp.api.Environment.manage(), self.db.cursor() as cr:
-            token = self.get_telegram_token(cr)
-            bot = telebot.TeleBot(token, threaded=True)
-        def listener(messages):
-            with openerp.api.Environment.manage(), self.db.cursor() as cr:
-                self.registry['telegram.command'].telegram_listener(cr, SUPERUSER_ID, messages, bot)
-        bot.set_update_listener(listener)
-        dispatch = telegram_bus.TelegramImDispatch().start()
-        threading.currentThread().bot = bot
-        bot_thread = BotPollingThread(self.interval, bot)
-        odoo_thread = OdooThread(self.interval, bot, dispatch,  self.db, self.db_name)
-        bot_thread.start()
-        odoo_thread.start()
-
     def process_work(self):
         # this called by run() in while self.alive cycle
         # only one process and threads as many as bases
+        # dynamically add new threads bundle (bot, odoo, dispatcher) for each base
+        # that also needed for runbot
         time.sleep(self.interval/2)
-        bases = _db_list(self)
-        # Here could be a checker, that looking for databases that have telegram token, but doesn't have process yet
+        db_names = _db_list(self)
+        for db_name in db_names:
+            db = openerp.sql_db.db_connect(db_name)
+            registry = openerp.registry(db_name)
+            with openerp.api.Environment.manage(), db.cursor() as cr:
+                token = self.get_telegram_token(cr, registry)
+                if self.need_new_bundle(token):
+                    bot = telebot.TeleBot(token, threaded=True)
+                else:
+                    continue
 
-    def get_telegram_token(self, cr):
-        icp = self.registry['ir.config_parameter']
+            def listener(messages):
+                with openerp.api.Environment.manage(), db.cursor() as cr:
+                    registry['telegram.command'].telegram_listener(cr, SUPERUSER_ID, messages, bot)
+            bot.set_update_listener(listener)
+            dispatch = telegram_bus.TelegramImDispatch().start()
+            threading.currentThread().bot = bot
+            bot_thread = BotPollingThread(self.interval, bot)
+            odoo_thread = OdooThread(self.interval, bot, dispatch,  db, db_name)
+            bot_thread.start()
+            odoo_thread.start()
+            vals = {'token': token, 'bot': bot, 'bot_thread': bot_thread, 'odoo_thread': odoo_thread, 'dispatch': dispatch}
+            self.threads_bundles_list.append(vals)
+
+    def get_telegram_token(self, cr, registry):
+        icp = registry['ir.config_parameter']
         res = icp.get_param(cr, SUPERUSER_ID, 'telegram.token')
         return res
 
-    def __init__(self, multi):
-        self.db_name = multi.db_name
-        self.db = openerp.sql_db.db_connect(self.db_name)
-        super(WorkerTelegram, self).__init__(multi)
-        self.registry = openerp.registry(self.db_name)
-        self.interval = 10
+    def need_new_bundle(self, token):
+        for bundle in self.threads_bundles_list:
+            if bundle['token'] == token:
+                return True
+        return False
 
+    def __init__(self, multi):
+        super(WorkerTelegram, self).__init__(multi)
+        self.interval = 10
+        self.threads_bundles_list = [] # token, bot, odoo, dispatcher
 
 class BotPollingThread(threading.Thread):
     def __init__(self, interval, bot):
