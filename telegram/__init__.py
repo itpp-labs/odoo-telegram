@@ -43,8 +43,6 @@ def telegram_worker():
 
 class WorkerTelegram(Worker):
     def start(self):
-        # token = self.get_telegram_token()
-        # token = '223555999:AAFJlG9UMLSlZIf9uqpHiOkilyDJrqAU5hA'
         with openerp.api.Environment.manage(), self.db.cursor() as cr:
             token = self.get_telegram_token(cr)
             bot = telebot.TeleBot(token, threaded=True)
