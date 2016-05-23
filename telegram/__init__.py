@@ -40,7 +40,7 @@ def telegram_worker():
 class WorkerTelegram(Worker):
     def process_work(self):
         # this called by run() in while self.alive cycle
-        # only one process and threads as many as bases
+        # only one process. threads as many as bases
         # dynamically add new threads bundle (bot, odoo, dispatcher) for each base
         # that also needed for runbot
         time.sleep(self.interval/2)
@@ -59,6 +59,7 @@ class WorkerTelegram(Worker):
                 with openerp.api.Environment.manage(), db.cursor() as cr:
                     registry['telegram.command'].telegram_listener(cr, SUPERUSER_ID, messages, bot)
             bot.set_update_listener(listener)
+            bot.db_name = db_name  # need in telegram_listener()
             dispatch = telegram_bus.TelegramImDispatch().start()
             threading.currentThread().bot = bot
             bot_thread = BotPollingThread(self.interval, bot)
@@ -76,13 +77,13 @@ class WorkerTelegram(Worker):
     def need_new_bundle(self, token):
         for bundle in self.threads_bundles_list:
             if bundle['token'] == token:
-                return True
-        return False
+                return False
+        return True
 
     def __init__(self, multi):
         super(WorkerTelegram, self).__init__(multi)
         self.interval = 10
-        self.threads_bundles_list = [] # token, bot, odoo, dispatcher
+        self.threads_bundles_list = []  # token, bot, odoo, dispatcher
 
 class BotPollingThread(threading.Thread):
     def __init__(self, interval, bot):

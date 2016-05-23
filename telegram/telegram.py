@@ -18,7 +18,7 @@ class TelegramCommand(models.Model):
                     vals = {'chat_id': m.chat.id, 'token': login_token}
                     new_tele_user = self.env['telegram.user'].create(vals)
                     # self._cr.commit()
-                    bot.send_message(m.chat.id, 'http://o9_t/web/login/telegram?token=' + login_token)
+                    bot.send_message(m.chat.id, 'http://%s/web/login/telegram?token=%s' % (bot.db_name, login_token))
                 elif m.text == '/users':
                     users_logintime_list = [str(r.name) + ', last login at: ' + str(r.login_date) for r in
                                             self.env['res.users'].search([('name', '!=', None)])]
