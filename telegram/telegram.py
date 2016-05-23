@@ -2,6 +2,8 @@
 
 from openerp import api, models, fields
 import openerp.addons.auth_signup.res_users as res_users
+from openerp.http import request
+from openerp import SUPERUSER_ID
 
 
 class TelegramCommand(models.Model):
@@ -13,13 +15,10 @@ class TelegramCommand(models.Model):
         for m in messages:
             if m.content_type == 'text':
                 if m.text == '/login':
-                    login_token = res_users.random_token()
-                    # TODO check if already exists
-                    vals = {'chat_id': m.chat.id, 'token': login_token}
-                    new_tele_user = self.env['telegram.user'].create(vals)
-                    # self._cr.commit()
+                    login_token = TelegramUser.register_user(self.env, m.chat.id)
                     bot.send_message(m.chat.id, 'http://%s/web/login/telegram?token=%s' % (bot.db_name, login_token))
                 elif m.text == '/users':
+                    TelegramUser.check_access(self.env, m.chat.id, '/users')
                     users_logintime_list = [str(r.name) + ', last login at: ' + str(r.login_date) for r in
                                             self.env['res.users'].search([('name', '!=', None)])]
                     [bot.send_message(m.chat.id, r) for r in users_logintime_list]
@@ -35,14 +34,33 @@ class TelegramCommand(models.Model):
             bot.send_message(m['chat_id'], 'Hello %s !' % m['odoo_user_name'])
             #если тут возникает ошибка то она даже в логе не отображается
 
+
 class TelegramUser(models.Model):
     _name = "telegram.user"
 
-    chat_id = fields.Char()
+    chat_id = fields.Char()  # Primary key
     token = fields.Char()
     logged_in = fields.Boolean()
-    res_user = fields.Many2one('res.users')
+    res_user = fields.Many2one('res.users')  # Primary key
 
+    @staticmethod
+    def register_user(tele_env, chat_id):
+        tele_user_id = tele_env['telegram.user'].search([('chat_id', '=', chat_id)])
+        if len(tele_user_id) == 0:
+            login_token = res_users.random_token()
+            vals = {'chat_id': chat_id, 'token': login_token}
+            new_tele_user = tele_env['telegram.user'].create(vals)
+        else:
+            tele_user_obj = tele_env['telegram.user'].browse(tele_user_id)
+            login_token = tele_user_obj.token  # user already exists
+
+        return login_token
+
+    @staticmethod
+    def check_access(tele_env, chat_id, command):
+        tele_user_id = tele_env['telegram.user'].search([('chat_id', '=', chat_id)])
+        tele_user_obj = tele_env['telegram.user'].browse(tele_user_id)
+        dumpclean(tele_user_obj.res_user.groups_id)
 
 # query = """SELECT *
 #            FROM mail_message as a, mail_message_res_partner_rel as b
