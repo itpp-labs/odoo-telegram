@@ -114,8 +114,10 @@ class OdooThread(threading.Thread):
 
     def run(self):
         def listener(message, bot):
-            with openerp.api.Environment.manage(), self.db.cursor() as cr:
-                self.registry['telegram.command'].odoo_listener(message, bot)
+            db = openerp.sql_db.db_connect(bot.db_name)
+            registry = openerp.registry(bot.db_name)
+            with openerp.api.Environment.manage(), db.cursor() as cr:
+                registry['telegram.command'].odoo_listener(message, bot)
         while True:
             # Exeptions ?
             db_names = _db_list(self)
