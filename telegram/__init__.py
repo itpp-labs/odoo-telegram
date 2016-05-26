@@ -60,6 +60,8 @@ class WorkerTelegram(Worker):
                 continue
 
             def listener(messages):
+                db = openerp.sql_db.db_connect(bot.db_name)
+                registry = openerp.registry(bot.db_name)
                 with openerp.api.Environment.manage(), db.cursor() as cr:
                     registry['telegram.command'].telegram_listener(cr, SUPERUSER_ID, messages, bot)
             bot.set_update_listener(listener)
