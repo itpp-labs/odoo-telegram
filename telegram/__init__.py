@@ -43,7 +43,6 @@ class WorkerTelegram(Worker):
         # only one process. threads as many as bases
         # dynamically add new threads bundle (bot, odoo, dispatcher) for each base
         # that also needed for runbot
-        time.sleep(self.interval/2)
         db_names = _db_list(self)
         for db_name in db_names:
             db = openerp.sql_db.db_connect(db_name)
@@ -60,14 +59,19 @@ class WorkerTelegram(Worker):
                     registry['telegram.command'].telegram_listener(cr, SUPERUSER_ID, messages, bot)
             bot.set_update_listener(listener)
             bot.db_name = db_name  # need in telegram_listener()
-            dispatch = telegram_bus.TelegramImDispatch().start()
+            odoo_dispatch = telegram_bus.Dispatch().start()
             threading.currentThread().bot = bot
             bot_thread = BotPollingThread(self.interval, bot)
-            odoo_thread = OdooThread(self.interval, bot, dispatch,  db, db_name)
+            odoo_thread = OdooThread(self.interval, bot, odoo_dispatch,  db, db_name)
             bot_thread.start()
             odoo_thread.start()
-            vals = {'token': token, 'bot': bot, 'bot_thread': bot_thread, 'odoo_thread': odoo_thread, 'dispatch': dispatch}
+            vals = {'token': token,
+                    'bot': bot,
+                    'bot_thread': bot_thread,
+                    'odoo_thread': odoo_thread,
+                    'odoo_dispatch': odoo_dispatch}
             self.threads_bundles_list.append(vals)
+            time.sleep(self.interval / 2)
 
     def get_telegram_token(self, cr, registry):
         icp = registry['ir.config_parameter']
@@ -105,7 +109,7 @@ class OdooThread(threading.Thread):
         self.db = db
         self.db_name = db_name
         self.dispatch = dispatch
-        self.worker_pool = util.ThreadPool()
+        self.odoo_thread_pool = util.ThreadPool()
         self.registry = openerp.registry(self.db_name)
         self.last = 0
         self.proceeded_messages = []
@@ -123,9 +127,9 @@ class OdooThread(threading.Thread):
                     self.proceeded_messages.append(r)
                     if r['id'] > self.last:
                         self.last = r['id']
-                    self.worker_pool.put(listener, r, self.bot)
-                    if self.worker_pool.exception_event.wait(0):
-                        self.worker_pool.raise_exceptions()
+                    self.odoo_thread_pool.put(listener, r, self.bot)
+                    if self.odoo_thread_pool.exception_event.wait(0):
+                        self.odoo_thread_pool.raise_exceptions()
                 else:
                     pass
 

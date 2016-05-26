@@ -3,7 +3,7 @@
 from openerp import SUPERUSER_ID
 from openerp.http import request
 from openerp import http
-import werkzeug
+from werkzeug import utils
 
 
 class TelegramLogin(http.Controller):
@@ -20,4 +20,4 @@ class TelegramLogin(http.Controller):
                        'chat_id': tele_user_obj.chat_id,
                        'odoo_user_name': tele_user_obj.res_user.name}
             pool['telegram.bus'].sendone(cr, SUPERUSER_ID, 'telegram_channel', message)
-        return werkzeug.utils.redirect('/web/')
+        return utils.redirect('/web/')

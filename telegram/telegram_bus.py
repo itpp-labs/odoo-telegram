@@ -25,7 +25,7 @@ def hashable(key):
     return key
 
 
-class TelegramImBus(models.Model):
+class TelegramBus(models.Model):
 
     _name = 'telegram.bus'
 
@@ -100,7 +100,7 @@ class TelegramImBus(models.Model):
         return result
 
 
-class TelegramImDispatch(object):
+class TelegramDispatch(object):
     def __init__(self):
         self.channels = {}
 
