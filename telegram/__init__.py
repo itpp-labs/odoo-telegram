@@ -7,6 +7,7 @@ import openerp
 from openerp.service.server import Worker
 from openerp.service.server import PreforkServer
 import telebot
+from telebot import TeleBot
 import telebot.util as util
 import openerp.tools.config as config
 from openerp import SUPERUSER_ID
@@ -53,7 +54,8 @@ class WorkerTelegram(Worker):
         for db_name in db_names:
             token = get_parameter(db_name, 'telegram.token')
             if self.need_new_bundle(token):
-                bot = telebot.TeleBot(token, threaded=True)
+                num_threads = get_parameter(db_name, 'telegram.telegram_threads')
+                bot = TeleBotMod(token, threaded=True, num_threads=num_threads)
             else:
                 continue
 
@@ -148,6 +150,13 @@ class OdooThread(threading.Thread):
         for db_name in db_names:
             n += get_parameter(db_name, 'telegram.odoo_threads')
         return  n
+
+
+class TeleBotMod(TeleBot):
+    def __init__(self, token, threaded=True, skip_pending=False, num_threads=2):
+        super(TeleBotMod, self).__init__(token, threaded=False, skip_pending=skip_pending)
+        if self.threaded:
+            self.worker_pool = util.ThreadPool(num_threads)
 
 
 def get_parameter(db_name, key):
