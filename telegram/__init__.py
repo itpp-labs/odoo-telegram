@@ -105,9 +105,9 @@ class OdooThread(threading.Thread):
         self.threads_bundles_list = threads_bundles_list
         self.last = 0
         self.proceeded_messages = []
-        self.do_init()
+        self._do_init()
 
-    def do_init(self):
+    def _do_init(self):
         # some stuff need to be reinitialised some times. It placed here.
         num_of_child_threads = self.get_num_of_children()
         self.odoo_thread_pool = util.ThreadPool(num_of_child_threads)
@@ -120,26 +120,25 @@ class OdooThread(threading.Thread):
             # Exeptions ?
             db_names = _db_list(self)
             for db_name in db_names:  # successively check notifications in bases
-                with openerp.api.Environment.manage(), db.cursor() as cr:
-                    token = get_parameter('telegram.token', db_name)
-                    if not token:
-                        continue
-                    res = self.dispatch.poll(dbname=db_name, channels=['telegram_channel'], last=self.last)
-                    for r in res:
-                        if r not in self.proceeded_messages:
-                            self.proceeded_messages.append(r)
-                            if r['id'] > self.last:
-                                self.last = r['id']
-                            ls = [r for r in self.threads_bundles_list if r['token'] == token]
-                            if len(ls) == 1:
-                                self.odoo_thread_pool.put(listener, r, ls[0]['bot'])
-                                if self.odoo_thread_pool.exception_event.wait(0):
-                                    self.odoo_thread_pool.raise_exceptions()
-                            elif len(ls) > 1:
-                                raise ValidationError('Token is not unique')
-                            elif len(ls) == 0:
-                                raise ValidationError('Unregistered token')
-            self.do_init()
+                token = get_parameter('telegram.token', db_name)
+                if not token:
+                    continue
+                res = self.dispatch.poll(dbname=db_name, channels=['telegram_channel'], last=self.last)
+                for r in res:
+                    if r not in self.proceeded_messages:
+                        self.proceeded_messages.append(r)
+                        if r['id'] > self.last:
+                            self.last = r['id']
+                        ls = [r for r in self.threads_bundles_list if r['token'] == token]
+                        if len(ls) == 1:
+                            self.odoo_thread_pool.put(listener, r, ls[0]['bot'])
+                            if self.odoo_thread_pool.exception_event.wait(0):
+                                self.odoo_thread_pool.raise_exceptions()
+                        elif len(ls) > 1:
+                            raise ValidationError('Token is not unique')
+                        elif len(ls) == 0:
+                            raise ValidationError('Unregistered token')
+            self._do_init()
 
     def get_num_of_children(self):
         db_names = _db_list(self)
