@@ -10,6 +10,7 @@ import telebot
 import telebot.util as util
 import openerp.tools.config as config
 from openerp import SUPERUSER_ID
+from openerp.exceptions import ValidationError
 import threading
 import logging
 import time
@@ -45,6 +46,9 @@ class WorkerTelegram(Worker):
         # dynamically add new threads bundle (bot, odoo, dispatcher) for each base
         # that also needed for runbot
         db_names = _db_list(self)
+        odoo_dispatch = telegram_bus.Dispatch().start()
+        odoo_thread = OdooThread(self.interval, odoo_dispatch, self.threads_bundles_list)
+        odoo_thread.start()
         for db_name in db_names:
             db = openerp.sql_db.db_connect(db_name)
             registry = openerp.registry(db_name)
@@ -60,12 +64,9 @@ class WorkerTelegram(Worker):
                     registry['telegram.command'].telegram_listener(cr, SUPERUSER_ID, messages, bot)
             bot.set_update_listener(listener)
             bot.db_name = db_name  # need in telegram_listener()
-            odoo_dispatch = telegram_bus.Dispatch().start()
             threading.currentThread().bot = bot
             bot_thread = BotPollingThread(self.interval, bot)
-            odoo_thread = OdooThread(self.interval, bot, odoo_dispatch,  db, db_name)
             bot_thread.start()
-            odoo_thread.start()
             vals = {'token': token,
                     'bot': bot,
                     'bot_thread': bot_thread,
@@ -102,39 +103,63 @@ class BotPollingThread(threading.Thread):
 
 
 class OdooThread(threading.Thread):
-    def __init__(self, interval, bot, dispatch, db, db_name):
+    def __init__(self, interval, dispatch, threads_bundles_list):
         threading.Thread.__init__(self, name='tele_wdt_thread')
         self.daemon = True
         self.interval = interval
-        self.bot = bot
-        self.db = db
-        self.db_name = db_name
         self.dispatch = dispatch
-        self.odoo_thread_pool = util.ThreadPool()
-        self.registry = openerp.registry(self.db_name)
+        self.threads_bundles_list = threads_bundles_list
         self.last = 0
         self.proceeded_messages = []
+        self.do_init()
+
+    def do_init(self):
+        # some stuff need to be reinitialised some times. It placed here.
+        num_of_child_threads = self.get_num_of_children()
+        self.odoo_thread_pool = util.ThreadPool(num_of_child_threads)
 
     def run(self):
-
         def listener(message, bot):
             with openerp.api.Environment.manage(), self.db.cursor() as cr:
                 self.registry['telegram.command'].odoo_listener(message, bot)
-
         while True:
-            res = self.dispatch.poll(dbname=self.db_name, channels=['telegram_channel'], last=self.last)
-            for r in res:
-                if r not in self.proceeded_messages:
-                    self.proceeded_messages.append(r)
-                    if r['id'] > self.last:
-                        self.last = r['id']
-                    #     limit here
-                    self.odoo_thread_pool.put(listener, r, self.bot)
-                    if self.odoo_thread_pool.exception_event.wait(0):
-                        self.odoo_thread_pool.raise_exceptions()
-                else:
-                    pass
+            # Exeptions ?
+            db_names = _db_list(self)
+            for db_name in db_names:  # successively check notifications in bases
+                with openerp.api.Environment.manage(), db.cursor() as cr:
+                    token = get_parameter('telegram.token', db_name)
+                    if not token:
+                        continue
+                    res = self.dispatch.poll(dbname=db_name, channels=['telegram_channel'], last=self.last)
+                    for r in res:
+                        if r not in self.proceeded_messages:
+                            self.proceeded_messages.append(r)
+                            if r['id'] > self.last:
+                                self.last = r['id']
+                            ls = [r for r in self.threads_bundles_list if r['token'] == token]
+                            if len(ls) == 1:
+                                self.odoo_thread_pool.put(listener, r, ls[0]['bot'])
+                                if self.odoo_thread_pool.exception_event.wait(0):
+                                    self.odoo_thread_pool.raise_exceptions()
+                            elif len(ls) > 1:
+                                raise ValidationError('Token is not unique')
+                            elif len(ls) == 0:
+                                raise ValidationError('Unregistered token')
+            self.do_init()
 
+    def get_num_of_children(self):
+        db_names = _db_list(self)
+        n = 1  # its minimum
+        for db_name in db_names:
+            n += get_parameter('telegram.odoo_threads', db_name)
+        return  n
+
+def get_parameter(db_name, key):
+    db = openerp.sql_db.db_connect(db_name)
+    registry = openerp.registry(db_name)
+    with openerp.api.Environment.manage(), db.cursor() as cr:
+        val = registry['ir.config_parameter'].get_param(cr, SUPERUSER_ID, key)
+    return val
 
 def _db_list(self):
     if config['db_name']:
