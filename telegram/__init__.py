@@ -19,6 +19,7 @@ from telebot import apihelper, types, util
 logger = logging.getLogger('Telegram')
 # from openerp.addons.telegram import dispatch
 
+
 def telegram_worker():
     # monkey patch
     old_process_spawn = PreforkServer.process_spawn
@@ -83,6 +84,7 @@ class WorkerTelegram(Worker):
         self.interval = 10
         self.threads_bundles_list = []  # token, bot, odoo, dispatcher
 
+
 class BotPollingThread(threading.Thread):
     def __init__(self, interval, bot):
         threading.Thread.__init__(self, name='tele_wdt_thread')
@@ -146,12 +148,14 @@ class OdooThread(threading.Thread):
             n += get_parameter(db_name, 'telegram.odoo_threads')
         return  n
 
+
 def get_parameter(db_name, key):
     db = openerp.sql_db.db_connect(db_name)
     registry = openerp.registry(db_name)
     with openerp.api.Environment.manage(), db.cursor() as cr:
         val = registry['ir.config_parameter'].get_param(cr, SUPERUSER_ID, key)
     return val
+
 
 def _db_list(self):
     if config['db_name']:
@@ -160,9 +164,11 @@ def _db_list(self):
         db_names = openerp.service.db.list_dbs(True)
     return db_names
 
+
 def dump(obj):
   for attr in dir(obj):
     print "obj.%s = %s" % (attr, getattr(obj, attr))
+
 
 def dumpclean(obj):
     if type(obj) == dict:
