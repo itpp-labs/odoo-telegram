@@ -114,6 +114,7 @@ class OdooThread(threading.Thread):
     def _do_init(self):
         # some stuff need to be reinitialised some times. It placed here.
         num_of_child_threads = self.get_num_of_children()
+        # not sure here. whats going to be if to recall ThreadPool init. Old workers killed ?
         self.odoo_thread_pool = util.ThreadPool(num_of_child_threads)
 
     def run(self):
@@ -151,7 +152,7 @@ class OdooThread(threading.Thread):
         n = 1  # its minimum
         for db_name in db_names:
             n += get_parameter(db_name, 'telegram.odoo_threads')
-        return  n
+        return n
 
 
 class TeleBotMod(TeleBot):
