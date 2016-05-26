@@ -7,6 +7,9 @@
     'author': 'IT Projects',
     'website': '',
     'depends': ['base', 'web'],
+    'data':[
+        'records.xml'
+    ],
     'auto_install': False,
     'installable': True,
     'post_load' : 'telegram_worker',

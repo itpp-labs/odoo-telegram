@@ -19,6 +19,7 @@ logger = logging.getLogger('Telegram')
 # from openerp.addons.telegram import dispatch
 
 def telegram_worker():
+    # monkey patch
     old_process_spawn = PreforkServer.process_spawn
 
     def process_spawn(self):
@@ -127,6 +128,7 @@ class OdooThread(threading.Thread):
                     self.proceeded_messages.append(r)
                     if r['id'] > self.last:
                         self.last = r['id']
+                    #     limit here
                     self.odoo_thread_pool.put(listener, r, self.bot)
                     if self.odoo_thread_pool.exception_event.wait(0):
                         self.odoo_thread_pool.raise_exceptions()
