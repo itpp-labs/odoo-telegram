@@ -115,6 +115,7 @@ class OdooThread(threading.Thread):
         # some stuff need to be reinitialised some times. It placed here.
         num_of_child_threads = self.get_num_of_children()
         # not sure here. whats going to be if to recall ThreadPool init. Old workers killed ?
+        # TODO need to modify ThreadPool to be able inc/dec number of threads.
         self.odoo_thread_pool = util.ThreadPool(num_of_child_threads)
 
     def run(self):
@@ -145,7 +146,7 @@ class OdooThread(threading.Thread):
                             raise ValidationError('Token is not unique')
                         elif len(ls) == 0:
                             raise ValidationError('Unregistered token')
-            self._do_init()
+            # self._do_init()  doubtfully.
 
     def get_num_of_children(self):
         db_names = _db_list(self)
