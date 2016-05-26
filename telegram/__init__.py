@@ -50,14 +50,11 @@ class WorkerTelegram(Worker):
         odoo_thread = OdooThread(self.interval, odoo_dispatch, self.threads_bundles_list)
         odoo_thread.start()
         for db_name in db_names:
-            db = openerp.sql_db.db_connect(db_name)
-            registry = openerp.registry(db_name)
-            with openerp.api.Environment.manage(), db.cursor() as cr:
-                token = self.get_telegram_token(cr, registry)
-                if self.need_new_bundle(token):
-                    bot = telebot.TeleBot(token, threaded=True)
-                else:
-                    continue
+            token = get_parameter(db_name, 'telegram.token')
+            if self.need_new_bundle(token):
+                bot = telebot.TeleBot(token, threaded=True)
+            else:
+                continue
 
             def listener(messages):
                 with openerp.api.Environment.manage(), db.cursor() as cr:
@@ -74,11 +71,6 @@ class WorkerTelegram(Worker):
                     'odoo_dispatch': odoo_dispatch}
             self.threads_bundles_list.append(vals)
             time.sleep(self.interval / 2)
-
-    def get_telegram_token(self, cr, registry):
-        icp = registry['ir.config_parameter']
-        res = icp.get_param(cr, SUPERUSER_ID, 'telegram.token')
-        return res
 
     def need_new_bundle(self, token):
         for bundle in self.threads_bundles_list:
@@ -151,7 +143,7 @@ class OdooThread(threading.Thread):
         db_names = _db_list(self)
         n = 1  # its minimum
         for db_name in db_names:
-            n += get_parameter('telegram.odoo_threads', db_name)
+            n += get_parameter(db_name, 'telegram.odoo_threads')
         return  n
 
 def get_parameter(db_name, key):
