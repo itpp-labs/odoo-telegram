@@ -1,8 +1,7 @@
-============
-Telegram bot
-============
+==============
+ Telegram bot
+==============
 
-Put token in settings !
 
 The module apply monkey patch for PreforkServer in order to run new process Telegram Worker, which run following threads
 
@@ -19,7 +18,7 @@ The module apply monkey patch for PreforkServer in order to run new process Tele
 Further information
 -------------------
 
-HTML Description: https://apps.odoo.com/apps/modules/9.0/ ???????????????????????
+HTML Description: https://apps.odoo.com/apps/modules/9.0/telegram
 
 Usage instructions: `<doc/index.rst>`_
 

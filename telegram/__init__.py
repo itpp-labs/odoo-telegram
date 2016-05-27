@@ -53,7 +53,7 @@ class WorkerTelegram(Worker):
         odoo_thread.start()
         for db_name in db_names:
             token = get_parameter(db_name, 'telegram.token')
-            if self.need_new_bundle(token):
+            if token != 'null' and self.need_new_bundle(token):
                 num_threads = get_parameter(db_name, 'telegram.telegram_threads')
                 bot = TeleBotMod(token, threaded=True, num_threads=num_threads)
             else:
