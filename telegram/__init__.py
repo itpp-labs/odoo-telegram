@@ -48,10 +48,11 @@ class WorkerTelegram(Worker):
         # dynamically add new threads bundle (bot, odoo, dispatcher) for each base
         # that also needed for runbot
         db_names = _db_list(self)
-        odoo_dispatch = telegram_bus.Dispatch().start()
+        odoo_dispatch = telegram_bus.TelegramDispatch().start()
         odoo_thread = OdooThread(self.interval, odoo_dispatch, self.threads_bundles_list)
         odoo_thread.start()
         for db_name in db_names:
+            print '# :db_name', db_name
             token = get_parameter(db_name, 'telegram.token')
             if token != 'null' and self.need_new_bundle(token):
                 num_threads = get_parameter(db_name, 'telegram.telegram_threads')
@@ -128,7 +129,7 @@ class OdooThread(threading.Thread):
             # Exeptions ?
             db_names = _db_list(self)
             for db_name in db_names:  # successively check notifications in bases
-                token = get_parameter('telegram.token', db_name)
+                token = get_parameter(db_name, 'telegram.token')
                 if not token:
                     continue
                 res = self.dispatch.poll(dbname=db_name, channels=['telegram_channel'], last=self.last)
@@ -152,11 +153,15 @@ class OdooThread(threading.Thread):
         db_names = _db_list(self)
         n = 1  # its minimum
         for db_name in db_names:
-            n += get_parameter(db_name, 'telegram.odoo_threads')
+            try:
+                num = int(get_parameter(db_name, 'telegram.odoo_threads'))
+                n += num
+            except ValueError:
+                raise ValidationError('telegram.odoo_threads must be integer!')
         return n
 
 
-class TeleBotMod(TeleBot):
+class TeleBotMod(TeleBot, object):
     def __init__(self, token, threaded=True, skip_pending=False, num_threads=2):
         super(TeleBotMod, self).__init__(token, threaded=False, skip_pending=skip_pending)
         if self.threaded:
