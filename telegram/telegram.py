@@ -11,7 +11,6 @@ class TelegramCommand(models.Model):
 
     @api.model
     def telegram_listener(self, messages, bot):
-        print '# bot', bot
         for m in messages:
             if m.content_type == 'text':
                 if m.text == '/login':

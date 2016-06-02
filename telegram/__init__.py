@@ -42,15 +42,23 @@ def telegram_worker():
 
 
 class WorkerTelegram(Worker):
+    def __init__(self, multi):
+        super(WorkerTelegram, self).__init__(multi)
+        self.interval = 10
+        self.threads_bundles_list = []  # token, bot, odoo, dispatcher
+        self.singles_ran = False  # for one instance of odoo_dispatcher and odoo_thread
+
     def process_work(self):
         # this called by run() in while self.alive cycle
         # only one process. threads as many as bases
         # dynamically add new threads bundle (bot, odoo, dispatcher) for each base
         # that also needed for runbot
         db_names = _db_list(self)
-        odoo_dispatch = telegram_bus.TelegramDispatch().start()
-        odoo_thread = OdooThread(self.interval, odoo_dispatch, self.threads_bundles_list)
-        odoo_thread.start()
+        if not self.singles_ran:
+            odoo_dispatch = telegram_bus.TelegramDispatch().start()
+            odoo_thread = OdooThread(self.interval, odoo_dispatch, self.threads_bundles_list)
+            odoo_thread.start()
+            self.singles_ran = True
         for db_name in db_names:
             print '# :db_name', db_name
             token = get_parameter(db_name, 'telegram.token')
@@ -84,11 +92,6 @@ class WorkerTelegram(Worker):
                 return False
         return True
 
-    def __init__(self, multi):
-        super(WorkerTelegram, self).__init__(multi)
-        self.interval = 10
-        self.threads_bundles_list = []  # token, bot, odoo, dispatcher
-
 
 class BotPollingThread(threading.Thread):
     def __init__(self, interval, bot):
@@ -98,6 +101,7 @@ class BotPollingThread(threading.Thread):
         self.bot = bot
 
     def run(self):
+        print '# :BotPollingThread run'
         self.bot.polling()
 
 
@@ -120,6 +124,7 @@ class OdooThread(threading.Thread):
         self.odoo_thread_pool = util.ThreadPool(num_of_child_threads)
 
     def run(self):
+        print '# OdooThread:run'
         def listener(message, bot):
             db = openerp.sql_db.db_connect(bot.db_name)
             registry = openerp.registry(bot.db_name)
@@ -165,6 +170,7 @@ class TeleBotMod(TeleBot, object):
     def __init__(self, token, threaded=True, skip_pending=False, num_threads=2):
         super(TeleBotMod, self).__init__(token, threaded=False, skip_pending=skip_pending)
         if self.threaded:
+            print '# :TeleBotMod'
             self.worker_pool = util.ThreadPool(num_threads)
 
 
