@@ -22,3 +22,17 @@ Preparation
 3. Turn off db filter in odoo configuration file.
 
 4. Run odoo with these console keys:  **--workers=2 --load telegram,web**.
+
+Using
+-----
+
+First of all you need to login in Odoo with telegram:
+
+* Open telegram.
+* Find your bot in contacts and send ``/login`` message (command) to him.
+* As answer you will get link you need to follow.
+* Your default internet browser will be opened and you will find your self on Odoo login page.
+* Enter your Odoo login and password and press ``[Log in]``.
+* Now you are logged in.
+* If you already logged in Odoo on your device Odoo main page just will be opened and there is no necessity to enter your login and password.
+* Now you can use commands to Odoo. For example ``/users`` will give you list of users.
