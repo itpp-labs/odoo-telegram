@@ -60,7 +60,6 @@ class WorkerTelegram(Worker):
             odoo_thread.start()
             self.singles_ran = True
         for db_name in db_names:
-            print '# :db_name', db_name
             token = get_parameter(db_name, 'telegram.token')
             if token != 'null' and self.need_new_bundle(token):
                 num_threads = get_parameter(db_name, 'telegram.telegram_threads')
@@ -124,7 +123,6 @@ class OdooThread(threading.Thread):
         self.odoo_thread_pool = util.ThreadPool(num_of_child_threads)
 
     def run(self):
-        print '# OdooThread:run'
         def listener(message, bot):
             db = openerp.sql_db.db_connect(bot.db_name)
             registry = openerp.registry(bot.db_name)
@@ -170,7 +168,6 @@ class TeleBotMod(TeleBot, object):
     def __init__(self, token, threaded=True, skip_pending=False, num_threads=2):
         super(TeleBotMod, self).__init__(token, threaded=False, skip_pending=skip_pending)
         if self.threaded:
-            print '# :TeleBotMod'
             self.worker_pool = util.ThreadPool(num_threads)
 
 
