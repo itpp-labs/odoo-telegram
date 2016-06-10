@@ -57,12 +57,10 @@ class WorkerTelegram(Worker):
         # that also needed for runbot
         db_names = _db_list(self)
         if not self.singles_ran:
-            odoo_dispatch = telegram_bus.TelegramDispatch().start()
-            odoo_thread = OdooThread(self.interval, odoo_dispatch, self.threads_bundles_list)
-            odoo_thread.start()
+            self.odoo_dispatch = telegram_bus.TelegramDispatch().start()
+            self.odoo_thread = OdooThread(self.interval, self.odoo_dispatch, self.threads_bundles_list)
+            self.odoo_thread.start()
             self.singles_ran = True
-            self.odoo_thread = odoo_thread
-            self.odoo_dispatch = odoo_dispatch
         for db_name in db_names:
             token = get_parameter(db_name, 'telegram.token')
             if token != 'null' and self.need_new_bundle(token):
@@ -181,12 +179,18 @@ def get_parameter(db_name, key):
     db = openerp.sql_db.db_connect(db_name)
     registry = openerp.registry(db_name)
     with openerp.api.Environment.manage(), db.cursor() as cr:
-        # val = registry['ir.config_parameter'].get_param(cr, SUPERUSER_ID, key)
         res = registry['ir.config_parameter'].search(cr, SUPERUSER_ID, [('key', '=', key)])
-        val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
-        print '# val.value:', val.value
+        if len(res) == 1:
+            val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
+        elif len(res) > 1:
+            raise ValidationError('Multiple values for %s' % key)
+        elif len(res) < 1:
+            print '# WARNING. No value for key:', key
+            return None
+
+        print '# val.value:', val.value  # without this print error occures. says cant do something with closed cursor.
     return val.value
-# 223555999:AAFJlG9UMLSlZIf9uqpHiOkilyDJrqAU5hA
+
 
 def _db_list(self):
     if config['db_name']:
