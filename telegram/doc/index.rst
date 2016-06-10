@@ -13,7 +13,6 @@ Preparation
 
 2. Configure settings:
 
-* Open base.
 * Go to ``Technical \ Parameters \ System Parameters``.
 * Enter value for ``telegram.token``. This is yours telegram bot token that *bot father* provided to you.
 * Enter value for ``telegram.odoo_threads``. Number of odoo threads that may to run some tasks (calculations, reports preparation and so on) received form bot. Default value is 2.

@@ -47,6 +47,8 @@ class WorkerTelegram(Worker):
         self.interval = 10
         self.threads_bundles_list = []  # token, bot, odoo, dispatcher
         self.singles_ran = False  # for one instance of odoo_dispatcher and odoo_thread
+        self.odoo_thread = False
+        self.odoo_dispatch = False
 
     def process_work(self):
         # this called by run() in while self.alive cycle
@@ -59,12 +61,16 @@ class WorkerTelegram(Worker):
             odoo_thread = OdooThread(self.interval, odoo_dispatch, self.threads_bundles_list)
             odoo_thread.start()
             self.singles_ran = True
+            self.odoo_thread = odoo_thread
+            self.odoo_dispatch = odoo_dispatch
         for db_name in db_names:
             token = get_parameter(db_name, 'telegram.token')
             if token != 'null' and self.need_new_bundle(token):
                 num_threads = get_parameter(db_name, 'telegram.telegram_threads')
                 bot = TeleBotMod(token, threaded=True, num_threads=num_threads)
+                print '# TOKEN is:', token
             else:
+                print '# %s TOKEN is null' % (db_name)
                 continue
 
             def listener(messages):
@@ -80,8 +86,8 @@ class WorkerTelegram(Worker):
             vals = {'token': token,
                     'bot': bot,
                     'bot_thread': bot_thread,
-                    'odoo_thread': odoo_thread,
-                    'odoo_dispatch': odoo_dispatch}
+                    'odoo_thread': self.odoo_thread,
+                    'odoo_dispatch': self.odoo_dispatch}
             self.threads_bundles_list.append(vals)
             time.sleep(self.interval / 2)
 
@@ -175,9 +181,12 @@ def get_parameter(db_name, key):
     db = openerp.sql_db.db_connect(db_name)
     registry = openerp.registry(db_name)
     with openerp.api.Environment.manage(), db.cursor() as cr:
-        val = registry['ir.config_parameter'].get_param(cr, SUPERUSER_ID, key)
-    return val
-
+        # val = registry['ir.config_parameter'].get_param(cr, SUPERUSER_ID, key)
+        res = registry['ir.config_parameter'].search(cr, SUPERUSER_ID, [('key', '=', key)])
+        val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
+        print '# val.value:', val.value
+    return val.value
+# 223555999:AAFJlG9UMLSlZIf9uqpHiOkilyDJrqAU5hA
 
 def _db_list(self):
     if config['db_name']:

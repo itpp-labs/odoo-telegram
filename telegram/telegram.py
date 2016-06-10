@@ -50,7 +50,7 @@ class TelegramUser(models.Model):
             vals = {'chat_id': chat_id, 'token': login_token}
             new_tele_user = tele_env['telegram.user'].create(vals)
         else:
-            tele_user_obj = tele_env['telegram.user'].browse(tele_user_id)
+            tele_user_obj = tele_env['telegram.user'].browse(tele_user_id.id)
             login_token = tele_user_obj.token  # user already exists
 
         return login_token
