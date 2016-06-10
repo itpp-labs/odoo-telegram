@@ -47,6 +47,8 @@ class WorkerTelegram(Worker):
         self.interval = 10
         self.threads_bundles_list = []  # token, bot, odoo, dispatcher
         self.singles_ran = False  # for one instance of odoo_dispatcher and odoo_thread
+        self.odoo_thread = False
+        self.odoo_dispatch = False
 
     def process_work(self):
         # this called by run() in while self.alive cycle
@@ -55,17 +57,18 @@ class WorkerTelegram(Worker):
         # that also needed for runbot
         db_names = _db_list(self)
         if not self.singles_ran:
-            odoo_dispatch = telegram_bus.TelegramDispatch().start()
-            odoo_thread = OdooThread(self.interval, odoo_dispatch, self.threads_bundles_list)
-            odoo_thread.start()
+            self.odoo_dispatch = telegram_bus.TelegramDispatch().start()
+            self.odoo_thread = OdooThread(self.interval, self.odoo_dispatch, self.threads_bundles_list)
+            self.odoo_thread.start()
             self.singles_ran = True
         for db_name in db_names:
-            print '# :db_name', db_name
             token = get_parameter(db_name, 'telegram.token')
             if token != 'null' and self.need_new_bundle(token):
                 num_threads = get_parameter(db_name, 'telegram.telegram_threads')
                 bot = TeleBotMod(token, threaded=True, num_threads=num_threads)
+                print '# TOKEN is:', token
             else:
+                print '# %s TOKEN is null' % (db_name)
                 continue
 
             def listener(messages):
@@ -81,8 +84,8 @@ class WorkerTelegram(Worker):
             vals = {'token': token,
                     'bot': bot,
                     'bot_thread': bot_thread,
-                    'odoo_thread': odoo_thread,
-                    'odoo_dispatch': odoo_dispatch}
+                    'odoo_thread': self.odoo_thread,
+                    'odoo_dispatch': self.odoo_dispatch}
             self.threads_bundles_list.append(vals)
             time.sleep(self.interval / 2)
 
@@ -124,7 +127,6 @@ class OdooThread(threading.Thread):
         self.odoo_thread_pool = util.ThreadPool(num_of_child_threads)
 
     def run(self):
-        print '# OdooThread:run'
         def listener(message, bot):
             db = openerp.sql_db.db_connect(bot.db_name)
             registry = openerp.registry(bot.db_name)
@@ -170,7 +172,6 @@ class TeleBotMod(TeleBot, object):
     def __init__(self, token, threaded=True, skip_pending=False, num_threads=2):
         super(TeleBotMod, self).__init__(token, threaded=False, skip_pending=skip_pending)
         if self.threaded:
-            print '# :TeleBotMod'
             self.worker_pool = util.ThreadPool(num_threads)
 
 
@@ -178,8 +179,17 @@ def get_parameter(db_name, key):
     db = openerp.sql_db.db_connect(db_name)
     registry = openerp.registry(db_name)
     with openerp.api.Environment.manage(), db.cursor() as cr:
-        val = registry['ir.config_parameter'].get_param(cr, SUPERUSER_ID, key)
-    return val
+        res = registry['ir.config_parameter'].search(cr, SUPERUSER_ID, [('key', '=', key)])
+        if len(res) == 1:
+            val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
+        elif len(res) > 1:
+            raise ValidationError('Multiple values for %s' % key)
+        elif len(res) < 1:
+            print '# WARNING. No value for key:', key
+            return None
+
+        print '# val.value:', val.value  # without this print error occures. says cant do something with closed cursor.
+    return val.value
 
 
 def _db_list(self):
