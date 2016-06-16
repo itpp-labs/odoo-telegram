@@ -17,7 +17,7 @@ import logging
 import time
 from telebot import apihelper, types, util
 
-logger = logging.getLogger('Telegram')
+_logger = logging.getLogger('Telegram')
 # from openerp.addons.telegram import dispatch
 
 
@@ -66,9 +66,9 @@ class WorkerTelegram(Worker):
             if token != 'null' and self.need_new_bundle(token):
                 num_threads = get_parameter(db_name, 'telegram.telegram_threads')
                 bot = TeleBotMod(token, threaded=True, num_threads=num_threads)
-                print '# TOKEN is:', token
+                _logger.info("Token %s used for bot running.", token)
             else:
-                print '# %s TOKEN is null' % (db_name)
+                _logger.info("Database %s has no token.", db_name)
                 continue
 
             def listener(messages):
@@ -104,7 +104,7 @@ class BotPollingThread(threading.Thread):
         self.bot = bot
 
     def run(self):
-        print '# :BotPollingThread run'
+        _logger.info("BotPollingThread started.")
         self.bot.polling()
 
 
@@ -127,6 +127,7 @@ class OdooThread(threading.Thread):
         self.odoo_thread_pool = util.ThreadPool(num_of_child_threads)
 
     def run(self):
+        _logger.info("OdooThread started.")
         def listener(message, bot):
             db = openerp.sql_db.db_connect(bot.db_name)
             registry = openerp.registry(bot.db_name)
