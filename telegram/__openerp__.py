@@ -1,16 +1,34 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 {
-    'name': 'Telegram',
-    'description' : 'Telegram bot service',
-    'category': 'Base',
-    'version': '1.0.0',
-    'author': 'IT Projects',
-    'website': '',
-    'depends': ['base', 'web'],
-    'data':[
-        'records.xml'
+    "name": """Telegram bot""",
+    "summary": """Telegram bot service""",
+    "category": "Web",
+    "images": [],
+    "version": "1.0.0",
+
+    "author": "IT-Projects LLC",
+    "website": "https://it-projects.info",
+    "license": "GPL-3",
+    #"price": 9.00,
+    #"currency": "EUR",
+
+    "depends": [
+        "base",
+        "web",
     ],
-    'auto_install': False,
-    'installable': True,
+    "external_dependencies": {"python": ['telebot'], "bin": []},
+    "data": [
+        "records.xml",
+    ],
+    "qweb": [
+    ],
+    "demo": [
+    ],
+
     'post_load' : 'telegram_worker',
+    "pre_init_hook": None,
+    "post_init_hook": None,
+    "installable": True,
+    "auto_install": False,
+
 }

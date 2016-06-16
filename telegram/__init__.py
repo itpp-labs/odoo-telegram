@@ -17,7 +17,7 @@ import logging
 import time
 from telebot import apihelper, types, util
 
-logger = logging.getLogger('Telegram')
+_logger = logging.getLogger('Telegram')
 # from openerp.addons.telegram import dispatch
 
 
@@ -55,7 +55,7 @@ class WorkerTelegram(Worker):
         # only one process. threads as many as bases
         # dynamically add new threads bundle (bot, odoo, dispatcher) for each base
         # that also needed for runbot
-        db_names = _db_list(self)
+        db_names = _db_list()
         if not self.singles_ran:
             self.odoo_dispatch = telegram_bus.TelegramDispatch().start()
             self.odoo_thread = OdooThread(self.interval, self.odoo_dispatch, self.threads_bundles_list)
@@ -66,9 +66,9 @@ class WorkerTelegram(Worker):
             if token != 'null' and self.need_new_bundle(token):
                 num_threads = get_parameter(db_name, 'telegram.telegram_threads')
                 bot = TeleBotMod(token, threaded=True, num_threads=num_threads)
-                print '# TOKEN is:', token
+                _logger.info("Token %s used for bot running.", token)
             else:
-                print '# %s TOKEN is null' % (db_name)
+                _logger.info("Database %s has no token.", db_name)
                 continue
 
             def listener(messages):
@@ -104,7 +104,7 @@ class BotPollingThread(threading.Thread):
         self.bot = bot
 
     def run(self):
-        print '# :BotPollingThread run'
+        _logger.info("BotPollingThread started.")
         self.bot.polling()
 
 
@@ -127,6 +127,7 @@ class OdooThread(threading.Thread):
         self.odoo_thread_pool = util.ThreadPool(num_of_child_threads)
 
     def run(self):
+        _logger.info("OdooThread started.")
         def listener(message, bot):
             db = openerp.sql_db.db_connect(bot.db_name)
             registry = openerp.registry(bot.db_name)
@@ -134,7 +135,7 @@ class OdooThread(threading.Thread):
                 registry['telegram.command'].odoo_listener(message, bot)
         while True:
             # Exeptions ?
-            db_names = _db_list(self)
+            db_names = _db_list()
             for db_name in db_names:  # successively check notifications in bases
                 token = get_parameter(db_name, 'telegram.token')
                 if not token:
@@ -157,7 +158,7 @@ class OdooThread(threading.Thread):
             # self._do_init()  doubtfully.
 
     def get_num_of_children(self):
-        db_names = _db_list(self)
+        db_names = _db_list()
         n = 1  # its minimum
         for db_name in db_names:
             try:
@@ -178,21 +179,21 @@ class TeleBotMod(TeleBot, object):
 def get_parameter(db_name, key):
     db = openerp.sql_db.db_connect(db_name)
     registry = openerp.registry(db_name)
+    result = None
     with openerp.api.Environment.manage(), db.cursor() as cr:
         res = registry['ir.config_parameter'].search(cr, SUPERUSER_ID, [('key', '=', key)])
         if len(res) == 1:
             val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
+            result = val.value
         elif len(res) > 1:
             raise ValidationError('Multiple values for %s' % key)
         elif len(res) < 1:
             print '# WARNING. No value for key:', key
             return None
-
-        print '# val.value:', val.value  # without this print error occures. says cant do something with closed cursor.
-    return val.value
+    return result
 
 
-def _db_list(self):
+def _db_list():
     if config['db_name']:
         db_names = config['db_name'].split(',')
     else:

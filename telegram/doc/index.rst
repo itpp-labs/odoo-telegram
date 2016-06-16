@@ -6,10 +6,13 @@
 Preparation
 ===========
 
-1. Install *requests* and *requests[security]* python libs::
+0. First of all you need to create your own telegram bot if you don't have it yet. Follow `this <https://core.telegram.org/bots#3-how-do-i-create-a-bot>`_ manual to do that.
+
+1. Install *requests*, *requests[security]*, *pyTelegramBotAPI (telebot)*  python libs::
 
     pip2 install -U requests
     pip2 install 'requests[security]'
+    pip2 install pyTelegramBotAPI
 
 2. Configure settings:
 
@@ -18,9 +21,7 @@ Preparation
 * Enter value for ``telegram.odoo_threads``. Number of odoo threads that may to run some tasks (calculations, reports preparation and so on) received form bot. Default value is 2.
 * Enter value for ``telegram.telegram_threads``. If you have lots of users per database you may be prefer to have bunch of telegram threads that handles requests from telegram clients to increase response speed. Default value is 2.
 
-3. Turn off db filter in odoo configuration file.
-
-4. Run odoo with these console keys:  **--workers=2 --load telegram,web**.
+3. Run odoo with these console keys:  **--workers=2 --load telegram,web**.
 
 Using
 -----
