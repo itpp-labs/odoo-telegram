@@ -66,9 +66,8 @@ class WorkerTelegram(Worker):
             if token != 'null' and self.need_new_bundle(token):
                 num_threads = get_parameter(db_name, 'telegram.telegram_threads')
                 bot = TeleBotMod(token, threaded=True, num_threads=num_threads)
-                _logger.info("Token %s used for bot running.", token)
+                _logger.info("Database %s has token.", db_name)
             else:
-                _logger.info("Database %s has no token.", db_name)
                 continue
 
             def listener(messages):
@@ -161,11 +160,9 @@ class OdooThread(threading.Thread):
         db_names = _db_list()
         n = 1  # its minimum
         for db_name in db_names:
-            try:
-                num = int(get_parameter(db_name, 'telegram.odoo_threads'))
-                n += num
-            except ValueError:
-                raise ValidationError('telegram.odoo_threads must be integer!')
+            num = get_parameter(db_name, 'telegram.odoo_threads')
+            if num:
+                n += int(num)
         return n
 
 
