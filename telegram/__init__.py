@@ -161,11 +161,9 @@ class OdooThread(threading.Thread):
         db_names = _db_list()
         n = 1  # its minimum
         for db_name in db_names:
-            try:
-                num = int(get_parameter(db_name, 'telegram.odoo_threads'))
-                n += num
-            except ValueError:
-                raise ValidationError('telegram.odoo_threads must be integer!')
+            num = get_parameter(db_name, 'telegram.odoo_threads')
+            if num:
+                n += int(num)
         return n
 
 
