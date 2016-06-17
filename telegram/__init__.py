@@ -66,9 +66,8 @@ class WorkerTelegram(Worker):
             if token != 'null' and self.need_new_bundle(token):
                 num_threads = get_parameter(db_name, 'telegram.telegram_threads')
                 bot = TeleBotMod(token, threaded=True, num_threads=num_threads)
-                _logger.info("Token %s used for bot running.", token)
+                _logger.info("Database %s has token.", db_name)
             else:
-                _logger.info("Database %s has no token.", db_name)
                 continue
 
             def listener(messages):
