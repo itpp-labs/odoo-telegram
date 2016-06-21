@@ -4,6 +4,8 @@ from openerp import api, models, fields
 import openerp.addons.auth_signup.res_users as res_users
 from openerp.http import request
 from openerp import SUPERUSER_ID
+import openerp
+from openerp.exceptions import ValidationError
 
 
 class TelegramCommand(models.Model):
@@ -15,7 +17,8 @@ class TelegramCommand(models.Model):
             if m.content_type == 'text':
                 if m.text == '/login':
                     login_token = TelegramUser.register_user(self.env, m.chat.id)
-                    bot.send_message(m.chat.id, 'http://%s/web/login/telegram?token=%s' % (bot.db_name, login_token))
+                    web_base = get_parameter(bot.db_name, 'web.base.url')
+                    bot.send_message(m.chat.id, '%s/web/login/telegram?token=%s' % (web_base, login_token))
                 elif m.text == '/users':
                     TelegramUser.check_access(self.env, m.chat.id, '/users')
                     users_logintime_list = [str(r.name) + ', last login at: ' + str(r.login_date) for r in
@@ -68,6 +71,23 @@ class TelegramUser(models.Model):
 # self.env.cr.execute(query)
 # query_results = self.env.cr.dictfetchall()
 #
+
+
+def get_parameter(db_name, key):
+    db = openerp.sql_db.db_connect(db_name)
+    registry = openerp.registry(db_name)
+    result = None
+    with openerp.api.Environment.manage(), db.cursor() as cr:
+        res = registry['ir.config_parameter'].search(cr, SUPERUSER_ID, [('key', '=', key)])
+        if len(res) == 1:
+            val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
+            result = val.value
+        elif len(res) > 1:
+            raise ValidationError('Multiple values for %s' % key)
+        elif len(res) < 1:
+            print '# WARNING. No value for key:', key
+            return None
+    return result
 
 
 def dump(obj):
