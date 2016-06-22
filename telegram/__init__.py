@@ -17,7 +17,7 @@ import logging
 import time
 from telebot import apihelper, types, util
 
-_logger = logging.getLogger('Telegram')
+_logger = logging.getLogger('# Telegram')
 # from openerp.addons.telegram import dispatch
 
 
@@ -139,15 +139,15 @@ class OdooThread(threading.Thread):
                 token = get_parameter(db_name, 'telegram.token')
                 if not token:
                     continue
-                res = self.dispatch.poll(dbname=db_name, channels=['telegram_channel'], last=self.last)
-                for r in res:
-                    if r not in self.proceeded_messages:
-                        self.proceeded_messages.append(r)
-                        if r['id'] > self.last:
-                            self.last = r['id']
-                        ls = [r for r in self.threads_bundles_list if r['token'] == token]
+                msg_list = self.dispatch.poll(dbname=db_name, channels=['telegram_channel'], last=self.last)
+                for msg in msg_list:
+                    if msg not in self.proceeded_messages:
+                        self.proceeded_messages.append(msg)
+                        if msg['id'] > self.last:
+                            self.last = msg['id']
+                        ls = [s for s in self.threads_bundles_list if s['token'] == token]
                         if len(ls) == 1:
-                            self.odoo_thread_pool.put(listener, r, ls[0]['bot'])
+                            self.odoo_thread_pool.put(listener, msg, ls[0]['bot'])
                             if self.odoo_thread_pool.exception_event.wait(0):
                                 self.odoo_thread_pool.raise_exceptions()
                         elif len(ls) > 1:

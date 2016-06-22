@@ -34,13 +34,17 @@ class TelegramCommand(models.Model):
 
     def odoo_listener(self, message, bot):
         # TODO exceptions ?
+        print '# odoo_listener:'
+        print '# message:' ,message
+        print '# bot:' ,bot
         m = message['message']
+        print '# m:', m
         if m['action'] == 'login':
             bot.send_message(m['chat_id'], 'Hello %s !' % m['odoo_user_name'])
             #если тут возникает ошибка то она даже в логе не отображается
 
 
-class TelegramUser(models.Model):
+class TelegramUser(models.TransientModel):
     _name = "telegram.user"
 
     chat_id = fields.Char()  # Primary key

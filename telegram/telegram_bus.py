@@ -43,11 +43,14 @@ class TelegramBus(models.Model):
     def sendmany(self, notifications):
         channels = set()
         for channel, message in notifications:
+            print '# message:', message
+            print '# channel:', channel
             channels.add(channel)
             values = {
                 "channel": json_dump(channel),
                 "message": json_dump(message)
             }
+            print '# values:', values
             self.sudo().create(values)
             if random.random() < 0.01:
                 self.gc()

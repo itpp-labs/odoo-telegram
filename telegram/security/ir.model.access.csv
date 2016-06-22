@@ -1,0 +1,3 @@
+id,name,model_id/id,group_id/id,perm_read,perm_write,perm_create,perm_unlink
+r1,r1,model_telegram_command,base.group_user,1,1,1,1
+r2,r2,model_telegram_bus,base.group_user,1,1,1,1
