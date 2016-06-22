@@ -17,7 +17,7 @@ import logging
 import time
 from telebot import apihelper, types, util
 
-_logger = logging.getLogger('Telegram')
+_logger = logging.getLogger('# Telegram')
 # from openerp.addons.telegram import dispatch
 
 
@@ -115,7 +115,6 @@ class OdooThread(threading.Thread):
         self.dispatch = dispatch
         self.threads_bundles_list = threads_bundles_list
         self.last = 0
-        self.proceeded_messages = []
         self._do_init()
 
     def _do_init(self):
@@ -139,21 +138,20 @@ class OdooThread(threading.Thread):
                 token = get_parameter(db_name, 'telegram.token')
                 if not token:
                     continue
-                res = self.dispatch.poll(dbname=db_name, channels=['telegram_channel'], last=self.last)
-                for r in res:
-                    if r not in self.proceeded_messages:
-                        self.proceeded_messages.append(r)
-                        if r['id'] > self.last:
-                            self.last = r['id']
-                        ls = [r for r in self.threads_bundles_list if r['token'] == token]
-                        if len(ls) == 1:
-                            self.odoo_thread_pool.put(listener, r, ls[0]['bot'])
-                            if self.odoo_thread_pool.exception_event.wait(0):
-                                self.odoo_thread_pool.raise_exceptions()
-                        elif len(ls) > 1:
-                            raise ValidationError('Token is not unique')
-                        elif len(ls) == 0:
-                            raise ValidationError('Unregistered token')
+                msg_list = self.dispatch.poll(dbname=db_name, channels=['telegram_channel'], last=self.last)
+                _logger.critical(msg_list)
+                for msg in msg_list:
+                    if msg['id'] > self.last:
+                        self.last = msg['id']
+                    ls = [s for s in self.threads_bundles_list if s['token'] == token]
+                    if len(ls) == 1:
+                        self.odoo_thread_pool.put(listener, msg, ls[0]['bot'])
+                        if self.odoo_thread_pool.exception_event.wait(0):
+                            self.odoo_thread_pool.raise_exceptions()
+                    elif len(ls) > 1:
+                        raise ValidationError('Token is not unique')
+                    elif len(ls) == 0:
+                        raise ValidationError('Unregistered token')
             # self._do_init()  doubtfully.
 
     def get_num_of_children(self):
@@ -185,7 +183,7 @@ def get_parameter(db_name, key):
         elif len(res) > 1:
             raise ValidationError('Multiple values for %s' % key)
         elif len(res) < 1:
-            print '# WARNING. No value for key:', key
+            _logger.debug("WARNING. No value for key" % key)
             return None
     return result
 

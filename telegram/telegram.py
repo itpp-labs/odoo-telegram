@@ -6,6 +6,9 @@ from openerp.http import request
 from openerp import SUPERUSER_ID
 import openerp
 from openerp.exceptions import ValidationError
+import logging
+
+_logger = logging.getLogger('# Telegram')
 
 
 class TelegramCommand(models.Model):
@@ -37,7 +40,7 @@ class TelegramCommand(models.Model):
             #если тут возникает ошибка то она даже в логе не отображается
 
 
-class TelegramUser(models.Model):
+class TelegramUser(models.TransientModel):
     _name = "telegram.user"
 
     chat_id = fields.Char()  # Primary key
@@ -60,10 +63,10 @@ class TelegramUser(models.Model):
 
     @staticmethod
     def check_access(tele_env, chat_id, command):
-        tele_user_id = tele_env['telegram.user'].search([('chat_id', '=', chat_id)])
-        tele_user_obj = tele_env['telegram.user'].browse(tele_user_id)
-        dumpclean(tele_user_obj.res_user.groups_id)
-
+        pass
+        # tele_user_id = tele_env['telegram.user'].search([('chat_id', '=', chat_id)])
+        # tele_user_obj = tele_env['telegram.user'].browse(tele_user_id)
+        # TODO
 # query = """SELECT *
 #            FROM mail_message as a, mail_message_res_partner_rel as b
 #            WHERE a.id = b.mail_message_id
@@ -82,10 +85,8 @@ def get_parameter(db_name, key):
         if len(res) == 1:
             val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
             result = val.value
-        elif len(res) > 1:
-            raise ValidationError('Multiple values for %s' % key)
         elif len(res) < 1:
-            print '# WARNING. No value for key:', key
+            _logger.debug('# WARNING. No value for key %s' % key)
             return None
     return result
 

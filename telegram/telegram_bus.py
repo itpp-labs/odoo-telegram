@@ -11,7 +11,7 @@ import openerp
 from openerp import api, fields, models
 from openerp.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger('# Telegram')
 
 # longpolling timeout connection
 TIMEOUT = 50
@@ -43,11 +43,14 @@ class TelegramBus(models.Model):
     def sendmany(self, notifications):
         channels = set()
         for channel, message in notifications:
+            print '# message:', message
+            print '# channel:', channel
             channels.add(channel)
             values = {
                 "channel": json_dump(channel),
                 "message": json_dump(message)
             }
+            print '# values:', values
             self.sudo().create(values)
             if random.random() < 0.01:
                 self.gc()
@@ -82,7 +85,7 @@ class TelegramBus(models.Model):
         # list of notification to return
         result = []
         for notif in notifications:
-            print '# notif ', notif
+            _logger.debug('notif: %s' % notif)
             result.append({
                 'id': notif['id'],
                 'channel': json.loads(notif['channel']),
