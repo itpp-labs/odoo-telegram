@@ -11,7 +11,7 @@ import openerp
 from openerp import api, fields, models
 from openerp.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger('Telegram')
 
 # longpolling timeout connection
 TIMEOUT = 50
@@ -82,7 +82,7 @@ class TelegramBus(models.Model):
         # list of notification to return
         result = []
         for notif in notifications:
-            print '# notif ', notif
+            _logger.debug('notif: %s' % notif)
             result.append({
                 'id': notif['id'],
                 'channel': json.loads(notif['channel']),

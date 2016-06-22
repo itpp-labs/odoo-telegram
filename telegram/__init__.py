@@ -185,7 +185,7 @@ def get_parameter(db_name, key):
         elif len(res) > 1:
             raise ValidationError('Multiple values for %s' % key)
         elif len(res) < 1:
-            print '# WARNING. No value for key:', key
+            _logger.debug("WARNING. No value for key" % key)
             return None
     return result
 

@@ -6,6 +6,9 @@ from openerp.http import request
 from openerp import SUPERUSER_ID
 import openerp
 from openerp.exceptions import ValidationError
+import logging
+
+_logger = logging.getLogger('Telegram')
 
 
 class TelegramCommand(models.Model):
@@ -82,10 +85,8 @@ def get_parameter(db_name, key):
         if len(res) == 1:
             val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
             result = val.value
-        elif len(res) > 1:
-            raise ValidationError('Multiple values for %s' % key)
         elif len(res) < 1:
-            print '# WARNING. No value for key:', key
+            _logger.debug('# WARNING. No value for key %s' % key)
             return None
     return result
 
