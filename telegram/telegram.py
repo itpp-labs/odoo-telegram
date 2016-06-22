@@ -8,7 +8,7 @@ import openerp
 from openerp.exceptions import ValidationError
 import logging
 
-_logger = logging.getLogger('Telegram')
+_logger = logging.getLogger('# Telegram')
 
 
 class TelegramCommand(models.Model):
@@ -34,11 +34,7 @@ class TelegramCommand(models.Model):
 
     def odoo_listener(self, message, bot):
         # TODO exceptions ?
-        print '# odoo_listener:'
-        print '# message:' ,message
-        print '# bot:' ,bot
         m = message['message']
-        print '# m:', m
         if m['action'] == 'login':
             bot.send_message(m['chat_id'], 'Hello %s !' % m['odoo_user_name'])
             #если тут возникает ошибка то она даже в логе не отображается
@@ -67,10 +63,10 @@ class TelegramUser(models.TransientModel):
 
     @staticmethod
     def check_access(tele_env, chat_id, command):
-        tele_user_id = tele_env['telegram.user'].search([('chat_id', '=', chat_id)])
-        tele_user_obj = tele_env['telegram.user'].browse(tele_user_id)
-        dumpclean(tele_user_obj.res_user.groups_id)
-
+        pass
+        # tele_user_id = tele_env['telegram.user'].search([('chat_id', '=', chat_id)])
+        # tele_user_obj = tele_env['telegram.user'].browse(tele_user_id)
+        # TODO
 # query = """SELECT *
 #            FROM mail_message as a, mail_message_res_partner_rel as b
 #            WHERE a.id = b.mail_message_id
