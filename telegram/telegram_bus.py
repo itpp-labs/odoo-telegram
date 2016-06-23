@@ -16,8 +16,10 @@ _logger = logging.getLogger('# Telegram')
 # longpolling timeout connection
 TIMEOUT = 50
 
+
 def json_dump(v):
     return json.dumps(v, separators=(',', ':'))
+
 
 def hashable(key):
     if isinstance(key, list):
@@ -26,7 +28,12 @@ def hashable(key):
 
 
 class TelegramBus(models.Model):
-
+    """
+        This bus is to get messages from Odoo to OdooTelegramThread.
+        Odoo sends commands to be executed to OdooTelegramThread using this bus.
+        Such may occur for example if user got new message, or event, those like new CRM lead is created, and so on.
+        OdooTelegramThread discovers about sent to it messages with help of TelegramDispatch, when listens according bus chanel.
+    """
     _name = 'telegram.bus'
 
     create_date = fields.Datetime('Create date')
@@ -43,14 +50,11 @@ class TelegramBus(models.Model):
     def sendmany(self, notifications):
         channels = set()
         for channel, message in notifications:
-            print '# message:', message
-            print '# channel:', channel
             channels.add(channel)
             values = {
                 "channel": json_dump(channel),
                 "message": json_dump(message)
             }
-            print '# values:', values
             self.sudo().create(values)
             if random.random() < 0.01:
                 self.gc()
@@ -104,6 +108,10 @@ class TelegramBus(models.Model):
 
 
 class TelegramDispatch(object):
+    """
+        Notifier thread. It notifies OdooTelegramThread about messages to it, sent by bus.
+        Only one instance of TelegramDispatch for all databases.
+    """
     def __init__(self):
         self.channels = {}
 
@@ -169,24 +177,3 @@ class TelegramDispatch(object):
         t.daemon = True
         t.start()
         return self
-
-def dumpclean(obj):
-    if type(obj) == dict:
-        for k, v in obj.items():
-            if hasattr(v, '__iter__'):
-                print k
-                dumpclean(v)
-            else:
-                print '%s : %s' % (k, v)
-    elif type(obj) == list:
-        for v in obj:
-            if hasattr(v, '__iter__'):
-                dumpclean(v)
-            else:
-                print v
-    else:
-        print obj
-
-def dump(obj):
-  for attr in dir(obj):
-    print "obj.%s = %s" % (attr, getattr(obj, attr))
