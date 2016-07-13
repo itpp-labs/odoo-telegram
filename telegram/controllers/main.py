@@ -16,7 +16,7 @@ class TelegramLogin(http.Controller):
             tele_user_obj = pool['telegram.user'].browse(cr, SUPERUSER_ID, tele_user_id)
             tele_user_obj.res_user = pool['res.users'].browse(cr, SUPERUSER_ID, uid)
             tele_user_obj.logged_in = True
-            message = {'action': 'login',
+            message = {'action': '/login',
                        'chat_id': tele_user_obj.chat_id,
                        'odoo_user_name': tele_user_obj.res_user.name}
             pool['telegram.bus'].sendone(cr, SUPERUSER_ID, 'telegram_channel', message)

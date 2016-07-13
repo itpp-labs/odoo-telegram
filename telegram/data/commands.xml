@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+    <!--BASIC COMMANDS-->
+    <record model="telegram.command" id="login_command">
+        <field name="name">/login</field>
+        <field name="python_code">login_token = TelegramUser.register_user(self.env, m.chat.id)
+web_base = get_parameter(bot.db_name, 'web.base.url')
+        </field>
+        <!--<field name="response_template" type="xml"><t>Please follow [login link](<t t-esc="locals_dict['web_base']"/>.local/web/login/telegram?token=<t t-esc="locals_dict['login_token']"/>)</t></field>-->
+        <field name="response_template" type="xml"><t>Please follow &lt;a href="<t t-esc="locals_dict['web_base']"/>/web/login/telegram?token=<t t-esc="locals_dict['login_token']"/>">login link&lt;/a&gt;</t></field>
+        <field name="notify_template" type="xml"><t>Hello <t t-esc="locals_dict['odoo_user_name']"/></t></field>
+        <field name="response_code">odoo_user_name = m['odoo_user_name']</field>
+    </record>
+
+    <record model="telegram.command" id="users_command">
+        <field name="name">/users</field>
+        <field name="python_code">TelegramUser.check_access(self.env, m.chat.id, '/users')
+users_logintime_list = [str(r.name) + ', last login at: ' + str(r.login_date) for r in self.env['res.users'].search([('name', '!=', None)])]
+[bot.send_message(m.chat.id, r) for r in users_logintime_list]
+        </field>
+    </record>
+
+    <record model="telegram.command" id="echo_command">
+        <field name="name">/echo</field>
+        <field name="python_code">bot.send_message(m.chat.id, 'You say ' + m.text)
+        </field>
+    </record>
+</data>
+</openerp>
