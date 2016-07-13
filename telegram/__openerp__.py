@@ -15,10 +15,13 @@
     "depends": [
         "base",
         "web",
+        "base_action_rule",
     ],
     "external_dependencies": {"python": ['telebot'], "bin": []},
     "data": [
-        "data/records.xml",
+        "data/config_parameter.xml",
+        "data/ir_action_server.xml",
+        "data/it_action_rules.xml",
         "data/commands.xml",
         "security/ir.model.access.csv",
     ],
