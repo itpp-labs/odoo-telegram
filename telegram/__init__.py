@@ -1,12 +1,17 @@
 # -*- encoding: utf-8 -*-
+
+from openerp import models
 import telegram
 import telegram_bus
 import controllers
 import random
-
+import datetime
+import dateutil
+import time
 import openerp
 from openerp.service.server import Worker
 from openerp.service.server import PreforkServer
+from openerp.tools.safe_eval import safe_eval
 import telebot
 from telebot import TeleBot
 import telebot.util as util
@@ -19,6 +24,43 @@ import time
 from telebot import apihelper, types, util
 
 _logger = logging.getLogger('# Telegram')
+
+
+def get_parameter(db_name, key):
+    db = openerp.sql_db.db_connect(db_name)
+    registry = openerp.registry(db_name)
+    result = None
+    with openerp.api.Environment.manage(), db.cursor() as cr:
+        res = registry['ir.config_parameter'].search(cr, SUPERUSER_ID, [('key', '=', key)])
+        if len(res) == 1:
+            val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
+            result = val.value
+        elif len(res) > 1:
+            raise ValidationError('Multiple values for %s' % key)
+        elif len(res) < 1:
+            _logger.debug("WARNING. No value for key %s" % key)
+            return None
+    return result
+def running_workers_num(workers):
+    res = 0
+    for r in workers:
+        if r._running:
+            res += 1
+    return res
+def _db_list():
+    if config['db_name']:
+        db_names = config['db_name'].split(',')
+    else:
+        db_names = openerp.service.db.list_dbs(True)
+    return db_names
+
+globals_dict = {
+    'datetime': datetime,
+    'dateutil': dateutil,
+    'time': time,
+    'get_parameter': get_parameter,
+    '_logger': _logger,
+}
 
 
 def telegram_worker():
@@ -248,40 +290,40 @@ class TeleBotMod(TeleBot, object):
     def __init__(self, token, threaded=True, skip_pending=False, num_threads=2):
         super(TeleBotMod, self).__init__(token, threaded=False, skip_pending=skip_pending)
         self.worker_pool = util.ThreadPool(num_threads)
+        self.cache = CommandCache()
         _logger.info("TeleBot started with %s threads" % num_threads)
 
 
-def get_parameter(db_name, key):
-    db = openerp.sql_db.db_connect(db_name)
-    registry = openerp.registry(db_name)
-    result = None
-    with openerp.api.Environment.manage(), db.cursor() as cr:
-        res = registry['ir.config_parameter'].search(cr, SUPERUSER_ID, [('key', '=', key)])
-        if len(res) == 1:
-            val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
-            result = val.value
-        elif len(res) > 1:
-            raise ValidationError('Multiple values for %s' % key)
-        elif len(res) < 1:
-            _logger.debug("WARNING. No value for key %s" % key)
-            return None
-    return result
+class CommandCache(object):
+    """
+        Cache structure:
+        <command_id> : {'result':'', 'users_results':{<user_id>:'bbb', <user_id>:'ccc'}}
+        Example:
+        {
+            1 : {'result':'aaaa', 'users_results':{1:'bbb', 2:'ccc'}},
+            2 : {'result':'fff',  'users_results':{2:'ddd', 3:'ggg'}}
+        }
+    """
+    def __init__(self):
+        self._vals = {}
 
+    def set_value(self, command_id, result=False, user_id=0):
+        if command_id.id not in self._vals:
+            self._vals.update({command_id: {}})
+        if user_id:
+            self._vals[command_id] = {'result': False, 'users_results': {user_id: result}}
+        elif result:
+            self._vals[command_id] = {'result': result, 'users_results': False}
 
-def running_workers_num(workers):
-    res = 0
-    for r in workers:
-        if r._running:
-            res += 1
-    return res
+    def get_value(self, command_id, user_id=0):
+        if command_id not in self._vals:
+            return False
+        if user_id:
+            ret = self._vals[command_id]['users_results'][user_id]
+        else:
+            ret = self._vals[command_id]['result']
+        return ret
 
-
-def _db_list():
-    if config['db_name']:
-        db_names = config['db_name'].split(',')
-    else:
-        db_names = openerp.service.db.list_dbs(True)
-    return db_names
 
 
 def dump(obj):
