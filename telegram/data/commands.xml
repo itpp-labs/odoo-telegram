@@ -2,29 +2,82 @@
 <openerp>
 <data>
     <!--BASIC COMMANDS-->
+    <record model="telegram.command" id="help_command">
+        <field name="name">/help</field>
+        <field name="description">Get list of available commands</field>
+        <field name="cacheable">False</field>
+        <field name="response_code">result = {'all_commands':''}
+all_commands = env['telegram.command'].search([])
+for command in all_commands:
+    result['all_commands'] += str(command.name) + ' - ' + str(command.description)+ '\n'
+        </field>
+        <field name="response_template" type="xml">
+            <t><t t-raw="data['all_commands']"/></t>
+        </field>
+    </record>
+
     <record model="telegram.command" id="login_command">
         <field name="name">/login</field>
-        <field name="python_code">login_token = TelegramUser.register_user(self.env, m.chat.id)
-web_base = get_parameter(bot.db_name, 'web.base.url')
+        <field name="description">Login in system to get access to commands</field>
+        <field name="cacheable">False</field>
+        <field name="response_code">result = {}
+result['login_token'] = TelegramUser.register_user(env, tele_message.chat.id)
+res = env['ir.config_parameter'].search([('key', '=', 'web.base.url')])
+if len(res) == 1:
+    result['web_base'] = res[0].value
+else:
+    _logger.debug('# WARNING. No value for key web.base.url')
         </field>
-        <!--<field name="response_template" type="xml"><t>Please follow [login link](<t t-esc="locals_dict['web_base']"/>.local/web/login/telegram?token=<t t-esc="locals_dict['login_token']"/>)</t></field>-->
-        <field name="response_template" type="xml"><t>Please follow &lt;a href="<t t-esc="locals_dict['web_base']"/>/web/login/telegram?token=<t t-esc="locals_dict['login_token']"/>">login link&lt;/a&gt;</t></field>
-        <field name="notify_template" type="xml"><t>Hello <t t-esc="locals_dict['odoo_user_name']"/></t></field>
-        <field name="response_code">odoo_user_name = m['odoo_user_name']</field>
+        <field name="response_template" type="xml"><t>Please follow &lt;a href="<t t-esc="data['web_base']"/>/web/login/telegram?token=<t t-esc="data['login_token']"/>">login link&lt;/a&gt;</t></field>
+        <field name="notify_template" type="xml"><t>Hello <t t-esc="data['odoo_user_name']"/>!</t></field>
+        <field name="notify_code">result = {}
+result['odoo_user_name'] = bus_message['odoo_user_name']</field>
+    </record>
+
+    <record model="telegram.command" id="logout_command">
+        <field name="name">/logout</field>
+        <field name="description">Logout in system in order of security</field>
+        <field name="cacheable">False</field>
+        <field name="response_code">result = {}
+TelegramUser.logout(env, tele_message.chat.id)
+        </field>
+        <field name="response_template" type="xml"><t>You successfully logged out.</t></field>
     </record>
 
     <record model="telegram.command" id="users_command">
         <field name="name">/users</field>
-        <field name="python_code">TelegramUser.check_access(self.env, m.chat.id, '/users')
-users_logintime_list = [str(r.name) + ', last login at: ' + str(r.login_date) for r in self.env['res.users'].search([('name', '!=', None)])]
-[bot.send_message(m.chat.id, r) for r in users_logintime_list]
+        <field name="description">Get list of database users and theirs last login time</field>
+        <field name="cacheable">True</field>
+        <field name="universal">True</field>
+        <field name="group_ids" eval="[(4, ref('base.group_configuration')),
+                                       (4, ref('base.group_erp_manager')),
+                                       (4, ref('base.group_system'))]" />
+        <field name="model_ids" eval="[(4, ref('base.model_res_users'))]"/>
+        <field name="response_code">result = {'users_logintime_list':''}
+for r in env['res.users'].search([]):
+    result['users_logintime_list'] += '&lt;pre&gt;' + str(r.name) +', last login at: ' + str(r.login_date)+ '&lt;/pre&gt;'
+        </field>
+        <field name="response_template" type="xml">
+            <t><t t-raw="data['users_logintime_list']"/></t>
         </field>
     </record>
 
-    <record model="telegram.command" id="echo_command">
-        <field name="name">/echo</field>
-        <field name="python_code">bot.send_message(m.chat.id, 'You say ' + m.text)
+    <record model="telegram.command" id="who_command">
+        <field name="name">/who</field>
+        <field name="description">Discover who you are</field>
+        <field name="cacheable">False</field>
+        <field name="response_code">result = {'telegram_user':''}
+telegram_user = env['telegram.user'].search([('chat_id','=', tele_message.chat.id)])
+result['telegram_user'] += 'Congratulations! You are ' + '&lt;b&gt;' +str(telegram_user.res_user.name) + '&lt;/b&gt;' +'.'
+        </field>
+        <field name="response_template" type="xml">
+            <t><t t-raw="data['telegram_user']"/></t>
         </field>
     </record>
+    <!--<record model="telegram.command" id="echo_command">-->
+        <!--<field name="name">/echo</field>-->
+        <!--<field name="python_code">bot.send_message(m.chat.id, 'You say ' + m.text)-->
+        <!--</field>-->
+    <!--</record>-->
 </data>
 </openerp>
