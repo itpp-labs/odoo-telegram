@@ -5,7 +5,7 @@
     <record model="telegram.command" id="help_command">
         <field name="name">/help</field>
         <field name="description">Get list of available commands</field>
-        <field name="cacheable">False</field>
+        <field name="command_type">regular</field>
         <field name="response_code">data = {'all_commands':''}
 all_commands = env['telegram.command'].search([])
 for command in all_commands:
@@ -19,7 +19,7 @@ for command in all_commands:
     <record model="telegram.command" id="login_command">
         <field name="name">/login</field>
         <field name="description">Login in system to get access to commands</field>
-        <field name="cacheable">False</field>
+        <field name="command_type">regular</field>
         <field name="response_code">data = {}
 data['login_token'] = TelegramUser.register_user(env, tele_message.chat.id)
 res = env['ir.config_parameter'].search([('key', '=', 'web.base.url')])
@@ -37,7 +37,7 @@ data['odoo_user_name'] = bus_message['odoo_user_name']</field>
     <record model="telegram.command" id="logout_command">
         <field name="name">/logout</field>
         <field name="description">Logout in system in order of security</field>
-        <field name="cacheable">False</field>
+        <field name="command_type">regular</field>
         <field name="response_code">data = {}
 TelegramUser.logout(env, tele_message.chat.id)
         </field>
@@ -47,7 +47,7 @@ TelegramUser.logout(env, tele_message.chat.id)
     <record model="telegram.command" id="users_command">
         <field name="name">/users</field>
         <field name="description">Get list of database users and theirs last login time</field>
-        <field name="cacheable">True</field>
+        <field name="command_type">cacheable</field>
         <field name="universal">True</field>
         <field name="group_ids" eval="[(4, ref('base.group_configuration')),
                                        (4, ref('base.group_erp_manager')),
@@ -65,7 +65,7 @@ for r in env['res.users'].search([]):
     <record model="telegram.command" id="who_command">
         <field name="name">/who</field>
         <field name="description">Discover who you are</field>
-        <field name="cacheable">False</field>
+        <field name="command_type">regular</field>
         <field name="response_code">data = {'telegram_user':''}
 telegram_user = env['telegram.user'].search([('chat_id','=', tele_message.chat.id)])
 data['telegram_user'] += 'Congratulations! You are ' + '&lt;b&gt;' +str(telegram_user.res_user.name) + '&lt;/b&gt;' +'.'
