@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 
 import openerp
+from openerp import tools
 from openerp import api, models, fields
 import openerp.addons.auth_signup.res_users as res_users
 from openerp.http import request
@@ -22,14 +23,6 @@ _logger.setLevel(logging.DEBUG)
 # telebot.logger.setLevel(logging.DEBUG)
 
 
-globals_dict = {
-    'datetime': datetime,
-    'dateutil': dateutil,
-    'time': time,
-    '_logger': _logger,
-}
-
-
 class TelegramCommand(models.Model):
     """
         Model represents Telegram commands that may be proceeded.
@@ -40,15 +33,16 @@ class TelegramCommand(models.Model):
     _name = "telegram.command"
 
     name = fields.Char()
-    description = fields.Char(help='What command do')
-    cacheable = fields.Boolean(help='Cache this command or not')
-    universal = fields.Boolean(help='Same answer for all users or not. Meaningful only if cacheable = True.', default=False)
+    description = fields.Char(help='What command does')
+    command_type = fields.Selection([('regular', 'regular'), ('cacheable', 'cacheable'), ('subscription', 'subscription')])
+    universal = fields.Boolean(help='Same answer for all users or not. Meaningful only if command_type = cacheable.', default=False)
     response_code = fields.Char(help='Python code to execute task. Launched by telegram_listener')
-    response_template = fields.Char(help='Template of message, that user will receive immediately after he send command')
+    response_template = fields.Char(help='Message template, that user will receive immediately after he sent command')
     notify_code = fields.Char(help='Python code to get data, computed after executed response code. Launched by odoo_listener (bus)')
-    notify_template = fields.Char(help='Template of message, that user will receive after job is done')
+    notify_template = fields.Char(help='Message template, that user will receive after job is done')
     group_ids = fields.One2many('res.groups', 'telegram_command_id', help='Who can use this command')
-    model_ids = fields.Many2many('ir.model', 'command_to_model_rel', 'command_id', 'model_id', help='These models changes initiates cache updates for this command.')
+    model_ids = fields.Many2many('ir.model', 'command_to_model_rel', 'command_id', 'model_id', help='These models changes initiates cache updates for this command')
+    res_users_ids = fields.Many2many('res.users', 'command_to_user_rel', 'telegram_command_id', 'user_id', help='Subscribed users')
 
     @api.model
     def telegram_listener(self, messages, bot):
@@ -68,7 +62,7 @@ class TelegramCommand(models.Model):
                 if command.name == '/login' and tele_user.logged_in:
                     bot.send_message(tele_message.chat.id, 'You already logged in.')
                     return
-                locals_dict = {'env': self.env, 'bot': bot, 'tele_message': tele_message, 'TelegramUser': TelegramUser}
+                locals_dict = {'command': command, 'env': self.env, 'bot': bot, 'tele_message': tele_message}
                 command_cache = bot.cache.get_value(command.id)
                 need_computed_answer = True
                 if command_cache:
@@ -102,6 +96,7 @@ class TelegramCommand(models.Model):
                 need_computed_answer = False
         return need_computed_answer
 
+    # bus listener
     @api.model
     def odoo_listener(self, message, bot):
         bus_message = message['message']  # message from bus, not from telegram server.
@@ -112,16 +107,18 @@ class TelegramCommand(models.Model):
             _logger.debug(bus_message)
             if bus_message['action'] == 'update_cache':
                 self.update_cache(bus_message, bot)
+            elif bus_message['action'] == 'handle_subscriptions':
+                self.handle_subscriptions(bus_message, bot)
             else:
                 command_id = registry['telegram.command'].search(cr, SUPERUSER_ID, [('name', '=', bus_message['action'])])
                 command = registry['telegram.command'].browse(cr, SUPERUSER_ID, command_id)
                 if len(command) == 1:
                     if command.notify_code:
-                        locals_dict = {'bot': bot, 'bus_message': bus_message, 'TelegramUser': TelegramUser}
+                        locals_dict = {'bot': bot, 'bus_message': bus_message}
                         safe_eval(command.notify_code, globals_dict, locals_dict, mode="exec", nocopy=True)
                         _logger.debug('locals_dict')
                         _logger.debug(locals_dict)
-                        self.render_and_send(command.notify_template, locals_dict)
+                        command.render_and_send(command.notify_template, locals_dict)
                     else:
                         pass  # No notify_code for this command. Response code is optional.
                 elif len(command) > 1:
@@ -136,32 +133,59 @@ class TelegramCommand(models.Model):
         context = QWebContext(self._cr, self._uid, {})
         ctx = context.copy()
         ctx.update({'data': locals_dict['data']})
-        dom = etree.fromstring(template)
-        rend = qweb.render_node(dom, ctx)
-        _logger.debug('render_and_send(): ' + rend)
-        if bus_message:
-            chat_id = bus_message['chat_id']
-        elif tele_message:
-            chat_id = tele_message.chat.id
-        else:
-            return
-        bot.send_message(chat_id, rend, parse_mode='HTML')
+        try:
+            dom = etree.fromstring(template)
+            _logger.debug('locals_dict')
+            _logger.debug(locals_dict)
+            if 'notify_user_ids' in locals_dict:
+                notify_users = set(self.res_users_ids.ids).intersection(set(locals_dict['notify_user_ids']))
+                if self.universal:
+                    rend = qweb.render_node(dom, ctx)
+                    _logger.debug('render_and_send(): ' + rend)
+                for notify_user in notify_users:
+                    telegram_user = self.env['telegram.user'].search([('res_user', '=', notify_user)])
+                    if not self.universal:
+                        ctx['data']['user_id'] = notify_user
+                        rend = qweb.render_node(dom, ctx)
+                        _logger.debug('render_and_send(): ' + rend)
+                    bot.send_message(telegram_user.chat_id, rend, parse_mode='HTML')
+            else:
+                chat_id = bus_message['chat_id'] if bus_message else tele_message.chat.id
+                rend = qweb.render_node(dom, ctx)
+                _logger.debug('render_and_send(): ' + rend)
+                bot.send_message(chat_id, rend, parse_mode='HTML')
+        except:
+            _logger.critical(sys.exc_info()[0])
 
-    def update_cache_bus_message(self, cr, uid, ids, context):
-        # Called by run_telegram_commands_cache_updates (ir.actions.server)
-        _logger.debug('update_cache_bus_message(): start')
-        found_commands_ids = self.pool['telegram.command'].search(cr, uid, [('model_ids.model', '=', context['active_model']), ('cacheable', '=', True)])
-        if len(found_commands_ids):
+    # ir.actions.server methods:
+    @api.model
+    def action_telegram_update_cache(self):
+        # Called by ir.actions.server
+        context = self._context
+        found_cacheable_commands = self.env['telegram.command'].search([('model_ids.model', '=', context['active_model']), ('command_type', '=', 'cacheable')])
+        if len(found_cacheable_commands):
             _logger.debug('update_cache_bus_message(): commands will got cache update:')
-            _logger.debug(found_commands_ids)
-            message = {'update_cache': True, 'model': context['active_model'], 'found_commands_ids': found_commands_ids}
-            self.pool['telegram.bus'].sendone(cr, SUPERUSER_ID, 'telegram_channel', message)
+            _logger.debug(found_cacheable_commands)
+            message = {'action': 'update_cache', 'update_cache': True, 'model': context['active_model'], 'found_commands_ids': found_cacheable_commands.ids}
+            self.env['telegram.bus'].sendone('telegram_channel', message)
 
+    @api.model
+    def action_telegram_handle_subscriptions(self):
+        # Called by ir.actions.server
+        _logger.debug('telegram_manage_subscriptions_event')
+        context = self._context
+        found_subscription_commands = self.env['telegram.command'].search([('model_ids.model', '=', context['active_model']), ('command_type', '=', 'subscription')])
+        _logger.debug(found_subscription_commands)
+        if len(found_subscription_commands):
+            message = {'action': 'handle_subscriptions', 'active_id': context['active_id'], 'update_cache': False, 'model': context['active_model'], 'found_commands_ids': found_subscription_commands.ids}
+            self.env['telegram.bus'].sendone('telegram_channel', message)
+
+    # bus reaction methods
     def update_cache(self, bus_message, bot):
         _logger.debug('update_cache() - command from bus')
         for command_id in bus_message['found_commands_ids']:
             command = self.env['telegram.command'].browse(command_id)
-            locals_dict = {'bot': bot, 'env': self.env,'bus_message': bus_message, 'TelegramUser': TelegramUser}
+            locals_dict = {'bot': bot, 'env': self.env,'bus_message': bus_message}
             if command.universal:
                 safe_eval(command.response_code, globals_dict, locals_dict, mode="exec", nocopy=True)
                 bot.cache.set_value(command_id, locals_dict['data'])
@@ -171,6 +195,18 @@ class TelegramCommand(models.Model):
                     safe_eval(command.response_code, globals_dict, locals_dict, mode="exec", nocopy=True)
                     bot.cache.set_value(command_id, locals_dict['data'], user.id)
 
+    def handle_subscriptions(self, bus_message, bot):
+        _logger.debug('handle_subscriptions() - called by bus')
+        for command_id in bus_message['found_commands_ids']:
+            command = self.env['telegram.command'].browse(command_id)
+            locals_dict = {'bot': bot, 'command': command, 'self': self, 'env': self.env,'bus_message': bus_message}
+            try:
+                safe_eval(command.notify_code, globals_dict, locals_dict, mode="exec", nocopy=True)
+            except:
+                _logger.warning(sys.exc_info()[0])
+            command.render_and_send(command.notify_template, locals_dict)
+
+    # other methods
     def access_granted(self, command, chat_id):
         # granted or not ?
         command_groups = set(self.env['res.groups'].search([('telegram_command_id', '=', command.id)]))
@@ -218,12 +254,17 @@ class ResGroups(models.Model):
 
 
     # query = """SELECT *
-#            FROM mail_message as a, mail_message_res_partner_rel as b
-#            WHERE a.id = b.mail_message_id
-#            AND b.res_partner_id = %s""" % (5,)
-# self.env.cr.execute(query)
-# query_results = self.env.cr.dictfetchall()
-#
+
+
+globals_dict = {
+    'datetime': datetime,
+    'dateutil': dateutil,
+    'time': time,
+    '_logger': _logger,
+    'tools': tools,
+    'TelegramUser': TelegramUser
+}
+
 
 def dump(obj):
     for attr in dir(obj):
@@ -246,3 +287,5 @@ def dumpclean(obj):
                 print v
     else:
         print obj
+
+

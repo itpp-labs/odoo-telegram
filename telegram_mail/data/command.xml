@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+    <record model="telegram.command" id="mail_command">
+        <field name="name">/mail</field>
+        <field name="description">Subscribe to incoming odoo mail</field>
+        <field name="command_type">subscription</field>
+        <field name="universal">True</field>
+        <field name="model_ids" eval="[(4, ref('mail.model_mail_message'))]"/>
+        <field name="response_code">data = {}
+telegram_user = env['telegram.user'].search([('chat_id', '=', tele_message.chat.id)])
+if len(telegram_user):
+    command.write({'res_users_ids': [(4, telegram_user[0].res_user.id,0)]})
+        </field>
+        <field name="response_template" type="xml">
+            <t>You have subscribed to yours new mail messages in odoo.</t>
+        </field>
+        <field name="notify_code">data = {}
+data['partner_message'] = env['mail.message'].browse(bus_message['active_id'])
+data['partner_message_from'] = data['partner_message'].author_id.name
+data['partner_message_subject'] = data['partner_message'].subject
+data['partner_message_date'] = data['partner_message'].date
+data['partner_message_body'] = tools.html2plaintext(data['partner_message'].body)
+notify_user_ids = data['partner_message'].partner_ids.mapped('user_ids').ids
+        </field>
+        <field name="notify_template" type="xml">
+            <t>
+<b>New message !</b>
+<b>From:</b> <t t-raw="data['partner_message_from']"/>
+<b>Subject:</b> <t t-raw="data['partner_message_subject']"/>
+<b>Time:</b> <t t-raw="data['partner_message_date']"/>
+<b>Text: </b><t t-esc="data['partner_message_body']"/>
+            </t>
+        </field>
+    </record>
+</data>
+</openerp>

@@ -129,7 +129,7 @@ class WorkerTelegram(Worker):
                         'odoo_dispatch': self.odoo_dispatch}
                 self.threads_bundles_list.append(vals)
         time.sleep(self.interval / 2)
-        if random.random() < 0.10:
+        if random.random() < 0.01:
             self.manage_threads()  # increase or decrease number of threads
 
     def need_new_bundle(self, token):
@@ -308,7 +308,7 @@ class CommandCache(object):
         self._vals = {}
 
     def set_value(self, command_id, result=False, user_id=0):
-        if command_id.id not in self._vals:
+        if command_id not in self._vals:
             self._vals.update({command_id: {}})
         if user_id:
             self._vals[command_id] = {'result': False, 'users_results': {user_id: result}}

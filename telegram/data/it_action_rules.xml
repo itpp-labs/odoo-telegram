@@ -6,7 +6,14 @@
         <field name="model_id" ref="base.model_res_users"/>
         <field name="sequence">59</field>
         <field name="kind">on_write</field>
-        <field name="server_action_ids" eval="[(6, 0, [ref('run_telegram_commands_cache_updates')])]"/>
+        <field name="server_action_ids" eval="[(6, 0, [ref('action_telegram_update_cache')])]"/>
     </record>
+    <!--<record id="manage_threads_on_config_update" model="base.action.rule">-->
+        <!--<field name="name">Call server_action when ir config parameter updated</field>-->
+        <!--<field name="model_id" ref="base.model_ir_config_parameter"/>-->
+        <!--<field name="sequence">63</field>-->
+        <!--<field name="kind">on_write</field>-->
+        <!--<field name="server_action_ids" eval="[(6, 0, [ref('telegram_manage_threads_event')])]"/>-->
+    <!--</record>-->
 </data>
 </openerp>
