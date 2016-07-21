@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 {
-    "name": """Telegram bot""",
-    "summary": """Telegram bot service""",
-    "category": "Web",
+    "name": """Telegram Bot""",
+    "summary": """Your best assistant!""",
+    "category": "Telegram",
     "images": [],
     "version": "1.0.0",
 
     "author": "IT-Projects LLC",
     "website": "https://it-projects.info",
     "license": "GPL-3",
-    #"price": 9.00,
-    #"currency": "EUR",
+    "price": 500.00,
+    "currency": "EUR",
 
     "depends": [
         "base",
@@ -24,6 +24,9 @@
         "data/it_action_rules.xml",
         "data/commands.xml",
         "security/ir.model.access.csv",
+        "security/telegram_security.xml",
+        "views/telegram_views.xml",
+        "views/telegram_command_views.xml",
     ],
     "qweb": [
     ],
@@ -35,5 +38,5 @@
     "post_init_hook": None,
     "installable": True,
     "auto_install": False,
-
+    "application": True,
 }

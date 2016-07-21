@@ -5,8 +5,8 @@
         <field name="name">Call server_action when user login_date updated</field>
         <field name="model_id" ref="base.model_res_users"/>
         <field name="sequence">59</field>
-        <field name="kind">on_write</field>
-        <field name="server_action_ids" eval="[(6, 0, [ref('action_telegram_update_cache')])]"/>
+        <field name="kind">on_create_or_write</field>
+        <field name="server_action_ids" eval="[(6, 0, [ref('telegram.action_telegram_update_cache')])]"/>
     </record>
     <!--<record id="manage_threads_on_config_update" model="base.action.rule">-->
         <!--<field name="name">Call server_action when ir config parameter updated</field>-->
