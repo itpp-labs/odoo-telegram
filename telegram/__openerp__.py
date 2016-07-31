@@ -21,7 +21,7 @@
     "data": [
         "data/config_parameter.xml",
         "data/ir_action_server.xml",
-        "data/it_action_rules.xml",
+        "data/base_action_rules.xml",
         "data/commands.xml",
         "security/ir.model.access.csv",
         "security/telegram_security.xml",
