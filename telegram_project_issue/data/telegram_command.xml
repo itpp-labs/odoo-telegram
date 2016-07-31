@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+
+    <record model="telegram.command" id="command_new_issues">
+        <field name="name">/new_issues</field>
+        <field name="description">Subscribe to get report on new issues every hour</field>
+        <field name="type">subscription</field>
+        <!-- it's not universal, because manager and user can see different list of issues -->
+        <field name="universal">False</field>
+        <field name="group_ids" eval="[(4, ref('base.group_user'))]" />
+        <field name="response_template" type="xml"><t>
+<t t-if="subscribed">You have subscribed to get report of new issues every hour.</t>
+<t t-if="not subscribed">You have opted out.</t>
+        </t></field>
+        <field name="notification_code">
+<![CDATA[
+limit_date = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
+limit_date_str = datetime.datetime.strftime(limit_date, tools.DEFAULT_SERVER_DATETIME_FORMAT)
+data['new_issues'] = env['project.issue'].search([
+('create_date', '>', limit_date_str)
+])
+]]>
+        </field>
+        <field name="notification_template" type="xml">
+            <t>
+<t t-if="len(data['new_issues'])">
+<b>New Issues for the last hour:</b>
+<t t-foreach="data['new_issues']" t-as="issue">
+<t t-esc="issue.name"/>
+<b>Contact:</b> <t t-esc="issue.partner_id.display_name"/>
+<b>Project:</b> <t t-esc="issue.project_id.display_name"/>
+</t>
+</t>
+            </t>
+        </field>
+    </record>
+
+</data>
+</openerp>

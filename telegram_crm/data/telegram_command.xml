@@ -29,7 +29,7 @@ charts.append(bar_chart)
         <field name="name">Update telegram /pipeline</field>
         <field name="model_id" ref="crm.model_crm_lead"/>
         <field name="kind">on_create_or_write</field>
-        <field name="server_action_ids" eval="[(6, 0, [ref('telegram.action_telegram_update_cache')])]"/>
+        <field name="server_action_ids" eval="[(6, 0, [ref('telegram.action_update_cache')])]"/>
     </record>
 
 

@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 <data>
-    <record id="action_telegram_update_cache" model="ir.actions.server">
+    <record id="action_update_cache" model="ir.actions.server">
         <field name="name">Update cacheable commands cache</field>
         <field name="model_id" ref="model_telegram_command"/>
         <field name="condition">True</field>
         <field name="type">ir.actions.server</field>
         <field name="state">code</field>
-        <field name="code">self.action_telegram_update_cache(cr, uid, context=context)</field>
+        <field name="code">self.action_update_cache(cr, uid, context=context)</field>
     </record>
-    <record id="action_telegram_handle_subscriptions" model="ir.actions.server">
+    <record id="action_handle_subscriptions" model="ir.actions.server">
         <field name="name">Do appropriate subscription action for active model and id</field>
         <field name="model_id" ref="model_telegram_command"/>
         <field name="condition">True</field>
         <field name="type">ir.actions.server</field>
         <field name="state">code</field>
-        <field name="code">self.action_telegram_handle_subscriptions(cr, uid, context=context)</field>
+        <field name="code">self.action_handle_subscriptions(cr, uid, context=context)</field>
     </record>
     <!--<record id="telegram_manage_threads_event" model="ir.actions.server">-->
         <!--<field name="name">Manage threads number</field>-->
