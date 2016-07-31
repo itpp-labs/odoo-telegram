@@ -8,6 +8,7 @@ import random
 import datetime
 import dateutil
 import time
+import sys
 import openerp
 from openerp.service.server import Worker
 from openerp.service.server import PreforkServer
@@ -23,7 +24,7 @@ import logging
 import time
 from telebot import apihelper, types, util
 
-_logger = logging.getLogger('# Telegram')
+_logger = logging.getLogger(__name__)
 
 
 def get_parameter(db_name, key):
@@ -102,7 +103,10 @@ class WorkerTelegram(Worker):
             db = openerp.sql_db.db_connect(bot.db_name)
             registry = openerp.registry(bot.db_name)
             with openerp.api.Environment.manage(), db.cursor() as cr:
-                registry['telegram.command'].telegram_listener(cr, SUPERUSER_ID, messages, bot)
+                try:
+                    registry['telegram.command'].telegram_listener(cr, SUPERUSER_ID, messages, bot)
+                except:
+                    _logger.error('Error while proccessing Telegram messages: %s' % messages, exc_info=True)
 
         db_names = _db_list()
         if not self.singles_ran:
@@ -218,7 +222,11 @@ class OdooTelegramThread(threading.Thread):
             db = openerp.sql_db.db_connect(bot.db_name)
             registry = openerp.registry(bot.db_name)
             with openerp.api.Environment.manage(), db.cursor() as cr:
-                registry['telegram.command'].odoo_listener(cr, SUPERUSER_ID, message, bot)
+                try:
+                    registry['telegram.command'].odoo_listener(cr, SUPERUSER_ID, message, bot)
+                except:
+                    _logger.error('Error while proccessing Odoo message: %s' % message, exc_info=True)
+
         while True:
             # Exeptions ?
             db_names = _db_list()
@@ -297,32 +305,36 @@ class TeleBotMod(TeleBot, object):
 class CommandCache(object):
     """
         Cache structure:
-        <command_id> : {'result':'', 'users_results':{<user_id>:'bbb', <user_id>:'ccc'}}
-        Example:
         {
-            1 : {'result':'aaaa', 'users_results':{1:'bbb', 2:'ccc'}},
-            2 : {'result':'fff',  'users_results':{2:'ddd', 3:'ggg'}}
+          <command_id>: {
+             <user_id1>: <response1>
+             <user_id2>: <response2>
+          }
         }
     """
     def __init__(self):
         self._vals = {}
 
-    def set_value(self, command_id, result=False, user_id=0):
-        if command_id not in self._vals:
-            self._vals.update({command_id: {}})
-        if user_id:
-            self._vals[command_id] = {'result': False, 'users_results': {user_id: result}}
-        elif result:
-            self._vals[command_id] = {'result': result, 'users_results': False}
+    def set_value(self, command, response, tsession=None):
+        if command.type != 'cacheable':
+            return
 
-    def get_value(self, command_id, user_id=0):
-        if command_id not in self._vals:
+        user_id = 0
+        if not command.universal:
+            user_id = tsession.user_id.id
+
+        if command.id not in self._vals:
+            self._vals[command.id] = {}
+        self._vals[command.id][user_id] = response
+
+    def get_value(self, command, tsession):
+        user_id = 0
+        if not command.universal:
+            user_id = tsession.user_id.id
+
+        if command.id not in self._vals:
             return False
-        if user_id:
-            ret = self._vals[command_id]['users_results'][user_id]
-        else:
-            ret = self._vals[command_id]['result']
-        return ret
+        return self._vals[command.id].get(user_id)
 
 
 

@@ -11,7 +11,7 @@ import openerp
 from openerp import api, fields, models
 from openerp.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT
 
-_logger = logging.getLogger('# Telegram')
+_logger = logging.getLogger(__name__)
 
 # longpolling timeout connection
 TIMEOUT = 50

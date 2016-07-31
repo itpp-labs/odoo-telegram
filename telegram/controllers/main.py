@@ -10,14 +10,17 @@ class TelegramLogin(http.Controller):
 
     @http.route('/web/login/telegram', type='http', auth='user')
     def do_login(self, *args, **kw):
-        cr, uid, context, pool = request.cr, request.uid, request.context, request.registry
-        tele_user_id = pool['telegram.user'].search(cr, SUPERUSER_ID, [('token', '=', kw['token'])])
-        if len(tele_user_id) == 1:
-            tele_user_obj = pool['telegram.user'].browse(cr, SUPERUSER_ID, tele_user_id)
-            tele_user_obj.res_user = pool['res.users'].browse(cr, SUPERUSER_ID, uid)
-            tele_user_obj.logged_in = True
-            message = {'action': '/login',
-                       'chat_id': tele_user_obj.chat_id,
-                       'odoo_user_name': tele_user_obj.res_user.name}
-            pool['telegram.bus'].sendone(cr, SUPERUSER_ID, 'telegram_channel', message)
-        return utils.redirect('/web/')
+        token = kw['token']
+        command_ids = request.env['telegram.command'].search([('name', '=', '/login')]).ids
+
+        tsession = request.env['telegram.session'].sudo().search([('token', '=', token)])
+        if not tsession:
+            return utils.redirect('/web')
+
+        tsession.user_id = request.env.uid
+
+        message = {'action': 'send_notifications',
+                   'command_ids': command_ids,
+                   'tsession_id': tsession.id}
+        request.env['telegram.bus'].sendone('telegram_channel', message)
+        return utils.redirect('/web')

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+
+    <record model="telegram.command" id="help_command">
+        <field name="name">/pipeline</field>
+        <field name="description">Returns Pipeline</field>
+        <field name="type">cacheable</field>
+        <field name="universal">False</field>
+        <field name="menu_id" ref="crm.crm_opportunity_report_menu"/>
+        <field name="group_ids" eval="[(4, ref('base.group_sale_salesman'))]" />
+        <field name="model_ids" eval="[(4, ref('crm.model_crm_lead'))]"/>
+        <field name="response_code">
+graph_data = command.get_graph_data()
+data['filters'] = graph_data['filters']
+bar_chart = pygal.StackedBar(title="Pipeline", x_labels=map(str, graph_data['x_labels']))
+
+for d_value, d in graph_data['data_lines'].items():
+    bar_chart.add(d_value or 'Undefined', d['values'])
+
+charts.append(bar_chart)
+        </field>
+        <field name="response_template" type="xml">
+            <t>Pipeline<t t-foreach="data['filters']" t-as="f"> [x] <t t-esc="f['name']"/></t></t>
+        </field>
+    </record>
+
+    <record id="action_rule_pipelin" model="base.action.rule">
+        <field name="name">Update telegram /pipeline</field>
+        <field name="model_id" ref="crm.model_crm_lead"/>
+        <field name="kind">on_create_or_write</field>
+        <field name="server_action_ids" eval="[(6, 0, [ref('telegram.action_telegram_update_cache')])]"/>
+    </record>
+
+
+</data>
+</openerp>

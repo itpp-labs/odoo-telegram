@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+
+    <record id="view_telegram_command_tree" model="ir.ui.view">
+        <field name="name">telegram.command.tree</field>
+        <field name="model">telegram.command</field>
+        <field name="arch" type="xml">
+            <tree string="Telegram Command">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="type"/>
+                <field name="description"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_telegram_command_form" model="ir.ui.view">
+        <field name="name">telegram.command.form</field>
+        <field name="model">telegram.command</field>
+        <field name="arch" type="xml">
+            <form string="Telegram Command">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+			                  <label for="description" class="oe_edit_only"/>
+			                  <h2>
+				                    <field name="description"/>
+			                  </h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="universal"/>
+                            <field name="group_ids" widget="many2many_tags"/>
+                            <field name="model_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page String="Response">
+                            <group>
+                                <field name="response_code"/>
+                                <field name="response_template"/>
+                                <field name="post_response_code"/>
+                            </group>
+                        </page>
+                        <page String="Notification">
+                            <group>
+                                <field name="notification_code"/>
+                                <field name="notification_template"/>
+                            </group>
+                        </page>
+                        <page String="Subscribers">
+                            <field name="user_ids"/>
+                        </page>
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_telegram_command" model="ir.actions.act_window">
+        <field name="name">Telegram Commands</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">telegram.command</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_telegram_command" parent="telegram.menu_telegram" name="Telegram Commands" sequence="10" action="action_telegram_command" />
+
+</data>
+</openerp>
