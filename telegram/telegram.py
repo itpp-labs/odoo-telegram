@@ -310,7 +310,7 @@ class TelegramCommand(models.Model):
 
     # ir.actions.server methods:
     @api.model
-    def action_telegram_update_cache(self):
+    def action_update_cache(self):
         # Called by ir.actions.server
         context = self._context
         cacheable_commands = self.env['telegram.command'].search([('model_ids.model', '=', context['active_model']), ('type', '=', 'cacheable')])
@@ -323,11 +323,18 @@ class TelegramCommand(models.Model):
             self.env['telegram.bus'].sendone('telegram_channel', message)
 
     @api.model
-    def action_telegram_handle_subscriptions(self):
-        # Called by ir.actions.server
+    def action_handle_subscriptions(self, id_or_xml_id=None):
         _logger.debug('telegram_manage_subscriptions_event')
         context = self._context
-        subscription_commands = self.env['telegram.command'].search([('model_ids.model', '=', context['active_model']), ('type', '=', 'subscription')])
+        if id_or_xml_id:
+            # called by ir.cron
+            if not isinstance(id_or_xml_id, (int, long)):
+                subscription_commands = self.env.ref(id_or_xml_id)
+            else:
+                subscription_commands = self.env['telegram.command'].browse(id_or_xml_id)
+        else:
+            # Called by base.action.rule via ir.actions.server
+            subscription_commands = self.env['telegram.command'].search([('model_ids.model', '=', context['active_model']), ('type', '=', 'subscription')])
         _logger.debug('subscription_commands %s' % [c.name for c in subscription_commands])
         event = dict((k, context.get(k)) for k in ['active_model', 'active_id', 'active_ids'])
         if len(subscription_commands):
@@ -361,8 +368,10 @@ class TelegramCommand(models.Model):
             locals_dict = command.eval_notification(bus_message.get('event'), tsession)
 
             if command.type == 'subscription':
-                notify_user_ids = set(locals_dict.get('notify_user_ids', []))
-                notify_user_ids = notify_user_ids.intersection(set(command.user_ids.ids))
+                notify_user_ids = set(command.user_ids.ids)
+                if 'notify_user_ids' in locals_dict:
+                    notify_user_ids = notify_user_ids.intersection(set(locals_dict.get('notify_user_ids', [])))
+
                 notify_sessions = self.env['telegram.session'].search([('user_id', 'in', list(notify_user_ids))])
 
             else:
