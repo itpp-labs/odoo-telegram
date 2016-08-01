@@ -33,20 +33,32 @@ class TelegramCommand(models.Model):
     _name = "telegram.command"
     _order = "sequence"
 
-    name = fields.Char()
-    description = fields.Char(help='What command does')
+    name = fields.Char('Name', help='Command name. Usually starts with slash symbol, e.g. "/mycommand"', required=True)
+    description = fields.Char('Description', help='What command does. It will be used in /help command')
     sequence = fields.Integer(default=16)
-    type = fields.Selection([('regular', 'regular'), ('cacheable', 'cacheable'), ('subscription', 'subscription')])
-    universal = fields.Boolean(help='Same answer for all users or not. Meaningful only if type = cacheable.', default=False)
-    response_code = fields.Text(help='Python code to execute task. Launched by telegram_listener')
-    response_template = fields.Text(help='Message template, that user will receive immediately after he sent command')
+    type = fields.Selection([('normal', 'Normal'), ('cacheable', 'Normal (with caching)'), ('subscription', 'Subscription')], help='''
+* Normal - usual request-response commands
+* Normal (with caching) - prepares and caches response to send it immediately after requesting
+* Subscription - allows to subscribe to events or notifications
+
+    ''', default='normal', required=True)
+    universal = fields.Boolean(help='Same answer for all users or not.', default=False)
+    response_code = fields.Text(help='''Code to be executed before rendering Response Template. ''')
+    response_template = fields.Text(help='Template for the message, that user will receive immediately after sending command')
     post_response_code = fields.Text(help='Python code to be executed after sending response')
-    notification_code = fields.Text(help='Python code to get data, computed after executed response code. Launched by odoo_listener (bus)')
-    notification_template = fields.Text(help='Message template, that user will receive after job is done')
+    notification_code = fields.Text(help='''Code to be executed before rendering Notification Template
+
+Vars that can be created to be handled by telegram module
+* notify_user_ids - by default all subscribers get notification. With notify_user_ids you can specify list of users who has to receive notification. Then only ones who subscribed and are specified in notify_user_ids will receive notification.
+
+Check Help Tab for the rest variables.
+
+    ''')
+    notification_template = fields.Text(help='Template for the message, that user will receive when event happens')
     group_ids = fields.Many2many('res.groups', string="Access Groups", help='Who can use this command. Set empty list for public commands (e.g. /login)', default=lambda self: [self.env.ref('base.group_user').id])
-    model_ids = fields.Many2many('ir.model', 'command_to_model_rel', 'command_id', 'model_id', string="Related models", help='These models changes initiates cache updates for this command')
-    user_ids = fields.Many2many('res.users', 'command_to_user_rel', 'telegram_command_id', 'user_id', help='Subscribed users')
-    menu_id = fields.Many2one('ir.ui.menu', 'Command Menu', help='Menu that can be used in command, for example to make search')
+    model_ids = fields.Many2many('ir.model', 'command_to_model_rel', 'command_id', 'model_id', string="Related models", help='Is used by Server Action to find commands to proceed')
+    user_ids = fields.Many2many('res.users', 'command_to_user_rel', 'telegram_command_id', 'user_id', string='Subscribed users')
+    menu_id = fields.Many2one('ir.ui.menu', 'Related Menu', help='Menu that can be used in command, for example to make search')
 
     _sql_constraints = [
         ('command_name_uniq', 'unique (name)', 'Command name must be unique!'),

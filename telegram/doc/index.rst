@@ -43,7 +43,7 @@ Configuration
 
 * First of all you need to create your own telegram bot if you don't have it yet. Follow `official manual <https://core.telegram.org/bots#3-how-do-i-create-a-bot>`_
 * `Enable technical features <https://odoo-development.readthedocs.io/en/latest/odoo/usage/technical-features.html>`_
-* Go to ``Technical / Parameters / System Parameters``.
+* Open ``Technical / Parameters / System Parameters`` menu.
 
   * Enter value for ``telegram.token``. This is yours telegram bot token that *bot father* provided to you.
   * Optional. Enter value for ``telegram.odoo_threads``. Number of odoo threads that may to run some tasks (calculations, reports preparation and so on) received form bot. Default value is 2.
@@ -53,8 +53,6 @@ Configuration
 Usage
 =====
 
-First of all you need to login in Odoo with telegram:
-
 * Open telegram.
 * Find your bot in contacts and send ``/login`` message (command)
 * As answer you will get link you need to follow.
@@ -63,4 +61,61 @@ First of all you need to login in Odoo with telegram:
 * Now you are logged in.
 * If you already logged in Odoo on your device Odoo main page just will be opened and there is no necessity to enter your login and password.
 
-Now you can use commands to Odoo. For example ``/users`` will give you list of users.
+Now you can use commands to Odoo. For example ``/users`` will give you list of users. Send ``/help`` to get list of all available commands.
+
+
+Creating new commands
+=====================
+
+* Open ``Settings / Telegram / Telegram Commands`` menu
+* Click ``[Create]``
+* Follow hints to fill the form out
+* Click ``[Save]``
+
+If command type is not ``Normal``, then you have to make further configuration:
+
+* `Enable technical features <https://odoo-development.readthedocs.io/en/latest/odoo/usage/technical-features.html>`_
+
+For periodic reports:
+
+* Open ``Settings / Technical / Automation / Scheduled Actions``
+* Click ``[Create]``
+* At ``Technical Data`` tab specify:
+
+  * **Object**: ``telegram.command``
+  * **Method**: ``action_handle_subscriptions``
+  * **Arguments**: ``(123,)``, where 123 is a ID of you command (can be found in url, when you open command form)
+
+* Click ``[Save]``
+
+For notifications:
+
+* Open ``Settings / Technical / Automation / Automated Actions``
+* Click ``[Create]``
+
+* At ``Conditions`` tab specify:
+
+  * **When to Run**, e.g. ``On Creation & Update``
+  * **Filter** if needed
+
+* At ``Conditions`` tab specify:
+
+  * **Server actions to run** - select ``Telegram: handle subscriptions (finds commands via "Related models" field)``
+
+* Click ``[Save]``
+
+For speeding up responses:
+
+* Open ``Settings / Technical / Automation / Automated Actions``
+* Click ``[Create]``
+
+* At ``Conditions`` tab specify:
+
+  * **When to Run**, e.g. ``On Creation & Update``
+  * **Filter** if needed
+
+* At ``Conditions`` tab specify:
+
+  * **Server actions to run** - select ``Telegram: Update cache (finds commands via "Related models" field)``
+
+* Click ``[Save]``

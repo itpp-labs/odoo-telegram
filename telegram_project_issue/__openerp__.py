@@ -7,11 +7,11 @@
     "version": "1.0.0",
     "application": False,
 
-    "author": "IT-Projects LLC, DEVELOPER_NAME",
+    "author": "IT-Projects LLC, Ivan Yelizariev",
     "website": "https://it-projects.info",
     "license": "GPL-3",
-    #"price": 9.00,
-    #"currency": "EUR",
+    "price": 40.00,
+    "currency": "EUR",
 
     "depends": [
         "telegram",
