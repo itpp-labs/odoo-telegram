@@ -5,6 +5,7 @@ import dateutil
 import time
 import logging
 import telebot
+from telebot.apihelper import ApiException
 import sys
 from lxml import etree
 
@@ -188,14 +189,36 @@ Check Help Tab for the rest variables.
 
     @api.model
     def send(self, bot, rendered, tsession):
+        try:
+            self._send(bot, rendered, tsession)
+            return True
+        except ApiException:
+            # TODO remove tsession in case of following error:
+            # [{"ok":false,"error_code":400,"description":"Bad Request: chat not found"}]
+            _logger.error('Cannot send message', exc_info=True)
+            return False
+
+
+    @api.model
+    def _send(self, bot, rendered, tsession):
         if rendered.get('html'):
             _logger.debug('send %s', rendered.get('html'))
             bot.send_message(tsession.chat_ID, rendered.get('html'), parse_mode='HTML')
         if rendered.get('photos'):
             _logger.debug('send photos %s' % len(rendered.get('photos')))
             for photo in rendered.get('photos'):
-                photo.seek(0)
-                bot.send_photo(tsession.chat_ID, photo)
+                if photo.get('file_id'):
+                    try:
+                        _logger.debug('Send photo by file_id')
+
+                        bot.send_photo(tsession.chat_ID, photo['file_id'])
+                        continue
+                    except ApiException:
+                        _logger.debug('Sending photo by file_id is failed', exc_info=True)
+                        pass
+                photo['file'].seek(0)
+                res = bot.send_photo(tsession.chat_ID, photo['file'])
+                photo['file_id'] = res.photo[0].file_id
 
     @api.multi
     def get_graph_data(self):
@@ -290,6 +313,7 @@ Check Help Tab for the rest variables.
                     break
 
         if personal_filter:
+            personal_filter['string'] = personal_filter['name']
             default_domains = [personal_filter['domain']]
             used_filters = [personal_filter]
         else:
@@ -355,7 +379,6 @@ Check Help Tab for the rest variables.
                 'event': event,
                 'command_ids': subscription_commands.ids
             }
-            print 'message', message
             self.env['telegram.bus'].sendone('telegram_channel', message)
 
     # bus reaction methods

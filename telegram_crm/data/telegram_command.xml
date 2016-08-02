@@ -21,7 +21,7 @@ for d_value, d in graph_data['data_lines'].items():
 charts.append(bar_chart)
         </field>
         <field name="response_template" type="xml">
-            <t>Pipeline<t t-foreach="data['filters']" t-as="f"> [x] <t t-esc="f['name']"/></t></t>
+            <t>Pipeline<t t-foreach="data['filters']" t-as="f"> [x] <t t-esc="f['string']"/></t></t>
         </field>
     </record>
 
