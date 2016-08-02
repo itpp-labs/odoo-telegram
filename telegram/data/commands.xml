@@ -49,7 +49,6 @@ else:
         <field name="response_template" type="xml">
         <t><t t-if="data['authed']">You already logged in</t><t t-if="not data['authed']"><t>Please follow login link: <t t-esc="data['web_base']"/>/web/login/telegram?token=<t t-esc="data['login_token']"/></t></t></t></field>
         <field name="notification_template" type="xml"><t>Hello <t t-esc="tsession.user_id.name"/>!</t></field>
-        <field name="public">True</field>
     </record>
 
     <record model="telegram.command" id="logout_command">
