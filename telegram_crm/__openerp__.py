@@ -14,6 +14,7 @@
 
     "depends": [
         "telegram_chart",
+        "crm",
     ],
     "external_dependencies": {"python": [], "bin": []},
 
