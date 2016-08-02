@@ -4,7 +4,7 @@
     <!--BASIC COMMANDS-->
     <record model="telegram.command" id="command_start">
         <field name="name">/start</field>
-        <field name="description">Get list of available commands</field>
+        <field name="description">Start here</field>
         <field name="sequence" eval="900"/>
         <field name="response_code">
         </field>
