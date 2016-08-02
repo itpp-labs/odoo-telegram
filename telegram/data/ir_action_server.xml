@@ -2,7 +2,7 @@
 <openerp>
 <data>
     <record id="action_update_cache" model="ir.actions.server">
-        <field name="name">Update cacheable commands cache</field>
+        <field name="name">Telegram: Update cache (finds commands via "Related models" field)</field>
         <field name="model_id" ref="model_telegram_command"/>
         <field name="condition">True</field>
         <field name="type">ir.actions.server</field>
@@ -10,7 +10,7 @@
         <field name="code">self.action_update_cache(cr, uid, context=context)</field>
     </record>
     <record id="action_handle_subscriptions" model="ir.actions.server">
-        <field name="name">Do appropriate subscription action for active model and id</field>
+        <field name="name">Telegram: handle subscriptions (finds commands via "Related models" field)</field>
         <field name="model_id" ref="model_telegram_command"/>
         <field name="condition">True</field>
         <field name="type">ir.actions.server</field>

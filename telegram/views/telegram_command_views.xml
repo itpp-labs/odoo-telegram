@@ -22,8 +22,9 @@
             <form string="Telegram Command">
                 <sheet>
                     <div class="oe_title">
+			                  <label for="name" class="oe_edit_only"/>
                         <h1>
-                            <field name="name" readonly="1"/>
+                            <field name="name"/>
                         </h1>
 			                  <label for="description" class="oe_edit_only"/>
 			                  <h2>
@@ -32,9 +33,13 @@
                     </div>
                     <group>
                         <group>
-                            <field name="universal"/>
+                            <field name="type" class="oe_inline"/>
                             <field name="group_ids" widget="many2many_tags"/>
-                            <field name="model_ids" widget="many2many_tags"/>
+                            <field name="model_ids" widget="many2many_tags" attrs="{'invisible': [('type', '=', 'normal')]}"/>
+                            <field name="universal"  attrs="{'invisible': [('type', '=', 'normal')]}"  class="oe_inline"/>
+                        </group>
+                        <group>
+                            <field name="menu_id"/>
                         </group>
                     </group>
 
@@ -47,13 +52,44 @@
                             </group>
                         </page>
                         <page String="Notification">
+                            <p>Notification can be used in subscriptions or for delayed repsonse</p>
                             <group>
                                 <field name="notification_code"/>
                                 <field name="notification_template"/>
                             </group>
                         </page>
-                        <page String="Subscribers">
+                        <page String="Subscribers" attrs="{'invisible': [('type', '!=', 'subscription')]}">
                             <field name="user_ids"/>
+                        </page>
+                        <page string="Help">
+                            <p>
+<h3>Template fields</h3>
+
+Check official qweb documentation: <a href="https://www.odoo.com/documentation/8.0/reference/qweb.html">https://www.odoo.com/documentation/8.0/reference/qweb.html</a>
+                            </p>
+
+                            <p>
+<h3>Code fields</h3>
+<pre>
+Vars that can be updated:
+* data - empty dictonary to be filled with any data for rendering
+* charts (module telegram_chart is required) - empty list to be filled by pygal chart objects
+
+Vars that can be used:
+* command - telegram.command record
+* tsession - telegram.session record. 
+* tsession.user_id - current user
+* env - odoo Environment
+
+Libs that can be used:
+* datetime
+* dateutil
+* time
+* tools (openerp.tools)
+* pygal (module telegram_chart is required)
+</pre>
+                            </p>
+
                         </page>
                     </notebook>
 

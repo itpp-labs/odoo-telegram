@@ -36,7 +36,7 @@ class TelegramCommand(models.Model):
         for obj in locals_dict.get('charts', []):
             f = StringIO(obj.render_to_png())
             f.name = 'chart.png'
-            photos.append(f)
+            photos.append({'file': f})
 
         render_time = time.time() - t0
         _logger.debug('Render Charts in %.2fs\n locals_dict: %s', render_time, locals_dict)
