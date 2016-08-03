@@ -2,7 +2,7 @@
 {
     "name": """Telegram Mail""",
     "summary": """Bot commands for Mail application""",
-    "category": "Web",
+    "category": "Telegram",
     "images": [],
     "version": "1.0.0",
 
