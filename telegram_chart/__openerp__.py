@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": """Charts for Telegram Bot""",
-    "summary": """Technical module for chart support""",
+    "summary": """Technical module for charts support""",
     "category": "Hidden",
     "images": [],
     "version": "1.0.0",
