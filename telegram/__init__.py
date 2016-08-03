@@ -35,14 +35,18 @@ def get_registry(db_name):
 
 def get_parameter(db_name, key):
     db = openerp.sql_db.db_connect(db_name)
-    registry = openerp.registry(db_name)
-    result = None
+    registry = get_registry(db_name)
     with openerp.api.Environment.manage(), db.cursor() as cr:
-        res = registry['ir.config_parameter'].search(cr, SUPERUSER_ID, [('key', '=', key)])
-        if len(res) == 1:
-            val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
-            return val.value
-    return None
+        return registry['ir.config_parameter'].get_param(cr, SUPERUSER_ID, key)
+#
+#    result = None
+#    with openerp.api.Environment.manage(), db.cursor() as cr:
+#        res = registry['ir.config_parameter'].search(cr, SUPERUSER_ID, [('key', '=', key)])
+#        if len(res) == 1:
+#            val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
+#            return val.value
+#    return None
+
 
 def running_workers_num(workers):
     res = 0
@@ -50,20 +54,14 @@ def running_workers_num(workers):
         if r._running:
             res += 1
     return res
+
+
 def _db_list():
     if config['db_name']:
         db_names = config['db_name'].split(',')
     else:
         db_names = openerp.service.db.list_dbs(True)
     return db_names
-
-globals_dict = {
-    'datetime': datetime,
-    'dateutil': dateutil,
-    'time': time,
-    'get_parameter': get_parameter,
-    '_logger': _logger,
-}
 
 
 def telegram_worker():
