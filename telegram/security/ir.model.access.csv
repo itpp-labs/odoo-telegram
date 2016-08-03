@@ -1,5 +1,5 @@
 id,name,model_id/id,group_id/id,perm_read,perm_write,perm_create,perm_unlink
 access_telegram_command_global_read,access_telegram_command_global_read,model_telegram_command,,1,0,0,0
 access_telegram_command_admin,access_telegram_command_admin,model_telegram_command,base.group_system,1,1,1,1
-access_telegram_session,access_telegram_session,model_telegram_session,,1,0,0,0
-access_telegram_bus,access_telegram_bus,model_telegram_bus,,1,0,0,0
+access_telegram_session,access_telegram_session,model_telegram_session,base.group_system,1,0,0,0
+access_telegram_bus,access_telegram_bus,model_telegram_bus,base.group_system,1,0,0,0
