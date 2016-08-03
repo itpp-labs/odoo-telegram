@@ -27,6 +27,12 @@ from telebot import apihelper, types, util
 _logger = logging.getLogger(__name__)
 
 
+def get_registry(db_name):
+    openerp.modules.registry.RegistryManager.check_registry_signaling(db_name)
+    registry = openerp.registry(db_name)
+    return registry
+
+
 def get_parameter(db_name, key):
     db = openerp.sql_db.db_connect(db_name)
     registry = openerp.registry(db_name)
@@ -35,13 +41,9 @@ def get_parameter(db_name, key):
         res = registry['ir.config_parameter'].search(cr, SUPERUSER_ID, [('key', '=', key)])
         if len(res) == 1:
             val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
-            result = val.value
-        elif len(res) > 1:
-            raise ValidationError('Multiple values for %s' % key)
-        elif len(res) < 1:
-            _logger.debug("WARNING. No value for key %s" % key)
-            return None
-    return result
+            return val.value
+    return None
+
 def running_workers_num(workers):
     res = 0
     for r in workers:
@@ -101,7 +103,7 @@ class WorkerTelegram(Worker):
         # this called by run() in while self.alive cycle
         def listener(messages):
             db = openerp.sql_db.db_connect(bot.db_name)
-            registry = openerp.registry(bot.db_name)
+            registry = get_registry(bot.db_name)
             with openerp.api.Environment.manage(), db.cursor() as cr:
                 try:
                     registry['telegram.command'].telegram_listener(cr, SUPERUSER_ID, messages, bot)
@@ -220,7 +222,7 @@ class OdooTelegramThread(threading.Thread):
 
         def listener(message, bot):
             db = openerp.sql_db.db_connect(bot.db_name)
-            registry = openerp.registry(bot.db_name)
+            registry = get_registry(bot.db_name)
             with openerp.api.Environment.manage(), db.cursor() as cr:
                 try:
                     registry['telegram.command'].odoo_listener(cr, SUPERUSER_ID, message, bot)
