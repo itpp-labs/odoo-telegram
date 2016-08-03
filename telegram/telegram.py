@@ -111,7 +111,6 @@ Check Help Tab for the rest variables.
     @api.model
     def odoo_listener(self, message, bot):
         bus_message = message['message']  # message from bus, not from telegram server.
-        registry = openerp.registry(bot.db_name)
         db = openerp.sql_db.db_connect(bot.db_name)
         with openerp.api.Environment.manage(), db.cursor() as cr:
             _logger.debug('bus_message')
@@ -202,7 +201,7 @@ Check Help Tab for the rest variables.
     @api.model
     def _send(self, bot, rendered, tsession):
         if rendered.get('html'):
-            _logger.debug('send %s', rendered.get('html'))
+            _logger.debug('Send:\n%s', rendered.get('html'))
             bot.send_message(tsession.chat_ID, rendered.get('html'), parse_mode='HTML')
         if rendered.get('photos'):
             _logger.debug('send photos %s' % len(rendered.get('photos')))

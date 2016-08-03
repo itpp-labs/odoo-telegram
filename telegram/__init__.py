@@ -27,41 +27,41 @@ from telebot import apihelper, types, util
 _logger = logging.getLogger(__name__)
 
 
+def get_registry(db_name):
+    openerp.modules.registry.RegistryManager.check_registry_signaling(db_name)
+    registry = openerp.registry(db_name)
+    return registry
+
+
 def get_parameter(db_name, key):
     db = openerp.sql_db.db_connect(db_name)
-    registry = openerp.registry(db_name)
-    result = None
+    registry = get_registry(db_name)
     with openerp.api.Environment.manage(), db.cursor() as cr:
-        res = registry['ir.config_parameter'].search(cr, SUPERUSER_ID, [('key', '=', key)])
-        if len(res) == 1:
-            val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
-            result = val.value
-        elif len(res) > 1:
-            raise ValidationError('Multiple values for %s' % key)
-        elif len(res) < 1:
-            _logger.debug("WARNING. No value for key %s" % key)
-            return None
-    return result
+        return registry['ir.config_parameter'].get_param(cr, SUPERUSER_ID, key)
+#
+#    result = None
+#    with openerp.api.Environment.manage(), db.cursor() as cr:
+#        res = registry['ir.config_parameter'].search(cr, SUPERUSER_ID, [('key', '=', key)])
+#        if len(res) == 1:
+#            val = registry['ir.config_parameter'].browse(cr, SUPERUSER_ID, res[0])
+#            return val.value
+#    return None
+
+
 def running_workers_num(workers):
     res = 0
     for r in workers:
         if r._running:
             res += 1
     return res
+
+
 def _db_list():
     if config['db_name']:
         db_names = config['db_name'].split(',')
     else:
         db_names = openerp.service.db.list_dbs(True)
     return db_names
-
-globals_dict = {
-    'datetime': datetime,
-    'dateutil': dateutil,
-    'time': time,
-    'get_parameter': get_parameter,
-    '_logger': _logger,
-}
 
 
 def telegram_worker():
@@ -101,7 +101,7 @@ class WorkerTelegram(Worker):
         # this called by run() in while self.alive cycle
         def listener(messages):
             db = openerp.sql_db.db_connect(bot.db_name)
-            registry = openerp.registry(bot.db_name)
+            registry = get_registry(bot.db_name)
             with openerp.api.Environment.manage(), db.cursor() as cr:
                 try:
                     registry['telegram.command'].telegram_listener(cr, SUPERUSER_ID, messages, bot)
@@ -220,7 +220,7 @@ class OdooTelegramThread(threading.Thread):
 
         def listener(message, bot):
             db = openerp.sql_db.db_connect(bot.db_name)
-            registry = openerp.registry(bot.db_name)
+            registry = get_registry(bot.db_name)
             with openerp.api.Environment.manage(), db.cursor() as cr:
                 try:
                     registry['telegram.command'].odoo_listener(cr, SUPERUSER_ID, message, bot)

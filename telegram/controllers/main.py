@@ -1,9 +1,12 @@
 # -*- coding:utf-8 -*-
+import logging
 
 from openerp import SUPERUSER_ID
 from openerp.http import request
 from openerp import http
 from werkzeug import utils
+
+_logger = logging.getLogger(__name__)
 
 
 class TelegramLogin(http.Controller):
@@ -15,6 +18,7 @@ class TelegramLogin(http.Controller):
 
         tsession = request.env['telegram.session'].sudo().search([('token', '=', token)])
         if not tsession:
+            _logger.error('Attempt to login with wrong token')
             return utils.redirect('/web')
 
         tsession.user_id = request.env.uid

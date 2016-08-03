@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
-    "name": """Telegram mail command""",
-    "summary": """Subscribe to incoming odoo mail""",
+    "name": """Telegram Mail""",
+    "summary": """Bot commands for Mail application""",
     "category": "Web",
     "images": [],
     "version": "1.0.0",
