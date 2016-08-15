@@ -20,7 +20,7 @@ data['partner_message_from'] = data['partner_message'].author_id.name
 data['partner_message_subject'] = data['partner_message'].subject
 data['partner_message_date'] = data['partner_message'].date
 data['partner_message_body'] = tools.html2plaintext(data['partner_message'].body)
-partner_ids = data['partner_message'].partner_ids + data['partner_message'].channel_ids.mapped('channel_partner_ids')
+partner_ids = data['partner_message'].partner_ids
 notify_user_ids = partner_ids.mapped('user_ids').ids
         </field>
         <field name="notification_template" type="xml">

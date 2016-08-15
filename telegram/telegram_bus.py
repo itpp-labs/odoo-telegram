@@ -59,15 +59,19 @@ class TelegramBus(models.Model):
             if random.random() < 0.01:
                 self.gc()
         if channels:
-            # We have to wait until the notifications are commited in database.
-            # When calling `NOTIFY imbus`, some concurrent threads will be
-            # awakened and will fetch the notification in the bus table. If the
-            # transaction is not commited yet, there will be nothing to fetch,
-            # and the longpolling will return no notification.
-            def notify():
-                with openerp.sql_db.db_connect('postgres').cursor() as cr:
-                    cr.execute("notify telegram_bus, %s", (json_dump(list(channels)),))
-            self._cr.after('commit', notify)
+            # The notifications must be commited in database because when calling `NOTIFY imbus`, some pertinent
+            # threads will be awakened and will fetch the notification in the bus table, but since the transaction
+            # is not commited, there will be nothing to fetch, the longpolling will return empty list of notification.
+            # For some reason, this happen when `sendmany` is called more than once on the same request.
+            # `self._cr.commit()` is prevented in a test environement, to allow test rollback.
+
+            # Better solution is made in 9.0 by this commit
+            # https://github.com/odoo/odoo/commit/18f3de2f19dcc211b10cc8b9f1cfd5fcdca22a9e
+            # but we cannot apply, as there is no _cr.after function in 8.0
+            if not openerp.tools.config['test_enable']:
+                self._cr.commit()
+            with openerp.sql_db.db_connect('postgres').cursor() as cr2:
+                cr2.execute("notify telegram_bus, %s", (json_dump(list(channels)),))
 
     @api.model
     def sendone(self, channel, message):
