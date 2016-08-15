@@ -4,25 +4,20 @@ import datetime
 import dateutil
 import time
 import logging
-import telebot
 from telebot.apihelper import ApiException
-import sys
 from lxml import etree
 
 import openerp
 from openerp import tools
 from openerp import api, models, fields
 import openerp.addons.auth_signup.res_users as res_users
-from openerp.http import request
-from openerp import SUPERUSER_ID
-from openerp.addons.base.ir import ir_qweb
-from openerp.exceptions import ValidationError
 from openerp.tools.safe_eval import safe_eval
 from openerp.tools.translate import _
 from openerp.addons.base.ir.ir_qweb import QWebContext
 
 
 _logger = logging.getLogger(__name__)
+
 
 class TelegramCommand(models.Model):
     """
@@ -96,7 +91,7 @@ Check Help Tab for the rest variables.
             if command.type == 'cacheable':
                 response = bot.cache.get_value(command, tsession)
                 if response:
-                    _logger.debug('Cached response found for command %s'  % tele_message.text)
+                    _logger.debug('Cached response found for command %s' % tele_message.text)
                 else:
                     _logger.debug('No cache found for command %s' % tele_message.text)
 
@@ -197,7 +192,6 @@ Check Help Tab for the rest variables.
             _logger.error('Cannot send message', exc_info=True)
             return False
 
-
     @api.model
     def _send(self, bot, rendered, tsession):
         if rendered.get('html'):
@@ -214,7 +208,6 @@ Check Help Tab for the rest variables.
                         continue
                     except ApiException:
                         _logger.debug('Sending photo by file_id is failed', exc_info=True)
-                        pass
                 photo['file'].seek(0)
                 res = bot.send_photo(tsession.chat_ID, photo['file'])
                 photo['file_id'] = res.photo[0].file_id
@@ -271,7 +264,6 @@ Check Help Tab for the rest variables.
                 # a - array
                 # f - field name
                 # v = value
-                print('r: %s, f %s' % (r, f))
                 v = r[f]
                 if v not in a:
                     a.append(v)
@@ -292,7 +284,6 @@ Check Help Tab for the rest variables.
             'stacked': graph_config['stacked']
         }
         return res
-
 
     @api.model
     def get_action_domain(self, action):
@@ -444,28 +435,3 @@ class TelegramSession(models.Model):
         if not tsession:
             tsession = self.env['telegram.session'].create({'chat_ID': chat_ID})
         return tsession
-
-
-def dump(obj):
-    for attr in dir(obj):
-        print "obj.%s = %s" % (attr, getattr(obj, attr))
-
-
-def dumpclean(obj):
-    if type(obj) == dict:
-        for k, v in obj.items():
-            if hasattr(v, '__iter__'):
-                print k
-                dumpclean(v)
-            else:
-                print '%s : %s' % (k, v)
-    elif type(obj) == list:
-        for v in obj:
-            if hasattr(v, '__iter__'):
-                dumpclean(v)
-            else:
-                print v
-    else:
-        print obj
-
-

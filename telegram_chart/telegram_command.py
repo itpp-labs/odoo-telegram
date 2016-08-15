@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import time
 from StringIO import StringIO
@@ -7,9 +8,11 @@ try:
 except:
     pygal = None
 
-from openerp import api, models, fields
+from openerp import api
+from openerp import models
 
 _logger = logging.getLogger(__name__)
+
 
 class TelegramCommand(models.Model):
 
