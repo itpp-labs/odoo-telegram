@@ -232,7 +232,6 @@ Check Help Tab for the rest variables.
         graph_config = {
             'stacked': graph_view.attrib.get('stacked'),
             'row': [],
-            'col': [],
             'measure': None,
             'fields': []
         }
@@ -240,12 +239,12 @@ Check Help Tab for the rest variables.
             if el.tag != 'field':
                 continue
             f = el.attrib
-            if f['type'] == 'row' or f['type'] == 'col':
+            if f['type'] == 'row':
                 value = f['name']
                 graph_config['fields'].append(value)
                 if f.get('interval'):
                     value += ':' + f.get('interval')
-                graph_config[f['type']].append(value)
+                graph_config['row'].append(value)
             elif f['type'] == 'measure':
                 value = f['name']
                 graph_config['measure'] = value
@@ -254,7 +253,7 @@ Check Help Tab for the rest variables.
         res = self.env[action.res_model].read_group(
             domain,
             fields=graph_config['fields'],
-            groupby=graph_config['row'] + graph_config['col'],
+            groupby=graph_config['row'],
             lazy=False,
         )
 
@@ -265,13 +264,12 @@ Check Help Tab for the rest variables.
 
         dlabels = []
         # e.g. Month in CRM Pipeline
-        dlabel_field = graph_config['col'][0]
+        dlabel_field = graph_config['row'][1]
         for r in res:
             for a, f in [(xlabels, xlabel_field), (dlabels, dlabel_field)]:
                 # a - array
                 # f - field name
                 # v = value
-                print('r: %s, f %s' % (r, f))
                 v = r[f]
                 if v not in a:
                     a.append(v)
