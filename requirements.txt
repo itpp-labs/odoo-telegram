@@ -1,0 +1,5 @@
+pyTelegramBotAPI
+pygal
+cairosvg
+tinycss
+cssselect
