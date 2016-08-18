@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import datetime
 import dateutil
@@ -7,7 +7,6 @@ import logging
 from telebot.apihelper import ApiException
 from lxml import etree
 
-import openerp
 from openerp import tools
 from openerp import api, models, fields
 import openerp.addons.auth_signup.res_users as res_users
@@ -106,14 +105,12 @@ Check Help Tab for the rest variables.
     @api.model
     def odoo_listener(self, message, bot):
         bus_message = message['message']  # message from bus, not from telegram server.
-        db = openerp.sql_db.db_connect(bot.db_name)
-        with openerp.api.Environment.manage(), db.cursor() as cr:
-            _logger.debug('bus_message')
-            _logger.debug(bus_message)
-            if bus_message['action'] == 'update_cache':
-                self.update_cache(bus_message, bot)
-            elif bus_message['action'] == 'send_notifications':
-                self.send_notifications(bus_message, bot)
+        _logger.debug('bus_message')
+        _logger.debug(bus_message)
+        if bus_message['action'] == 'update_cache':
+            self.update_cache(bus_message, bot)
+        elif bus_message['action'] == 'send_notifications':
+            self.send_notifications(bus_message, bot)
 
     @api.multi
     def get_response(self, locals_dict=None, tsession=None):

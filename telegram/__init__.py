@@ -13,6 +13,7 @@ import openerp
 from openerp.service.server import Worker
 from openerp.service.server import PreforkServer
 from openerp.tools.safe_eval import safe_eval
+from openerp.tools.translate import _
 import telebot
 from telebot import TeleBot
 import telebot.util as util
@@ -247,9 +248,9 @@ class OdooTelegramThread(threading.Thread):
                         if self.odoo_thread_pool.exception_event.wait(0):
                             self.odoo_thread_pool.raise_exceptions()
                     elif len(ls) > 1:
-                        raise ValidationError('Token is not unique')
+                        raise ValidationError(_('Token is not unique'))
                     elif len(ls) == 0:
-                        raise ValidationError('Unregistered token')
+                        raise ValidationError(_('Unregistered token'))
             self.manage_threads()
 
     @staticmethod
