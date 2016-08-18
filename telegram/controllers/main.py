@@ -1,7 +1,6 @@
-# -*- coding:utf-8 -*-
+# -*- coding: utf-8 -*-
 import logging
 
-from openerp import SUPERUSER_ID
 from openerp.http import request
 from openerp import http
 from werkzeug import utils

@@ -1,9 +1,9 @@
 # -*- encoding: utf-8 -*-
 
 from openerp import models
-import telegram
-import telegram_bus
-import controllers
+from . import telegram
+from . import telegram_bus
+from . import controllers
 import random
 import datetime
 import dateutil
@@ -13,6 +13,7 @@ import openerp
 from openerp.service.server import Worker
 from openerp.service.server import PreforkServer
 from openerp.tools.safe_eval import safe_eval
+from openerp.tools.translate import _
 import telebot
 from telebot import TeleBot
 import telebot.util as util
@@ -21,7 +22,6 @@ from openerp import SUPERUSER_ID
 from openerp.exceptions import ValidationError
 import threading
 import logging
-import time
 from telebot import apihelper, types, util
 
 _logger = logging.getLogger(__name__)
@@ -89,6 +89,7 @@ class WorkerTelegram(Worker):
         This is main singleton process for all other telegram purposes.
         It creates one TelegramDispatch (events bus), one OdooTelegramThread, several TeleBotMod and BotPollingThread threads.
     """
+
     def __init__(self, multi):
         super(WorkerTelegram, self).__init__(multi)
         self.interval = 10
@@ -184,6 +185,7 @@ class BotPollingThread(threading.Thread):
         Listener do what command requires by it self or may send according command in telegram bus.
         For every database with token one bot and one bot_polling is created.
     """
+
     def __init__(self, interval, bot):
         threading.Thread.__init__(self, name='BotPollingThread')
         self.daemon = True
@@ -205,6 +207,7 @@ class OdooTelegramThread(threading.Thread):
         Spawned threads are in odoo_thread_pool.
         Amount of threads = telegram.odoo_threads + 1
     """
+
     def __init__(self, interval, dispatch, threads_bundles_list):
         threading.Thread.__init__(self, name='OdooTelegramThread')
         self.daemon = True
@@ -245,9 +248,9 @@ class OdooTelegramThread(threading.Thread):
                         if self.odoo_thread_pool.exception_event.wait(0):
                             self.odoo_thread_pool.raise_exceptions()
                     elif len(ls) > 1:
-                        raise ValidationError('Token is not unique')
+                        raise ValidationError(_('Token is not unique'))
                     elif len(ls) == 0:
-                        raise ValidationError('Unregistered token')
+                        raise ValidationError(_('Unregistered token'))
             self.manage_threads()
 
     @staticmethod
@@ -261,40 +264,41 @@ class OdooTelegramThread(threading.Thread):
         return n
 
     def manage_threads(self):
-            new_num_threads = self.get_num_of_children()
-            diff = new_num_threads - self.odoo_threads
-            wp = self.odoo_thread_pool
-            if new_num_threads > self.odoo_threads:
+        new_num_threads = self.get_num_of_children()
+        diff = new_num_threads - self.odoo_threads
+        wp = self.odoo_thread_pool
+        if new_num_threads > self.odoo_threads:
                 # add new threads
-                wp.workers += [util.WorkerThread(wp.on_exception, wp.tasks) for _ in range(diff)]
-                self.odoo_threads += diff
-                _logger.info("Odoo workers increased and now its amount = %s" % running_workers_num(wp.workers))
-            elif new_num_threads < self.odoo_threads:
-                # decrease threads
-                cnt = 0
-                for i in range(len(wp.workers)):
-                    if wp.workers[i]._running:
-                        wp.workers[i].stop()
-                        _logger.info('Odoo worker stop')
-                        cnt += 1
-                        if cnt >= -diff:
-                            break
-                cnt = 0
-                for i in range(len(wp.workers)):
-                    if not wp.workers[i]._running:
-                        wp.workers[i].join()
-                        _logger.info('Odoo worker join')
-                        cnt += 1
-                        if cnt >= -diff:
-                            break
-                self.odoo_threads += diff
-                _logger.info("Odoo workers decreased and now its amount = %s" % running_workers_num(wp.workers))
+            wp.workers += [util.WorkerThread(wp.on_exception, wp.tasks) for _ in range(diff)]
+            self.odoo_threads += diff
+            _logger.info("Odoo workers increased and now its amount = %s" % running_workers_num(wp.workers))
+        elif new_num_threads < self.odoo_threads:
+            # decrease threads
+            cnt = 0
+            for i in range(len(wp.workers)):
+                if wp.workers[i]._running:
+                    wp.workers[i].stop()
+                    _logger.info('Odoo worker stop')
+                    cnt += 1
+                    if cnt >= -diff:
+                        break
+            cnt = 0
+            for i in range(len(wp.workers)):
+                if not wp.workers[i]._running:
+                    wp.workers[i].join()
+                    _logger.info('Odoo worker join')
+                    cnt += 1
+                    if cnt >= -diff:
+                        break
+            self.odoo_threads += diff
+            _logger.info("Odoo workers decreased and now its amount = %s" % running_workers_num(wp.workers))
 
 
 class TeleBotMod(TeleBot, object):
     """
         Little bit modified TeleBot. Just to control amount of children threads to be created.
     """
+
     def __init__(self, token, threaded=True, skip_pending=False, num_threads=2):
         super(TeleBotMod, self).__init__(token, threaded=False, skip_pending=skip_pending)
         self.worker_pool = util.ThreadPool(num_threads)
@@ -312,6 +316,7 @@ class CommandCache(object):
           }
         }
     """
+
     def __init__(self):
         self._vals = {}
 
@@ -335,27 +340,3 @@ class CommandCache(object):
         if command.id not in self._vals:
             return False
         return self._vals[command.id].get(user_id)
-
-
-
-def dump(obj):
-  for attr in dir(obj):
-    print "obj.%s = %s" % (attr, getattr(obj, attr))
-
-
-def dumpclean(obj):
-    if type(obj) == dict:
-        for k, v in obj.items():
-            if hasattr(v, '__iter__'):
-                print k
-                dumpclean(v)
-            else:
-                print '%s : %s' % (k, v)
-    elif type(obj) == list:
-        for v in obj:
-            if hasattr(v, '__iter__'):
-                dumpclean(v)
-            else:
-                print v
-    else:
-        print obj
