@@ -17,7 +17,7 @@ Install foloowing python libs::
 Charts
 ------
 
-Install module `Charts for Telegram Bot <https://apps.odoo.com/apps/modules/9.0/telegram_chart/>`_ to be able receive charts. In that case `install Pygal lib <http://www.pygal.org/en/stable/installing.html>`_ too::
+Install module `Charts for Telegram Bot <https://apps.odoo.com/apps/modules/9.0/telegram_chart/>`__ to be able receive charts. In that case `install Pygal lib <http://www.pygal.org/en/stable/installing.html>`__ too::
 
     sudo apt-get install libffi-dev
     sudo pip install pygal
@@ -26,14 +26,14 @@ Install module `Charts for Telegram Bot <https://apps.odoo.com/apps/modules/9.0/
 Modules
 -------
 
-`Install <https://odoo-development.readthedocs.io/en/latest/odoo/usage/install-module.html>`_ this module in a usual way.
+`Install <https://odoo-development.readthedocs.io/en/latest/odoo/usage/install-module.html>`__ this module in a usual way.
 
-You can install other `Telegram modules <https://apps.odoo.com/apps/modules/category/Telegram/browse?author=IT-Projects%20LLC>`_ to have prepared bot commands. Otherwise you will need to create them yourself (see below).
+You can install other `Telegram modules <https://apps.odoo.com/apps/modules/category/Telegram/browse?author=IT-Projects%20LLC>`__ to have prepared bot commands. Otherwise you will need to create them yourself (see below).
 
 Odoo parameters
 ---------------
 
-* `Activate longpolling <https://odoo-development.readthedocs.io/en/latest/admin/longpolling.html>`_ 
+* `Activate longpolling <https://odoo-development.readthedocs.io/en/latest/admin/longpolling.html>`__ 
 * Add ``telegram`` to ``--load`` parameters, e.g.::
 
     ./openerp-server --workers=2 --load telegram,web --config=/path/to/openerp-server.conf
@@ -41,8 +41,8 @@ Odoo parameters
 Configuration
 =============
 
-* First of all you need to create your own telegram bot if you don't have it yet. Follow `official manual <https://core.telegram.org/bots#3-how-do-i-create-a-bot>`_
-* `Enable technical features <https://odoo-development.readthedocs.io/en/latest/odoo/usage/technical-features.html>`_
+* First of all you need to create your own telegram bot if you don't have it yet. Follow `official manual <https://core.telegram.org/bots#3-how-do-i-create-a-bot>`__
+* `Enable technical features <https://odoo-development.readthedocs.io/en/latest/odoo/usage/technical-features.html>`__
 * Open ``Technical / Parameters / System Parameters`` menu.
 
   * Enter value for ``telegram.token``. This is yours telegram bot token that *bot father* provided to you.
@@ -74,7 +74,7 @@ Creating new commands
 
 If command type is not ``Normal``, then you have to make further configuration:
 
-* `Enable technical features <https://odoo-development.readthedocs.io/en/latest/odoo/usage/technical-features.html>`_
+* `Enable technical features <https://odoo-development.readthedocs.io/en/latest/odoo/usage/technical-features.html>`__
 
 For periodic reports:
 
