@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import datetime
 import dateutil
@@ -9,7 +9,6 @@ from telebot.apihelper import ApiException
 import sys
 from lxml import etree
 
-import openerp
 from openerp import tools
 from openerp import api, models, fields
 import openerp.addons.auth_signup.res_users as res_users

@@ -69,6 +69,7 @@ class TelegramBus(models.Model):
             # https://github.com/odoo/odoo/commit/18f3de2f19dcc211b10cc8b9f1cfd5fcdca22a9e
             # but we cannot apply, as there is no _cr.after function in 8.0
             if not openerp.tools.config['test_enable']:
+                # we don't make commit in test mode to allow rollback test data
                 self._cr.commit()
             with openerp.sql_db.db_connect('postgres').cursor() as cr2:
                 cr2.execute("notify telegram_bus, %s", (json_dump(list(channels)),))
@@ -151,6 +152,7 @@ class TelegramDispatch(object):
         with openerp.sql_db.db_connect('postgres').cursor() as cr:
             conn = cr._cnx
             cr.execute("listen telegram_bus")
+            # Commit
             cr.commit();
             while True:
                 if select.select([conn], [], [], TIMEOUT) == ([], [], []):
