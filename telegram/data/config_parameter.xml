@@ -5,10 +5,12 @@
         <field name="key">telegram.token</field>
         <field name="value">null</field>
     </record>
+
     <record model="ir.config_parameter" id="telegram_odoo_threads">
         <field name="key">telegram.odoo_threads</field>
         <field name="value">2</field>
     </record>
+
     <record model="ir.config_parameter" id="telegram_threads">
         <field name="key">telegram.telegram_threads</field>
         <field name="value">2</field>

@@ -42,7 +42,7 @@ class TelegramBus(models.Model):
 
     @api.model
     def gc(self):
-        timeout_ago = datetime.datetime.utcnow()-datetime.timedelta(seconds=TIMEOUT*2)
+        timeout_ago = datetime.datetime.utcnow() - datetime.timedelta(seconds=TIMEOUT * 2)
         domain = [('create_date', '<', timeout_ago.strftime(DEFAULT_SERVER_DATETIME_FORMAT))]
         return self.sudo().search(domain).unlink()
 
@@ -79,7 +79,7 @@ class TelegramBus(models.Model):
             options = {}
         # first poll return the notification in the 'buffer'
         if last == 0:
-            timeout_ago = datetime.datetime.utcnow()-datetime.timedelta(seconds=TIMEOUT)
+            timeout_ago = datetime.datetime.utcnow() - datetime.timedelta(seconds=TIMEOUT)
             domain = [('create_date', '>', timeout_ago.strftime(DEFAULT_SERVER_DATETIME_FORMAT))]
         else:  # else returns the unread notifications
             domain = [('id', '>', last)]
@@ -112,6 +112,7 @@ class TelegramDispatch(object):
         Notifier thread. It notifies OdooTelegramThread about messages to it, sent by bus.
         Only one instance of TelegramDispatch for all databases.
     """
+
     def __init__(self):
         self.channels = {}
 
@@ -147,7 +148,8 @@ class TelegramDispatch(object):
         with openerp.sql_db.db_connect('postgres').cursor() as cr:
             conn = cr._cnx
             cr.execute("listen telegram_bus")
-            cr.commit();
+            # Commit
+            cr.commit()
             while True:
                 if select.select([conn], [], [], TIMEOUT) == ([], [], []):
                     pass
@@ -167,7 +169,7 @@ class TelegramDispatch(object):
         while True:
             try:
                 self.loop()
-            except Exception, e:
+            except Exception:
                 _logger.exception("Bus.loop error, sleep and retry")
                 time.sleep(TIMEOUT)
 

@@ -33,7 +33,7 @@
     "demo": [
     ],
 
-    'post_load' : 'telegram_worker',
+    'post_load': 'telegram_worker',
     "pre_init_hook": None,
     "post_init_hook": None,
     "installable": True,
