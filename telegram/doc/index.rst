@@ -98,7 +98,7 @@ For notifications:
   * **When to Run**, e.g. ``On Creation & Update``
   * **Filter** if needed
 
-* At ``Conditions`` tab specify:
+* At ``Actions`` tab specify:
 
   * **Server actions to run** - select ``Telegram: handle subscriptions (finds commands via "Related models" field)``
 
@@ -114,7 +114,7 @@ For speeding up responses:
   * **When to Run**, e.g. ``On Creation & Update``
   * **Filter** if needed
 
-* At ``Conditions`` tab specify:
+* At ``Actions`` tab specify:
 
   * **Server actions to run** - select ``Telegram: Update cache (finds commands via "Related models" field)``
 
