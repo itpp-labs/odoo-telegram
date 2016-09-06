@@ -46,8 +46,8 @@ Configuration
 * Open ``Technical / Parameters / System Parameters`` menu.
 
   * Enter value for ``telegram.token``. This is yours telegram bot token that *bot father* provided to you.
-  * Optional. Enter value for ``telegram.odoo_threads``. Number of odoo threads that may to run some tasks (calculations, reports preparation and so on) received form bot. Default value is 2.
-  * Opntional. Enter value for ``telegram.telegram_threads``. If you have lots of users per database you may be prefer to have bunch of telegram threads that handles requests from telegram clients to increase response speed. Default value is 2.
+  * Optional. Enter value for ``telegram.num_odoo_threads``. Number of odoo threads that may to run some tasks (calculations, reports preparation and so on) received form bot. Default value is 2.
+  * Opntional. Enter value for ``telegram.num_telegram_threads``. If you have lots of users per database you may be prefer to have bunch of telegram threads that handles requests from telegram clients to increase response speed. Default value is 2.
 
 
 Usage

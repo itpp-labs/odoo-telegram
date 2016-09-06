@@ -174,6 +174,7 @@ class TelegramDispatch(object):
                         event.set()
 
     def run(self):
+        _logger.info("TelegramDispatch started")
         while True:
             try:
                 self.loop()
