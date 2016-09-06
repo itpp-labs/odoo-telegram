@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
+import threading
 import datetime
 import dateutil
 import time
 import logging
 from telebot.apihelper import ApiException
 from lxml import etree
+from telebot import TeleBot
+import telebot.util as util
 
 from openerp import tools
 from openerp import api, models, fields
@@ -13,9 +16,9 @@ import openerp.addons.auth_signup.res_users as res_users
 from openerp.tools.safe_eval import safe_eval
 from openerp.tools.translate import _
 from openerp.addons.base.ir.ir_qweb import QWebContext
+import openerp
 
-
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger('# ' + __name__)
 
 
 class TelegramCommand(models.Model):
@@ -412,6 +415,57 @@ Check Help Tab for the rest variables.
                 command.send(bot, rendered, tsession)
 
 
+class TelegramManager(object):
+
+    def __init__(self, threads_bundles_list, OdooTelegramThread):
+        self.threads_bundles_list = threads_bundles_list
+        self.OdooTelegramThread = OdooTelegramThread
+        # this called by run() in while self.alive cycle
+
+
+
+    @api.model
+    def telegram_proceed_ir_config(self):
+        _logger.info('telegram_proceed_ir_config')
+        active_id = self._context['active_id']
+        parameter = self.env['ir.config_parameter'].browse(active_id)
+        if parameter.key == 'telegram.token':
+            self.build_new_proc_bundle(self._cr.dbname)
+
+    def build_new_proc_bundle(self, dbname):
+        def listener(messages):
+            try:
+                self.env['telegram.command'].telegram_listener(messages, bot)
+            except:
+                _logger.error('Error while processing Telegram messages: %s' % messages, exc_info=True)
+
+        token = self.env['ir.config_parameter'].get_param('telegram.token')
+        if token and len(token) > 10:
+            res = self.get_bundle_action(dbname)
+            if res['action'] == 'complete':
+                _logger.info("Database %s just obtained new token.", dbname)
+                num_telegram_threads = int(self.env['ir.config_parameter'].get_param('telegram.telegram_threads'))
+                bot = TeleBotMod(token, threaded=True, num_threads=num_telegram_threads)
+                bot.telegram_threads = num_telegram_threads
+                bot.set_update_listener(listener)
+                bot.db_name = dbname  # needs in telegram_listener()
+                bot_thread = BotPollingThread(self.interval, bot)
+                bot_thread.start()
+                res['bundle']['token'] = token
+                res['bundle']['bot'] = bot
+                res['bundle']['bot_thread'] = bot_thread
+
+    def get_bundle_action(self, dbname):
+        for bundle in self.threads_bundles_list:
+            if bundle['db_name'] == dbname:
+                if bundle['bot']:
+                    # destroy old threads and create new
+                    return {'action': 'update', 'bundle': bundle}
+                else:
+                    return {'action': 'complete', 'bundle': bundle}
+        return {'action': 'new', 'bundle': False}
+
+
 class TelegramSession(models.Model):
     _name = "telegram.session"
 
@@ -431,3 +485,94 @@ class TelegramSession(models.Model):
         if not tsession:
             tsession = self.env['telegram.session'].create({'chat_ID': chat_ID})
         return tsession
+
+
+class TeleBotMod(TeleBot, object):
+    """
+        Little bit modified TeleBot. Just to control amount of children threads to be created.
+    """
+
+    def __init__(self, token, threaded=True, skip_pending=False, num_threads=2):
+        super(TeleBotMod, self).__init__(token, threaded=False, skip_pending=skip_pending)
+        self.worker_pool = util.ThreadPool(num_threads)
+        self.cache = CommandCache()
+        _logger.info("TeleBot started with %s threads" % num_threads)
+
+
+class CommandCache(object):
+    """
+        Cache structure:
+        {
+          <command_id>: {
+             <user_id1>: <response1>
+             <user_id2>: <response2>
+          }
+        }
+    """
+
+    def __init__(self):
+        self._vals = {}
+
+    def set_value(self, command, response, tsession=None):
+        if command.type != 'cacheable':
+            return
+
+        user_id = 0
+        if not command.universal:
+            user_id = tsession.user_id.id
+
+        if command.id not in self._vals:
+            self._vals[command.id] = {}
+        self._vals[command.id][user_id] = response
+
+    def get_value(self, command, tsession):
+        user_id = 0
+        if not command.universal:
+            user_id = tsession.user_id.id
+
+        if command.id not in self._vals:
+            return False
+        return self._vals[command.id].get(user_id)
+
+
+class BotPollingThread(threading.Thread):
+    """
+        This is father-thread for telegram bot execution-threads.
+        When bot polling is started it at once spawns several child threads (num=telegram.telegram_threads).
+        Then in __threaded_polling() it listens for events from telegram server.
+        If it catches message from server it gives to manage this message to one of executors that calls telegram_listener().
+        Listener do what command requires by it self or may send according command in telegram bus.
+        For every database with token one bot and one bot_polling is created.
+    """
+
+    def __init__(self, interval, bot):
+        threading.Thread.__init__(self, name='BotPollingThread')
+        self.daemon = True
+        self.interval = interval
+        self.bot = bot
+
+    def run(self):
+        _logger.info("BotPollingThread started.")
+        self.bot.polling()
+
+
+def dump(obj):
+  for attr in dir(obj):
+    print "obj.%s = %s" % (attr, getattr(obj, attr))
+
+def dumpclean(obj):
+    if type(obj) == dict:
+        for k, v in obj.items():
+            if hasattr(v, '__iter__'):
+                print k
+                dumpclean(v)
+            else:
+                print '%s : %s' % (k, v)
+    elif type(obj) == list:
+        for v in obj:
+            if hasattr(v, '__iter__'):
+                dumpclean(v)
+            else:
+                print v
+    else:
+        print obj

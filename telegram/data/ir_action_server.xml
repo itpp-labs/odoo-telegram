@@ -17,13 +17,13 @@
         <field name="state">code</field>
         <field name="code">self.action_handle_subscriptions(cr, uid, context=context)</field>
     </record>
-    <!--<record id="telegram_manage_threads_event" model="ir.actions.server">-->
-        <!--<field name="name">Manage threads number</field>-->
-        <!--<field name="model_id" ref="model_telegram_command"/>-->
-        <!--<field name="condition">True</field>-->
-        <!--<field name="type">ir.actions.server</field>-->
-        <!--<field name="state">code</field>-->
-        <!--<field name="code">self.telegram_manage_subscriptions_event(cr, uid, context=context)</field>-->
-    <!--</record>-->
+    <record id="action_manage_threads" model="ir.actions.server">
+        <field name="name">Telegram: Manage threads</field>
+        <field name="model_id" ref="model_telegram_manager"/>
+        <field name="condition">True</field>
+        <field name="type">ir.actions.server</field>
+        <field name="state">code</field>
+        <field name="code">self.telegram_proceed_ir_config(cr, uid, context=context)</field>
+    </record>
 </data>
 </openerp>
