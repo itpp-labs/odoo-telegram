@@ -50,7 +50,6 @@ class WorkerTelegram(Worker):
         self.interval = 10
         self.threads_bundles = {}  # {db_name: {odoo_thread, odoo_dispatch}}
         self.singles_ran = False  # indicates one instance of odoo_dispatcher and odoo_thread exists
-        self.odoo_thread = False
         self.odoo_dispatch = False
 
     def process_work(self):
@@ -63,9 +62,9 @@ class WorkerTelegram(Worker):
             if registry.get('telegram.bus', False):
                 # _logger.info("telegram.bus in %s" % db_name)
                 self.odoo_dispatch = telegram_bus.TelegramDispatch().start()
-                self.odoo_thread = OdooTelegramThread(self.interval, self.odoo_dispatch, dbname, False)
-                self.odoo_thread.start()
-                self.threads_bundles[dbname] = {'odoo_thread': self.odoo_thread,
+                odoo_thread = OdooTelegramThread(self.interval, self.odoo_dispatch, dbname, False)
+                odoo_thread.start()
+                self.threads_bundles[dbname] = {'odoo_thread': odoo_thread,
                                                 'odoo_dispatch': self.odoo_dispatch}
         time.sleep(self.interval / 2)
 
