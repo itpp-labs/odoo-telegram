@@ -8,7 +8,7 @@ Installation
 Base dependencies
 -----------------
 
-Install foloowing python libs::
+Install following python libs::
 
     pip2 install -U requests
     pip2 install 'requests[security]'

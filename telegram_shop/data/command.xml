@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+    <record model="telegram.command" id="shop_command">
+        <field name="name">/shop</field>
+        <field name="description">Shows available goods</field>
+        <field name="sequence" eval="100"/>
+        <field name="type">normal</field>
+        <field name="universal">True</field>
+        <field name="group_ids" eval="[(4, ref('base.group_user'))]" />
+        <field name="response_code">#
+_logger.debug("callback_data: %s" % callback_data)
+if callback_data:
+    # callback_data = {'command' : shop
+    #                  'action': menuin/menuout/itemin/itemopen/itemadd/itemremove/checkout/cartin/cartout
+    #                  'id': some_cat_id/some_item_id}
+    element_id = int(callback_data.split('_')[2])
+    _logger.debug("element_id: %s" % element_id)
+    if 'menuin' in callback_data:
+        data['action'] = 'menuin'
+        res = env['product.category'].search([('parent_id','=',element_id)])
+        if not res:
+            res = env['product.product'].search([('categ_id','=',element_id)])
+            data['action'] = 'itemin'
+        _logger.debug("res: %s" % res)
+        keyboard = types.InlineKeyboardMarkup()
+        for r in res:
+            callback_button = types.InlineKeyboardButton(text=r.name, callback_data='shop_'+data['action']+'_'+str(r.id))
+            keyboard.add(callback_button)
+        data['reply_markup'] = keyboard
+    elif 'itemin' in callback_data:
+        data['action'] = 'itemopen'
+        product = env['product.product'].browse(element_id)
+        data['product_name'] = product.name
+        photos = [{'data':product.image}]
+else:
+    data['product_categories'] = env['product.category'].search([])
+    keyboard = types.InlineKeyboardMarkup()
+    for r in data['product_categories']:
+        cat_name = env['product.category'].browse(r.id).name
+        callback_button = types.InlineKeyboardButton(text=cat_name, callback_data='shop_menuin_'+str(r.id))
+        keyboard.add(callback_button)
+    data['reply_markup'] = keyboard
+    data['action'] = 'menuin'</field>
+        <field name="response_template" type="xml">
+            <t>
+                <t t-if="data.get('action', False)">
+                    <t t-if="data['action'] == 'menuin'">
+                        <t>Select category:</t>
+                    </t>
+                    <t t-if="data['action'] == 'itemin'">
+                        <t>Select product:</t>
+                    </t>
+                    <t t-if="data['action'] == 'itemopen'">
+                        <t t-esc="data['product_name']"/>
+                    </t>
+                </t>
+            </t>
+        </field>
+    </record>
+</data>
+</openerp>
