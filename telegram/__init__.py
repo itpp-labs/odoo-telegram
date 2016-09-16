@@ -49,11 +49,12 @@ class WorkerTelegram(Worker):
         super(WorkerTelegram, self).__init__(multi)
         self.interval = 10
         self.threads_bundles = {}  # {db_name: {odoo_thread, odoo_dispatch}}
-        self.singles_ran = False  # indicates one instance of odoo_dispatcher and odoo_thread exists
         self.odoo_dispatch = False
 
     def process_work(self):
         # this called by run() in while self.alive cycle
+        if not self.odoo_dispatch:
+            self.odoo_dispatch = telegram_bus.TelegramDispatch().start()
         db_names = tools.db_list()
         for dbname in db_names:
             if self.threads_bundles.get(dbname, False):
@@ -61,7 +62,6 @@ class WorkerTelegram(Worker):
             registry = tools.get_registry(dbname)
             if registry.get('telegram.bus', False):
                 # _logger.info("telegram.bus in %s" % db_name)
-                self.odoo_dispatch = telegram_bus.TelegramDispatch().start()
                 odoo_thread = OdooTelegramThread(self.interval, self.odoo_dispatch, dbname, False)
                 odoo_thread.start()
                 self.threads_bundles[dbname] = {'odoo_thread': odoo_thread,
