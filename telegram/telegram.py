@@ -429,8 +429,8 @@ class IrConfigParameter(models.Model):
             message['action'] = 'odoo_threads_changed'
         elif parameter.key == 'telegram.num_telegram_threads':
             message['action'] = 'telegram_threads_changed'
-        message['dbname'] = self._cr.dbname
         if message:
+            message['dbname'] = self._cr.dbname
             self.env['telegram.bus'].sendone('telegram_channel', message)
 
 
