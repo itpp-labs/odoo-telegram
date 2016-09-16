@@ -110,7 +110,8 @@ class OdooTelegramThread(threading.Thread):
         self.bot_thread = False
         self.last = 0
         self.dbname = dbname
-        self.num_odoo_threads = tools.get_num_of_odoo_threads(dbname)
+        self.num_odoo_threads = teletools.get_int_parameter(dbname, 'telegram.num_odoo_threads')
+
         self.odoo_thread_pool = util.ThreadPool(self.num_odoo_threads)
 
     def run(self):
@@ -169,7 +170,7 @@ class OdooTelegramThread(threading.Thread):
             res = self.get_bundle_action(dbname, odoo_thread)
             if res == 'complete':
                 _logger.info("Database %s just obtained new token or on-boot launch.", dbname)
-                num_telegram_threads = int(teletools.get_parameter(dbname, 'telegram.num_telegram_threads'))
+                num_telegram_threads = teletools.get_int_parameter(dbname, 'telegram.num_telegram_threads')
                 bot = TeleBotMod(token, threaded=True, num_threads=num_telegram_threads)
                 bot.num_telegram_threads = num_telegram_threads
                 bot.set_update_listener(listener)
@@ -193,14 +194,14 @@ class OdooTelegramThread(threading.Thread):
 
     @staticmethod
     def update_odoo_threads(dbname, odoo_thread):
-        new_num_threads = teletools.get_num_of_odoo_threads(dbname)
+        new_num_threads = teletools.get_int_parameter(dbname, 'telegram.num_odoo_threads')
         diff = new_num_threads - odoo_thread.num_odoo_threads
         odoo_thread.num_odoo_threads += diff
         OdooTelegramThread._update_threads(diff, 'Odoo', odoo_thread.odoo_thread_pool)
 
     @staticmethod
     def update_telegram_threads(dbname, odoo_thread):
-        new_num_threads = int(teletools.get_parameter(dbname, 'telegram.num_telegram_threads'))
+        new_num_threads = teletools.get_int_parameter(dbname, 'telegram.num_telegram_threads')
         diff = new_num_threads - odoo_thread.bot.num_telegram_threads
         odoo_thread.bot.num_telegram_threads += diff
         OdooTelegramThread._update_threads(diff, 'Telegram', odoo_thread.bot.worker_pool)

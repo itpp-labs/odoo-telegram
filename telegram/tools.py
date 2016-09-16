@@ -37,12 +37,13 @@ def db_list():
     return db_names
 
 
-def get_num_of_odoo_threads(dbname):
-    n = 1  # its minimum
-    num = get_parameter(dbname, 'telegram.num_odoo_threads')
-    if num:
-        n += int(num)
-    return n
+def get_int_parameter(dbname, key, default=1):
+    num = get_parameter(dbname, key)
+    try:
+        return int(num)
+    except:
+        _logger.info('Wrong value of %s: %s', key, num)
+    return default
 
 
 def token_is_valid(token):
