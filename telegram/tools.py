@@ -33,7 +33,7 @@ def db_list():
     if config['db_name']:
         db_names = config['db_name'].split(',')
     else:
-        db_names = openerp.service.db.list_dbs(True)
+        db_names = openerp.service.db.exp_list(True)
     return db_names
 
 
