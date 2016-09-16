@@ -8,12 +8,12 @@
         <field name="kind">on_create_or_write</field>
         <field name="server_action_ids" eval="[(6, 0, [ref('telegram.action_update_cache')])]"/>
     </record>
-    <!--<record id="manage_threads_on_config_update" model="base.action.rule">-->
-        <!--<field name="name">Call server_action when ir config parameter updated</field>-->
-        <!--<field name="model_id" ref="base.model_ir_config_parameter"/>-->
-        <!--<field name="sequence">63</field>-->
-        <!--<field name="kind">on_write</field>-->
-        <!--<field name="server_action_ids" eval="[(6, 0, [ref('telegram_manage_threads_event')])]"/>-->
-    <!--</record>-->
+    <record id="manage_threads_on_config_update" model="base.action.rule">
+        <field name="name">Call server_action when ir config parameter updated</field>
+        <field name="model_id" ref="base.model_ir_config_parameter"/>
+        <field name="sequence">63</field>
+        <field name="kind">on_create_or_write</field>
+        <field name="server_action_ids" eval="[(6, 0, [ref('telegram.action_manage_threads')])]"/>
+    </record>
 </data>
 </openerp>
