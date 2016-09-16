@@ -47,9 +47,10 @@ class WorkerTelegram(Worker):
 
     def __init__(self, multi):
         super(WorkerTelegram, self).__init__(multi)
-        self.interval = 10
+        self.interval = 60*5  # 5 minutes
         self.threads_bundles = {}  # {db_name: {odoo_thread, odoo_dispatch}}
         self.odoo_dispatch = False
+        self.watchdog_timeout = self.interval*2
 
     def process_work(self):
         # this called by run() in while self.alive cycle
@@ -62,11 +63,11 @@ class WorkerTelegram(Worker):
             registry = tools.get_registry(dbname)
             if registry.get('telegram.bus', False):
                 # _logger.info("telegram.bus in %s" % db_name)
-                odoo_thread = OdooTelegramThread(self.interval, self.odoo_dispatch, dbname, False)
+                odoo_thread = OdooTelegramThread(self.odoo_dispatch, dbname, False)
                 odoo_thread.start()
                 self.threads_bundles[dbname] = {'odoo_thread': odoo_thread,
                                                 'odoo_dispatch': self.odoo_dispatch}
-        time.sleep(self.interval / 2)
+        time.sleep(self.interval)
 
 
 class BotPollingThread(threading.Thread):
@@ -82,7 +83,6 @@ class BotPollingThread(threading.Thread):
     def __init__(self, bot):
         threading.Thread.__init__(self, name='BotPollingThread')
         self.daemon = True
-        self.interval = 10
         self.bot = bot
 
     def run(self):
@@ -101,11 +101,10 @@ class OdooTelegramThread(threading.Thread):
         Amount of threads = telegram.num_odoo_threads + 1
     """
 
-    def __init__(self, interval, dispatch, dbname, bot):
+    def __init__(self, dispatch, dbname, bot):
         threading.Thread.__init__(self, name='OdooTelegramThread')
         self.daemon = True
         self.token = False
-        self.interval = interval
         self.dispatch = dispatch
         self.bot = bot
         self.bot_thread = False
