@@ -6,14 +6,12 @@ import time
 import logging
 from telebot.apihelper import ApiException
 from lxml import etree
-
 from openerp import tools
 from openerp import api, models, fields
 import openerp.addons.auth_signup.res_users as res_users
 from openerp.tools.safe_eval import safe_eval
 from openerp.tools.translate import _
 from openerp.addons.base.ir.ir_qweb import QWebContext
-
 
 _logger = logging.getLogger(__name__)
 
@@ -103,12 +101,13 @@ Check Help Tab for the rest variables.
 
     # bus listener
     @api.model
-    def odoo_listener(self, message, bot):
+    def odoo_listener(self, message, odoo_thread, bot):
         bus_message = message['message']  # message from bus, not from telegram server.
         _logger.debug('bus_message')
         _logger.debug(bus_message)
         if bus_message['action'] == 'update_cache':
-            self.update_cache(bus_message, bot)
+            if bot:
+                self.update_cache(bus_message, bot)
         elif bus_message['action'] == 'send_notifications':
             self.send_notifications(bus_message, bot)
 
@@ -410,6 +409,28 @@ Check Help Tab for the rest variables.
                 if not command.universal:
                     rendered = command.render_notification(locals_dict, tsession)
                 command.send(bot, rendered, tsession)
+
+
+class IrConfigParameter(models.Model):
+    _inherit = 'ir.config_parameter'
+
+    @api.model
+    def proceed_telegram_configs(self, dbname=False):
+        # invoked by ir.actions.server
+        _logger.debug('telegram_proceed_ir_config')
+        message = {}
+        active_id = self._context['active_id']
+        parameter = self.env['ir.config_parameter'].browse(active_id)
+        _logger.debug('parameter = %s' % parameter)
+        if parameter.key == 'telegram.token':
+            message['action'] = 'token_changed'
+        elif parameter.key == 'telegram.num_odoo_threads':
+            message['action'] = 'odoo_threads_changed'
+        elif parameter.key == 'telegram.num_telegram_threads':
+            message['action'] = 'telegram_threads_changed'
+        if message:
+            message['dbname'] = self._cr.dbname
+            self.env['telegram.bus'].sendone('telegram_channel', message)
 
 
 class TelegramSession(models.Model):

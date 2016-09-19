@@ -127,7 +127,10 @@ class TelegramDispatch(object):
         registry = openerp.registry(dbname)
         with registry.cursor() as cr:
             with openerp.api.Environment.manage():
-                notifications = registry['telegram.bus'].poll(cr, openerp.SUPERUSER_ID, channels, last, options)
+                if registry.get('telegram.bus', False):
+                    notifications = registry['telegram.bus'].poll(cr, openerp.SUPERUSER_ID, channels, last, options)
+                else:
+                    notifications = []
         # or wait for future ones
         if not notifications:
             event = self.Event()
@@ -166,6 +169,7 @@ class TelegramDispatch(object):
                         event.set()
 
     def run(self):
+        _logger.info("TelegramDispatch started")
         while True:
             try:
                 self.loop()
