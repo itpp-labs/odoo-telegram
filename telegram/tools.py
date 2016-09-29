@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import openerp
-import openerp.tools.config as config
+import odoo.tools.config as config
 from openerp import SUPERUSER_ID
 import logging
 

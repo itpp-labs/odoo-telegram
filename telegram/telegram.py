@@ -8,10 +8,10 @@ from telebot.apihelper import ApiException
 from lxml import etree
 from openerp import tools
 from openerp import api, models, fields
-import openerp.addons.auth_signup.res_users as res_users
+from openerp.addons.auth_signup.models.res_partner import random_token
 from openerp.tools.safe_eval import safe_eval
 from openerp.tools.translate import _
-from openerp.addons.base.ir.ir_qweb import QWebContext
+from openerp.addons.base.ir.ir_qweb.qweb import QWeb
 
 _logger = logging.getLogger(__name__)
 
@@ -161,7 +161,7 @@ Check Help Tab for the rest variables.
         return locals_dict
 
     def _qcontext(self, locals_dict, tsession):
-        qcontext = QWebContext(self._cr, self._uid, {})
+        qcontext = {}
         qcontext['data'] = locals_dict['data']
         qcontext['subscribed'] = locals_dict.get('subscribed')
         qcontext['tsession'] = tsession
@@ -171,7 +171,7 @@ Check Help Tab for the rest variables.
         t0 = time.time()
         dom = etree.fromstring(template)
         qcontext = self._qcontext(locals_dict, tsession)
-        html = self.pool['ir.qweb'].render_node(dom, qcontext)
+        html = QWeb.render(dom, qcontext)
         render_time = time.time() - t0
         _logger.debug('Render in %.2fs\n qcontext:\n%s \nTemplate:\n%s\n', render_time, qcontext, template)
         return {'photos': [],
@@ -437,7 +437,7 @@ class TelegramSession(models.Model):
     _name = "telegram.session"
 
     chat_ID = fields.Char()
-    token = fields.Char(default=lambda self: res_users.random_token())
+    token = fields.Char(default=lambda self: random_token())
     logged_in = fields.Boolean()
     user_id = fields.Many2one('res.users')
 
