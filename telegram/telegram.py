@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from StringIO import StringIO
+import base64
 import datetime
 import dateutil
 import time
 import logging
-from telebot.apihelper import ApiException
+from telebot.apihelper import ApiException, _convert_markup
+from telebot import types, TeleBot
 from lxml import etree
 from openerp import tools
 from openerp import api, models, fields
@@ -95,7 +98,6 @@ Check Help Tab for the rest variables.
             if not response:
                 response = command.get_response(locals_dict, tsession)
                 bot.cache.set_value(command, response, tsession)
-
             self.send(bot, response, tsession)
             command.eval_post_response(tsession)
 
@@ -141,10 +143,12 @@ Check Help Tab for the rest variables.
             'time': time,
             '_logger': _logger,
             'tools': tools,
+            'types': types,
         }
 
     @api.multi
     def _eval(self, code, locals_dict=None, tsession=None):
+        _logger.debug("_eval locals_dict: %s" % locals_dict)
         t0 = time.time()
         locals_dict = locals_dict or {}
         user = tsession and tsession.get_user()
@@ -152,6 +156,8 @@ Check Help Tab for the rest variables.
             'command': self.sudo(user),
             'env': self.env(user=user),
             'data': {},
+            'photos': [],
+            'callback_data': locals_dict.get('callback_data', False),
             'tsession': tsession})
         globals_dict = self._get_globals_dict()
         if code:
@@ -174,8 +180,18 @@ Check Help Tab for the rest variables.
         html = self.pool['ir.qweb'].render_node(dom, qcontext)
         render_time = time.time() - t0
         _logger.debug('Render in %.2fs\n qcontext:\n%s \nTemplate:\n%s\n', render_time, qcontext, template)
-        return {'photos': [],
-                'html': html}
+        ret = {'photos': [],
+               'markup': _convert_markup(locals_dict.get('data', {}).get('reply_markup', {})),
+               'html': html}
+        for photo in locals_dict.get('photos', []):
+            if photo.get('type') == 'file':
+                f = photo['data']
+            else:
+                # type is 'base64' by default'
+                f = StringIO(base64.b64decode(photo['data']))
+                f.name = photo.get('filename', 'item.png')
+            ret['photos'].append({'file': f})
+        return ret
 
     @api.model
     def send(self, bot, rendered, tsession):
@@ -190,9 +206,12 @@ Check Help Tab for the rest variables.
 
     @api.model
     def _send(self, bot, rendered, tsession):
+        reply_markup = rendered.get('markup', None)
+        _logger.debug('_send rendered %s' % rendered)
+        _logger.debug('reply_markup %s' % reply_markup)
         if rendered.get('html'):
             _logger.debug('Send:\n%s', rendered.get('html'))
-            bot.send_message(tsession.chat_ID, rendered.get('html'), parse_mode='HTML')
+            bot.send_message(tsession.chat_ID, rendered.get('html'), parse_mode='HTML', reply_markup=reply_markup)
         if rendered.get('photos'):
             _logger.debug('send photos %s' % len(rendered.get('photos')))
             for photo in rendered.get('photos'):
@@ -205,6 +224,7 @@ Check Help Tab for the rest variables.
                     except ApiException:
                         _logger.debug('Sending photo by file_id is failed', exc_info=True)
                 photo['file'].seek(0)
+                _logger.debug('photo[file] %s ' % photo['file'])
                 res = bot.send_photo(tsession.chat_ID, photo['file'])
                 photo['file_id'] = res.photo[0].file_id
 

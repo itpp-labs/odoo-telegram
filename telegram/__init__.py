@@ -175,6 +175,7 @@ class OdooTelegramThread(threading.Thread):
                 bot.num_telegram_threads = num_telegram_threads
                 bot.set_update_listener(listener)
                 bot.dbname = dbname
+                bot.add_callback_query_handler({'function': lambda call: self.callback_query_handler(call, bot), 'filters': {}})
                 bot_thread = BotPollingThread(bot)
                 bot_thread.start()
                 odoo_thread.token = token
@@ -231,6 +232,38 @@ class OdooTelegramThread(threading.Thread):
                     if cnt >= -diff:
                         break
             _logger.info("%s workers decreased and now its amount = %s" % (proc_name, teletools.running_workers_num(wp.workers)))
+
+    @staticmethod
+    def callback_query_handler(call, bot):
+        # Если сообщение из чата с ботом
+        _logger.debug("callback_inline msg: %s" % call.message)
+        if call.message:
+            if call.data:
+                _logger.debug("callback_inline data: %s" % call.data)
+                _logger.debug("callback_inline call: %s" % call)
+                command_name = call.data.split('_')[0]
+                db = openerp.sql_db.db_connect(bot.dbname)
+                registry = teletools.get_registry(bot.dbname)
+                with openerp.api.Environment.manage(), db.cursor() as cr:
+                    command_id = registry['telegram.command'].search(cr, SUPERUSER_ID,
+                                                                     [('name', '=', '/' + command_name)],
+                                                                     limit=1)
+                    command = registry['telegram.command'].browse(cr, SUPERUSER_ID, command_id)
+                    if not command:
+                        _logger.error('Command %s not found.' % command_name, exc_info=True)
+                        return
+                    _logger.debug("callback_inline command: %s" % command)
+                    tsession = registry['telegram.session'].get_session(cr, SUPERUSER_ID,
+                                                                        call.message.chat.id)
+                    _logger.debug("callback_inline tsession: %s" % tsession)
+                    response = command.get_response({'callback_data': call.data}, tsession)
+                    # bot.cache.set_value(command, response, tsession)
+                    registry['telegram.command'].send(cr, SUPERUSER_ID, bot, response, tsession)
+
+        # Если сообщение из инлайн-режима
+        elif call.inline_message_id:
+            if call.data:
+                pass
 
 
 class TeleBotMod(TeleBot, object):
