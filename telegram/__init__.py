@@ -1,11 +1,13 @@
 # -*- encoding: utf-8 -*-
 
+# local imports, that can be unused:
 from . import telegram
 from . import telegram_bus
 from . import controllers
 from . import tools
-
 from . import tools as teletools
+
+# usual imports
 import time
 import openerp
 from openerp.service.server import Worker
@@ -114,6 +116,18 @@ class OdooTelegramThread(threading.Thread):
 
         self.odoo_thread_pool = util.ThreadPool(self.num_odoo_threads)
 
+    def odoo_execute(self, dbname, model, method, args, kwargs=None):
+        kwargs = kwargs or {}
+        db = openerp.sql_db.db_connect(dbname)
+        registry = tools.get_registry(dbname)
+        with openerp.api.Environment.manage(), db.cursor() as cr:
+            try:
+                _logger.debug('%s: %s %s', method, args, kwargs)
+                getattr(registry[model], method)(cr, SUPERUSER_ID, *args, **kwargs)
+            except:
+                _logger.error('Error while executing method=%s, args=%s, kwargs=%s',
+                              method, args, kwargs, exc_info=True)
+
     def run(self):
         _logger.info("OdooTelegramThread started with %s threads" % self.num_odoo_threads)
 
@@ -129,13 +143,11 @@ class OdooTelegramThread(threading.Thread):
                 _logger.info('telegram_threads_changed')
                 self.update_telegram_threads(dbname, odoo_thread)
             else:
-                db = openerp.sql_db.db_connect(dbname)
-                registry = tools.get_registry(dbname)
-                with openerp.api.Environment.manage(), db.cursor() as cr:
-                    try:
-                        registry['telegram.command'].odoo_listener(cr, SUPERUSER_ID, message, self, bot)
-                    except:
-                        _logger.error('Error while processing Odoo message: %s' % message, exc_info=True)
+                self.odoo_execute(
+                    dbname,
+                    'telegram.command',
+                    'odoo_listener',
+                    (message, bot))
 
         token = teletools.get_parameter(self.dbname, 'telegram.token')
         if not self.bot and tools.token_is_valid(token):
@@ -155,43 +167,37 @@ class OdooTelegramThread(threading.Thread):
                         self.odoo_thread_pool.raise_exceptions()
 
     def build_new_proc_bundle(self, dbname, odoo_thread):
-        def listener(messages):
-            db = openerp.sql_db.db_connect(dbname)
-            registry = teletools.get_registry(dbname)
-            with openerp.api.Environment.manage(), db.cursor() as cr:
-                try:
-                    registry['telegram.command'].telegram_listener(cr, SUPERUSER_ID, messages, bot)
-                except:
-                    _logger.error('Error while processing Telegram messages: %s' % messages, exc_info=True)
-
         token = teletools.get_parameter(dbname, 'telegram.token')
         _logger.debug(token)
         if teletools.token_is_valid(token):
-            res = self.get_bundle_action(dbname, odoo_thread)
-            if res == 'complete':
+            if not odoo_thread.bot:
                 _logger.info("Database %s just obtained new token or on-boot launch.", dbname)
                 num_telegram_threads = teletools.get_int_parameter(dbname, 'telegram.num_telegram_threads')
                 bot = TeleBotMod(token, threaded=True, num_threads=num_telegram_threads)
                 bot.num_telegram_threads = num_telegram_threads
-                bot.set_update_listener(listener)
+                bot.set_update_listener(
+                    lambda messages:
+                    self.odoo_execute(
+                        dbname,
+                        'telegram.command',
+                        'telegram_listener_message',
+                        (messages, bot))
+                )
                 bot.dbname = dbname
-                bot.add_callback_query_handler({'function': lambda call: self.callback_query_handler(call, bot), 'filters': {}})
+                bot.add_callback_query_handler({
+                    'function': lambda call:
+                    self.odoo_execute(
+                        dbname,
+                        'telegram.command',
+                        'telegram_listener_callback_query',
+                        (call, bot)
+                    ),
+                    'filters': {}})
                 bot_thread = BotPollingThread(bot)
                 bot_thread.start()
                 odoo_thread.token = token
                 odoo_thread.bot = bot
                 odoo_thread.bot_thread = bot_thread
-
-    @staticmethod
-    def get_bundle_action(dbname, odoo_thread):
-        # update - means token was updated
-        # complete - means TelegramDispatch and OdooTelegramThread already created and we just need complete threads_bundles with bot and BotPollingThread
-        # new - means there is no even TelegramDispatch and OdooTelegramThread
-        if odoo_thread.bot:
-            return 'update'
-        elif dbname:
-            return 'complete'
-        return 'new'
 
     @staticmethod
     def update_odoo_threads(dbname, odoo_thread):
@@ -232,38 +238,6 @@ class OdooTelegramThread(threading.Thread):
                     if cnt >= -diff:
                         break
             _logger.info("%s workers decreased and now its amount = %s" % (proc_name, teletools.running_workers_num(wp.workers)))
-
-    @staticmethod
-    def callback_query_handler(call, bot):
-        # Если сообщение из чата с ботом
-        _logger.debug("callback_inline msg: %s" % call.message)
-        if call.message:
-            if call.data:
-                _logger.debug("callback_inline data: %s" % call.data)
-                _logger.debug("callback_inline call: %s" % call)
-                command_name = call.data.split('_')[0]
-                db = openerp.sql_db.db_connect(bot.dbname)
-                registry = teletools.get_registry(bot.dbname)
-                with openerp.api.Environment.manage(), db.cursor() as cr:
-                    command_id = registry['telegram.command'].search(cr, SUPERUSER_ID,
-                                                                     [('name', '=', '/' + command_name)],
-                                                                     limit=1)
-                    command = registry['telegram.command'].browse(cr, SUPERUSER_ID, command_id)
-                    if not command:
-                        _logger.error('Command %s not found.' % command_name, exc_info=True)
-                        return
-                    _logger.debug("callback_inline command: %s" % command)
-                    tsession = registry['telegram.session'].get_session(cr, SUPERUSER_ID,
-                                                                        call.message.chat.id)
-                    _logger.debug("callback_inline tsession: %s" % tsession)
-                    response = command.get_response({'callback_data': call.data}, tsession)
-                    # bot.cache.set_value(command, response, tsession)
-                    registry['telegram.command'].send(cr, SUPERUSER_ID, bot, response, tsession)
-
-        # Если сообщение из инлайн-режима
-        elif call.inline_message_id:
-            if call.data:
-                pass
 
 
 class TeleBotMod(TeleBot, object):

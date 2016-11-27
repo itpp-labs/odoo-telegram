@@ -61,25 +61,38 @@ Check Help Tab for the rest variables.
     ]
 
     @api.model
-    def telegram_listener(self, messages, bot):
-        # python_code execution method
-        for tele_message in messages:  # messages from telegram server
-            tsession = self.env['telegram.session'].get_session(tele_message.chat.id)
+    def telegram_listener_message(self, messages, bot):
+        for tmessage in messages:  # messages from telegram server
+            tsession = self.env['telegram.session'].get_session(tmessage.chat.id)
 
-            command = self.env['telegram.command'].sudo(tsession.get_user()).search([('name', '=', tele_message.text)], limit=1)
+            command = self.env['telegram.command'].sudo(tsession.get_user()).search([('name', '=', tmessage.text)], limit=1)
             if not command:
-                not_found = {'html': _("There is no such command or you don't have access:  <i>%s</i>.  \n Use /help to see all available for you commands.") % tele_message.text}
+                not_found = {'html': _("There is no such command or you don't have access:  <i>%s</i>.  \n Use /help to see all available for you commands.") % tmessage.text}
                 self.send(bot, not_found, tsession)
                 if not tsession.user_id:
                     self.send(bot, {'html': _('Or try to /login.')}, tsession)
                 return
-            command.execute(tsession, bot, tele_message)
+            command.execute(tsession, bot, {'tmessage': tmessage})
+
+    @api.model
+    def telegram_listener_callback_query(self, callback_query, bot):
+        """callback_query is https://core.telegram.org/bots/api#callbackquery"""
+        if not callback_query.data:
+            return
+        command_name = callback_query.data.split('_')[0]
+        command = self.search([('name', '=', '/' + command_name)], limit=1)
+        if not command:
+            _logger.error('Command %s not found.', command_name, exc_info=True)
+            return
+        tsession = self.env['telegram.session'].get_session(callback_query.message.chat.id)
+        command.execute(tsession, bot, {'callback_query': callback_query})
 
     @api.multi
-    def execute(self, tsession, bot, tele_message=None):
+    def execute(self, tsession, bot, locals_dict):
+        locals_dict_origin = locals_dict
         for command in self:
             response = None
-            locals_dict = {}
+            locals_dict = locals_dict_origin and locals_dict_origin.copy() or {}
             if command.type == 'subscription':
                 if not tsession.user_id:
                     self.send(bot, {'html': _('You have to /login first.')}, tsession)
@@ -95,9 +108,9 @@ Check Help Tab for the rest variables.
             if command.type == 'cacheable':
                 response = bot.cache.get_value(command, tsession)
                 if response:
-                    _logger.debug('Cached response found for command %s' % (tele_message and tele_message.text or command.name))
+                    _logger.debug('Cached response found for command %s', command.name)
                 else:
-                    _logger.debug('No cache found for command %s' % (tele_message and tele_message.text or command.name))
+                    _logger.debug('No cache found for command %s', command.name)
 
             if not response:
                 response = command.get_response(locals_dict, tsession)
@@ -107,7 +120,7 @@ Check Help Tab for the rest variables.
 
     # bus listener
     @api.model
-    def odoo_listener(self, message, odoo_thread, bot):
+    def odoo_listener(self, message, bot):
         bus_message = message['message']  # message from bus, not from telegram server.
         _logger.debug('bus_message')
         _logger.debug(bus_message)
@@ -212,9 +225,8 @@ Check Help Tab for the rest variables.
 
     @api.model
     def _send(self, bot, rendered, tsession):
-        reply_markup = rendered.get('markup', None)
         _logger.debug('_send rendered %s' % rendered)
-        _logger.debug('reply_markup %s' % reply_markup)
+        reply_markup = rendered.get('markup', None)
         if rendered.get('html'):
             _logger.debug('Send:\n%s', rendered.get('html'))
             bot.send_message(tsession.chat_ID, rendered.get('html'), parse_mode='HTML', reply_markup=reply_markup)
