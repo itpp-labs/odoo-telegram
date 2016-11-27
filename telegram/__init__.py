@@ -146,7 +146,7 @@ class OdooTelegramThread(threading.Thread):
         while True:
             # Exeptions ?
             # ask TelegramDispatch about some messages.
-            msg_list = self.dispatch.poll(dbname=self.dbname, channels=['telegram_channel'], last=self.last)
+            msg_list = self.dispatch.poll(self.dbname, last=self.last)
             for msg in msg_list:
                 if msg['id'] > self.last:
                     self.last = msg['id']

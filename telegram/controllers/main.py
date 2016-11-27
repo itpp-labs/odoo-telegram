@@ -25,5 +25,5 @@ class TelegramLogin(http.Controller):
         message = {'action': 'send_notifications',
                    'command_ids': command_ids,
                    'tsession_id': tsession.id}
-        request.env['telegram.bus'].sendone('telegram_channel', message)
+        request.env['telegram.bus'].sendone(message)
         return utils.redirect('/web')

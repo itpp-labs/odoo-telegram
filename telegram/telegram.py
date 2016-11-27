@@ -364,7 +364,7 @@ Check Help Tab for the rest variables.
             message = {
                 'action': 'update_cache',
                 'command_ids': cacheable_commands.ids}
-            self.env['telegram.bus'].sendone('telegram_channel', message)
+            self.env['telegram.bus'].sendone(message)
 
     @api.model
     def action_handle_subscriptions(self, id_or_xml_id=None):
@@ -387,7 +387,7 @@ Check Help Tab for the rest variables.
                 'event': event,
                 'command_ids': subscription_commands.ids
             }
-            self.env['telegram.bus'].sendone('telegram_channel', message)
+            self.env['telegram.bus'].sendone(message)
 
     # bus reaction methods
     def update_cache(self, bus_message, bot):
@@ -451,7 +451,7 @@ class IrConfigParameter(models.Model):
             message['action'] = 'telegram_threads_changed'
         if message:
             message['dbname'] = self._cr.dbname
-            self.env['telegram.bus'].sendone('telegram_channel', message)
+            self.env['telegram.bus'].sendone(message)
 
 
 class TelegramSession(models.Model):
