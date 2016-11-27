@@ -117,7 +117,7 @@ Check Help Tab for the rest variables.
         elif bus_message['action'] == 'send_notifications':
             self.send_notifications(bus_message, bot)
         elif bus_message['action'] == 'emulate_request':
-            self.do_emulate_request(bus_message, bot)
+            self.execute_emulated_request(bus_message, bot)
 
     @api.multi
     def get_response(self, locals_dict=None, tsession=None):
@@ -463,7 +463,7 @@ Check Help Tab for the rest variables.
         return True
 
     @api.model
-    def do_emulate_request(self, bus_message, bot):
+    def execute_emulated_request(self, bus_message, bot):
         for command in self.browse(bus_message['command_ids']):
             tsession = self.env['telegram.session'].search([('user_id', '=', bus_message['user_id'])])
             if not tsession or not tsession.chat_ID:
