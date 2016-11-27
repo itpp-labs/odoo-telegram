@@ -76,7 +76,7 @@ Vars that can be updated:
 * charts (module telegram_chart is required) - empty list to be filled by pygal chart objects
 
 Reserved vars:
-* notify_user_ids - list interger user ids to be notified in subscription commands (will affect only if user is subscribed). With empty list nobody receive notification. With unspecified value all subscribers receive notification.
+* notify_user_ids - list interger user ids to be notified in subscription commands (will affect only if user is subscribed). With empty list nobody receives notification. With unspecified value all subscribers receive notification.
 
 Vars that can be used:
 * command - telegram.command record
