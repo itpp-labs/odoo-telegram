@@ -75,11 +75,16 @@ Vars that can be updated:
 * data - empty dictonary to be filled with any data for rendering
 * charts (module telegram_chart is required) - empty list to be filled by pygal chart objects
 
+Reserved vars:
+* notify_user_ids - list interger user ids to be notified in subscription commands (will affect only if user is subscribed). With empty list nobody receives notification. With unspecified value all subscribers receive notification.
+
 Vars that can be used:
 * command - telegram.command record
 * tsession - telegram.session record. 
 * tsession.user_id - current user
+* event - dictonary with keys 'active_model', 'active_id', 'active_ids'. Only for commands triggered by base.action.rule.
 * env - odoo Environment
+* _logger - logger
 
 Libs that can be used:
 * datetime

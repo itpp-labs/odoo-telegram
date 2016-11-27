@@ -19,6 +19,7 @@
     "data": [
         "data/ir_action_rules.xml",
         "data/command.xml",
+        "views/mail_channel.xml",
     ],
     "qweb": [
     ],

@@ -15,17 +15,17 @@
 <t t-if="not subscribed">You have opted out.</t>
         </t></field>
         <field name="notification_code">data = {}
-data['partner_message'] = env['mail.message'].browse(event['active_id'])
-data['partner_message_from'] = data['partner_message'].author_id.name
-data['partner_message_subject'] = data['partner_message'].subject
-data['partner_message_date'] = data['partner_message'].date
-data['partner_message_body'] = tools.html2plaintext(data['partner_message'].body)
-partner_ids = data['partner_message'].partner_ids
+data['message'] = env['mail.message'].browse(event['active_id'])
+data['message_from'] = data['message'].author_id.name
+data['message_subject'] = data['message'].subject
+data['message_date'] = data['message'].date
+data['message_body'] = tools.html2plaintext(data['message'].body)
+partner_ids = data['message'].partner_ids
 notify_user_ids = partner_ids.mapped('user_ids').ids
         </field>
         <field name="notification_template" type="xml">
             <t>
-<b>New message !</b>
+<b>New message!</b>
 <b>From:</b> <t t-raw="data['partner_message_from']"/>
 <b>Subject:</b> <t t-raw="data['partner_message_subject']"/>
 <b>Time:</b> <t t-raw="data['partner_message_date']"/>
@@ -33,5 +33,65 @@ notify_user_ids = partner_ids.mapped('user_ids').ids
             </t>
         </field>
     </record>
+
+    <record model="telegram.command" id="mail_channels_command">
+        <field name="name">/mail_channels</field>
+        <field name="description">Subscribe to selected channels</field>
+        <field name="sequence" eval="105"/>
+        <field name="type">subscription</field>
+        <field name="universal">True</field>
+        <field name="group_ids" eval="[(4, ref('base.group_user'))]" />
+        <field name="model_ids" eval="[(4, ref('mail.model_mail_message'))]"/>
+        <field name="response_code">
+data['current_channels'] = env.user.partner_id.telegram_subscribed_channel_ids
+        </field>
+        <field name="response_template" type="xml"><t>
+<t t-if="subscribed">You have subscribed to new messages from selected channels. <t t-if="not data['current_channels']">
+Currently, you haven't specified channels. To do that open odoo and switch on <b>Notify to Telegram</b> checkbox.
+</t><t t-if="data['current_channels']">Current channels are: <t t-foreach="data['current_channels']" t-as="ch">
+* <t t-esc="ch.name"/></t>
+</t>
+            </t>
+<t t-if="not subscribed">You have opted out.</t>
+        </t></field>
+        <field name="notification_code">data = {}
+notify_user_ids = []
+message = env['mail.message'].browse(event['active_id'])
+# 8.0:
+if message.model != 'mail.group':
+    # empty list
+    partners = env['res.partner']
+else:
+    channel =  env['mail.group'].browse(message.res_id)
+    partners = channel.telegram_subscriber_ids
+    data['message_channel'] = channel.name
+# 9.0:
+# partners = message.channel_ids.mapped('telegram_subscriber_ids')
+# data['message_channel'] = ", ".join(message.channel_ids.mapped('name'))
+
+if message.author_id:
+    partners -= message.author_id
+
+if partners:
+    notify_user_ids = partners.mapped('user_ids').ids
+
+if notify_user_ids:
+    data['message_from'] = message.author_id.name
+    data['message_subject'] = message.subject
+    data['message_date'] = message.date
+    data['message_body'] = tools.html2plaintext(message.body)
+        </field>
+        <field name="notification_template" type="xml">
+            <t>
+<b>New message!</b>
+<b>Channel: <t t-esc="data['message_channel']"/></b>
+<b>From:</b> <t t-raw="data['message_from']"/>
+<b>Subject:</b> <t t-raw="data['message_subject']"/>
+<b>Time:</b> <t t-raw="data['message_date']"/>
+<b>Text: </b><t t-esc="data['message_body']"/>
+            </t>
+        </field>
+    </record>
+
 </data>
 </openerp>

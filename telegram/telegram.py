@@ -7,7 +7,7 @@ import dateutil
 import time
 import logging
 from telebot.apihelper import ApiException, _convert_markup
-from telebot import types, TeleBot
+from telebot import types
 from lxml import etree
 from openerp import tools
 from openerp import api, models, fields
@@ -73,7 +73,11 @@ Check Help Tab for the rest variables.
                 if not tsession.user_id:
                     self.send(bot, {'html': _('Or try to /login.')}, tsession)
                 return
+            command.execute(tsession, bot, tele_message)
 
+    @api.multi
+    def execute(self, tsession, bot, tele_message=None):
+        for command in self:
             response = None
             locals_dict = {}
             if command.type == 'subscription':
@@ -91,9 +95,9 @@ Check Help Tab for the rest variables.
             if command.type == 'cacheable':
                 response = bot.cache.get_value(command, tsession)
                 if response:
-                    _logger.debug('Cached response found for command %s' % tele_message.text)
+                    _logger.debug('Cached response found for command %s' % (tele_message and tele_message.text or command.name))
                 else:
-                    _logger.debug('No cache found for command %s' % tele_message.text)
+                    _logger.debug('No cache found for command %s' % (tele_message and tele_message.text or command.name))
 
             if not response:
                 response = command.get_response(locals_dict, tsession)
@@ -112,6 +116,8 @@ Check Help Tab for the rest variables.
                 self.update_cache(bus_message, bot)
         elif bus_message['action'] == 'send_notifications':
             self.send_notifications(bus_message, bot)
+        elif bus_message['action'] == 'emulate_request':
+            self.execute_emulated_request(bus_message, bot)
 
     @api.multi
     def get_response(self, locals_dict=None, tsession=None):
@@ -364,7 +370,7 @@ Check Help Tab for the rest variables.
             message = {
                 'action': 'update_cache',
                 'command_ids': cacheable_commands.ids}
-            self.env['telegram.bus'].sendone('telegram_channel', message)
+            self.env['telegram.bus'].sendone(message)
 
     @api.model
     def action_handle_subscriptions(self, id_or_xml_id=None):
@@ -387,7 +393,7 @@ Check Help Tab for the rest variables.
                 'event': event,
                 'command_ids': subscription_commands.ids
             }
-            self.env['telegram.bus'].sendone('telegram_channel', message)
+            self.env['telegram.bus'].sendone(message)
 
     # bus reaction methods
     def update_cache(self, bus_message, bot):
@@ -403,7 +409,7 @@ Check Help Tab for the rest variables.
                     bot.cache.set_value(command, response, tsession)
 
     def send_notifications(self, bus_message, bot):
-        _logger.debug('send_notifications() - called by bus')
+        _logger.debug('send_notifications(). bus_message=%s', bus_message)
         tsession = None
         if bus_message.get('tsession_id'):
             tsession = self.env['telegram.session'].browse(bus_message.get('tsession_id'))
@@ -421,7 +427,7 @@ Check Help Tab for the rest variables.
                 notify_sessions = [tsession]
 
             if not notify_sessions:
-                return
+                continue
 
             if command.universal:
                 rendered = command.render_notification(locals_dict)
@@ -430,6 +436,39 @@ Check Help Tab for the rest variables.
                 if not command.universal:
                     rendered = command.render_notification(locals_dict, tsession)
                 command.send(bot, rendered, tsession)
+
+    @api.multi
+    def has_user(self, user):
+        self.ensure_one()
+        return self in user.telegram_command_ids
+
+    @api.multi
+    def subscribe_user(self, user):
+        """Subscribe if he is not subscribed yet"""
+        self.ensure_one()
+        if self.has_user(user):
+            # already subscribed
+            return False
+        return self.emulate_request(user)
+
+    @api.multi
+    def emulate_request(self, user):
+        """handle request as if it was sent by user"""
+        message = {
+            'action': 'emulate_request',
+            'user_id': user.id,
+            'command_ids': self.ids,
+        }
+        self.env['telegram.bus'].sendone(message)
+        return True
+
+    @api.model
+    def execute_emulated_request(self, bus_message, bot):
+        for command in self.browse(bus_message['command_ids']):
+            tsession = self.env['telegram.session'].search([('user_id', '=', bus_message['user_id'])])
+            if not tsession or not tsession.chat_ID:
+                return False
+            command.execute(tsession, bot)
 
 
 class IrConfigParameter(models.Model):
@@ -451,7 +490,7 @@ class IrConfigParameter(models.Model):
             message['action'] = 'telegram_threads_changed'
         if message:
             message['dbname'] = self._cr.dbname
-            self.env['telegram.bus'].sendone('telegram_channel', message)
+            self.env['telegram.bus'].sendone(message)
 
 
 class TelegramSession(models.Model):
@@ -473,3 +512,8 @@ class TelegramSession(models.Model):
         if not tsession:
             tsession = self.env['telegram.session'].create({'chat_ID': chat_ID})
         return tsession
+
+class ResUsers(models.Model):
+    _inherit = "res.users"
+
+    telegram_command_ids = fields.Many2many('telegram.command', 'command_to_user_rel', 'user_id', 'telegram_command_id', string='Subscribed Commands')
