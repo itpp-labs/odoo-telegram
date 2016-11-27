@@ -7,7 +7,7 @@ import dateutil
 import time
 import logging
 from telebot.apihelper import ApiException, _convert_markup
-from telebot import types, TeleBot
+from telebot import types
 from lxml import etree
 from openerp import tools
 from openerp import api, models, fields
