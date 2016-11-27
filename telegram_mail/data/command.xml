@@ -80,7 +80,6 @@ if notify_user_ids:
     data['message_subject'] = message.subject
     data['message_date'] = message.date
     data['message_body'] = tools.html2plaintext(message.body)
-    # 8.0
         </field>
         <field name="notification_template" type="xml">
             <t>

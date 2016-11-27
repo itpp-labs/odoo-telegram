@@ -19,14 +19,20 @@ class Channel(models.Model):
 
     @api.multi
     def _set_subscribed(self):
-        cur_partner_id = self.env.user.partner_id.id
+        cur_partner = self.env.user.partner_id
         for r in self:
             if r.telegram_subscribed:
-                value = [(4, cur_partner_id, 0)]
-                # TODO: check global subscription and activate if it's off
+                # new value is "subscribed"
+                value = [(4, cur_partner.id, 0)]
+                mail_channels_command = self.env.ref('telegram_mail.mail_channels_command', raise_if_not_found=False)
+                cur_user = cur_partner.user_ids[0]
+                if not cur_partner.telegram_subscribed_channel_ids \
+                   and cur_user \
+                   and mail_channels_command:
+                    # it's first subscribed channel
+                    mail_channels_command.sudo().subscribe_user(cur_user)
             else:
-                value = [(3, cur_partner_id, 0)]
-            print '_set_subscribed', value
+                value = [(3, cur_partner.id, 0)]
             r.write({'telegram_subscriber_ids': value})
 
     @api.multi
