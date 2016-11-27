@@ -39,5 +39,4 @@ class Channel(models.Model):
     def _compute_subscribed(self):
         cur_partner_id = self.env.user.partner_id.id
         for record in self:
-            print '_compute_subscribed', cur_partner_id,  record.telegram_subscriber_ids.ids
             record.telegram_subscribed = cur_partner_id in record.telegram_subscriber_ids.ids
