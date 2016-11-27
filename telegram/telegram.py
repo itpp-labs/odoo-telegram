@@ -403,7 +403,7 @@ Check Help Tab for the rest variables.
                     bot.cache.set_value(command, response, tsession)
 
     def send_notifications(self, bus_message, bot):
-        _logger.debug('send_notifications() - called by bus')
+        _logger.debug('send_notifications(). bus_message=%s', bus_message)
         tsession = None
         if bus_message.get('tsession_id'):
             tsession = self.env['telegram.session'].browse(bus_message.get('tsession_id'))
@@ -421,7 +421,7 @@ Check Help Tab for the rest variables.
                 notify_sessions = [tsession]
 
             if not notify_sessions:
-                return
+                continue
 
             if command.universal:
                 rendered = command.render_notification(locals_dict)
