@@ -2,7 +2,7 @@
 <openerp>
 <data>
     <record id="mail_command_call_server_action" model="base.action.rule">
-        <field name="name">Telegram: broadcase notifications about new mail.message</field>
+        <field name="name">Telegram: broadcast notifications about new mail.message</field>
         <field name="model_id" ref="mail.model_mail_message"/>
         <field name="sequence">61</field>
         <field name="kind">on_create</field>
