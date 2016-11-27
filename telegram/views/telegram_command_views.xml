@@ -82,6 +82,8 @@ Vars that can be used:
 * command - telegram.command record
 * tsession - telegram.session record. 
 * tsession.user_id - current user
+* tmessage - message from telegram. See https://core.telegram.org/bots/api#message
+* tmessage.text - actual UTF-8 text of the message
 * event - dictonary with keys 'active_model', 'active_id', 'active_ids'. Only for commands triggered by base.action.rule.
 * env - odoo Environment
 * _logger - logger
