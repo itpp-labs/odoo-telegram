@@ -10,9 +10,11 @@ Base dependencies
 
 Install following python libs::
 
-    pip2 install -U requests
-    pip2 install 'requests[security]'
-    pip2 install pyTelegramBotAPI
+    pip install -U pip
+    pip install -U requests
+    pip install 'requests[security]'
+    pip install pyTelegramBotAPI
+    pip install emoji
 
 Charts
 ------

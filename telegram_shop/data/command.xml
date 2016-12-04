@@ -8,51 +8,95 @@
         <field name="type">normal</field>
         <field name="universal">True</field>
         <field name="group_ids" eval="[(4, ref('base.group_user'))]" />
-        <field name="response_code">#
-_logger.debug("callback_data: %s" % callback_data)
+        <field name="response_code"><![CDATA[
+CATEGORY_KEY='c'
+PRODUCT_KEY='p'
+
+categ_id = None
+product_id = None
 if callback_data:
-    # callback_data = {'command' : shop
-    #                  'action': menuin/menuout/itemin/itemopen/itemadd/itemremove/checkout/cartin/cartout
-    #                  'id': some_cat_id/some_item_id}
-    element_id = int(callback_data.split('_')[2])
-    _logger.debug("element_id: %s" % element_id)
-    if 'menuin' in callback_data:
-        data['action'] = 'menuin'
-        res = env['product.category'].search([('parent_id','=',element_id)])
-        if not res:
-            res = env['product.product'].search([('categ_id','=',element_id)])
-            data['action'] = 'itemin'
-        _logger.debug("res: %s" % res)
-        keyboard = types.InlineKeyboardMarkup()
-        for r in res:
-            callback_button = types.InlineKeyboardButton(text=r.name, callback_data='shop_'+data['action']+'_'+str(r.id))
-            keyboard.add(callback_button)
-        data['reply_markup'] = keyboard
-    elif 'itemin' in callback_data:
-        data['action'] = 'itemopen'
-        product = env['product.product'].browse(element_id)
-        data['product_name'] = product.name
-        photos = [{'data':product.image}]
+    categ_id = callback_data.get(CATEGORY_KEY)
+    product_id = callback_data.get(PRODUCT_KEY)
+
+if product_id:
+
+    product = env['product.template'].browse(product_id)
+    data['type'] = 'product'
+    data['product'] = product
+    options['photos'] = [{'data':product.image}]
+
 else:
-    data['product_categories'] = env['product.category'].search([])
+
     keyboard = types.InlineKeyboardMarkup()
-    for r in data['product_categories']:
-        cat_name = env['product.category'].browse(r.id).name
-        callback_button = types.InlineKeyboardButton(text=cat_name, callback_data='shop_menuin_'+str(r.id))
-        keyboard.add(callback_button)
-    data['reply_markup'] = keyboard
-    data['action'] = 'menuin'</field>
+    parent = None
+    if categ_id:
+        domain = [('parent_id','=', categ_id)]
+        category = env['product.public.category'].browse(categ_id)
+        parent = category.parent_id
+    else:
+        domain = [('parent_id', '=', None)]
+
+    # Up button
+    up_icon = emoji.emojize(':arrow_heading_up:', use_aliases=True)
+    if parent:
+        keyboard.add(types.InlineKeyboardButton(
+            text=_('Go Up %s %s') % (up_icon, parent.name),
+            callback_data=command.encode_callback_data({
+                CATEGORY_KEY: parent.id
+            })
+        ))
+    elif categ_id:
+        keyboard.add(types.InlineKeyboardButton(
+            text=_('Go Up %s') % up_icon,
+            callback_data=command.encode_callback_data({})
+        ))
+
+    # subcategories
+    res = env['product.public.category'].search(domain)
+    if res:
+        data['type'] = 'categories'
+    for r in res:
+        keyboard.add(types.InlineKeyboardButton(
+            text=r.name, 
+            callback_data=command.encode_callback_data({
+                CATEGORY_KEY: r.id,
+            })))
+
+    if not res:
+        # products
+        domain = []
+        if categ_id:
+            domain = [('public_categ_ids','child_of', categ_id)]
+        res = env['product.template'].search(domain)
+        if res:
+            data['type'] = 'products'
+        for r in res:
+            keyboard.add(types.InlineKeyboardButton(
+                text=r.name, 
+                callback_data=command.encode_callback_data({
+                    PRODUCT_KEY: r.id,
+                })))
+        if not res:
+            data['type'] = 'not_found'
+            keyboard = None
+
+    if keyboard:
+        options['reply_markup'] = keyboard
+    
+]]>
+        </field>
         <field name="response_template" type="xml">
             <t>
-                <t t-if="data.get('action', False)">
-                    <t t-if="data['action'] == 'menuin'">
+                <t t-if="data.get('type', False)">
+                    <t t-if="data['type'] == 'categories'">
                         <t>Select category:</t>
                     </t>
-                    <t t-if="data['action'] == 'itemin'">
+                    <t t-if="data['type'] == 'products'">
                         <t>Select product:</t>
                     </t>
-                    <t t-if="data['action'] == 'itemopen'">
-                        <t t-esc="data['product_name']"/>
+                    <t t-if="data['type'] == 'product'">
+<b><t t-esc="data['product'].name"/></b>
+<em>Price: <t t-esc="data['product'].price"/></em>
                     </t>
                 </t>
             </t>
