@@ -154,7 +154,7 @@ Check Help Tab for the rest variables.
         self.ensure_one()
         return self._render(self.notification_template, locals_dict, tsession)
 
-    @api.multi
+    @api.model
     def _get_globals_dict(self):
         return {
             'datetime': datetime,
@@ -163,22 +163,29 @@ Check Help Tab for the rest variables.
             '_logger': _logger,
             'tools': tools,
             'types': types,
+            '_': _,
         }
+
+    @api.multi
+    def _update_locals_dict(self, locals_dict, tsession):
+        locals_dict = locals_dict or {}
+        user = tsession and tsession.get_user()
+        locals_dict.update({
+            'options': {
+                'photos': [],
+            },
+            'command': self.sudo(user),
+            'env': self.env(user=user),
+            'data': {},
+            'callback_data': locals_dict.get('callback_data', False),
+            'tsession': tsession})
+        return locals_dict
 
     @api.multi
     def _eval(self, code, locals_dict=None, tsession=None):
         _logger.debug("_eval locals_dict: %s" % locals_dict)
         t0 = time.time()
-        locals_dict = locals_dict or {}
-        user = tsession and tsession.get_user()
-        locals_dict.update({
-            'options': {},
-            'command': self.sudo(user),
-            'env': self.env(user=user),
-            'data': {},
-            'photos': [],
-            'callback_data': locals_dict.get('callback_data', False),
-            'tsession': tsession})
+        locals_dict = self._update_locals_dict(locals_dict, tsession)
         globals_dict = self._get_globals_dict()
         if code:
             safe_eval(code, globals_dict, locals_dict, mode="exec", nocopy=True)
@@ -203,7 +210,7 @@ Check Help Tab for the rest variables.
         ret = {'photos': [],
                'markup': _convert_markup(locals_dict.get('data', {}).get('reply_markup', {})),
                'html': html}
-        for photo in locals_dict.get('photos', []):
+        for photo in locals_dict['options'].get('photos', []):
             if photo.get('type') == 'file':
                 f = photo['data']
             else:
