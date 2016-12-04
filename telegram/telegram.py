@@ -96,14 +96,25 @@ Check Help Tab for the rest variables.
         })
 
     @api.multi
-    def inline_keyboard_button(self, options, **kwargs):
+    def inline_keyboard_buttons(self, options, buttons, row_width=None):
+        """Adds set of buttons.
+           Splits buttons to several rows, if row_width is specified"""
         self.ensure_one()
-        kwargs = kwargs.copy()
-        callback_data = kwargs.get('callback_data') or {}
-        kwargs['callback_data'] = self._encode_callback_data(callback_data)
+        row = []
+        for b in buttons:
+            b = b.copy()
+            callback_data = b.get('callback_data') or {}
+            b['callback_data'] = self._encode_callback_data(callback_data)
+            row.append(types.InlineKeyboardButton(**b))
+
         if 'reply_markup' not in options:
             options['reply_markup'] = types.InlineKeyboardMarkup()
-        options['reply_markup'].add(types.InlineKeyboardButton(**kwargs))
+
+        if row_width:
+            options['reply_markup'].row_width = row_width
+            options['reply_markup'].add(*row)
+        else:
+            options['reply_markup'].row(*row)
 
     @api.multi
     def _encode_callback_data(self, callback_data, raise_on_error=True):
@@ -212,6 +223,7 @@ Check Help Tab for the rest variables.
             'env': self.env(user=user),
             'data': {},
             'callback_data': locals_dict.get('callback_data', False),
+            'callback_query': locals_dict.get('callback_query', False),
             'tsession': tsession})
         return locals_dict
 

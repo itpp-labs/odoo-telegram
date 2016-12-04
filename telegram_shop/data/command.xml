@@ -17,6 +17,8 @@ product_id = None
 if callback_data:
     categ_id = callback_data.get(CATEGORY_KEY)
     product_id = callback_data.get(PRODUCT_KEY)
+
+if callback_query:
     if not product_id and callback_query.message.message_id:
         options['editMessageText'] = {'message_id': callback_query.message.message_id}
 
@@ -36,29 +38,31 @@ else:
     else:
         domain = [('parent_id', '=', None)]
 
-    # Up button
+    # Go Up button
     up_icon = emoji.emojize(':arrow_heading_up:', use_aliases=True)
     if parent:
-        command.inline_keyboard_button(options,
-            text=_('Go Up %s %s') % (up_icon, parent.name),
-            callback_data={
-                CATEGORY_KEY: parent.id
-            })
-    elif categ_id:
-        command.inline_keyboard_button(options,
-            text=_('Go Up %s') % up_icon,
-        )
+        command.inline_keyboard_buttons(options,[{
+            'text': _('Go Up %s %s') % (up_icon, parent.name),
+            'callback_data': {
+                CATEGORY_KEY: parent.id,
+            }}])
 
+    elif categ_id:
+        command.inline_keyboard_buttons(options, [{
+                'text': _('Go Up %s') % up_icon,
+            }]
+        )
+    buttons = []
     # subcategories
     res = env['product.public.category'].search(domain)
     if res:
         data['type'] = 'categories'
     for r in res:
-        command.inline_keyboard_button(options,
-            text=r.name, 
-            callback_data={
+        buttons.append({
+            'text': r.name, 
+            'callback_data': {
                 CATEGORY_KEY: r.id,
-            })
+            }})
 
     if not res:
         # products
@@ -69,15 +73,15 @@ else:
         if res:
             data['type'] = 'products'
         for r in res:
-            command.inline_keyboard_button(options,
-                text=r.name, 
-                callback_data={
+            buttons.append({
+                'text': r.name, 
+                'callback_data': {
                     PRODUCT_KEY: r.id,
-                })
+                }})
         if not res:
             data['type'] = 'not_found'
-            options['reply_markup'] = None
-    
+    if buttons:
+        command.inline_keyboard_buttons(options, buttons, row_width=2)
 ]]>
         </field>
         <field name="response_template" type="xml">
