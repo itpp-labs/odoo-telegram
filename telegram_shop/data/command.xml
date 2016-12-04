@@ -17,6 +17,8 @@ product_id = None
 if callback_data:
     categ_id = callback_data.get(CATEGORY_KEY)
     product_id = callback_data.get(PRODUCT_KEY)
+    if not product_id and callback_query.message.message_id:
+        options['editMessageText'] = {'message_id': callback_query.message.message_id}
 
 if product_id:
 

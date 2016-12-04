@@ -76,11 +76,12 @@ Vars that can be updated:
 * options - dictonary to control processing
   * options['notify_user_ids'] - list interger user ids to be notified in subscription commands (will affect only if user is subscribed). With empty list nobody receives notification. With unspecified value all subscribers receive notification.
   * options['reply_markup']
-  * options['charts'] (module telegram_chart is required) - empty list to be filled by pygal chart objects
-  * options['photos'] - empty list of dictionaries with keys
+  * options['charts'] (module telegram_chart is required) - list of pygal chart objects
+  * options['photos'] - list of dictionaries with keys
     * data
     * type = "file"|"base64". Default is "base64".
     * filename
+  * options['editMessageText'] - dictonary with identifier (message_id or inline_message_id). Allows to update existed message instead of sending new one. See https://core.telegram.org/bots/api#editmessagetext. 
 
 Vars that can be used:
 * command - telegram.command record
