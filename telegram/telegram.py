@@ -6,8 +6,10 @@ import datetime
 import dateutil
 import time
 import logging
+import simplejson
 from telebot.apihelper import ApiException, _convert_markup
 from telebot import types
+import emoji
 from lxml import etree
 from openerp import tools
 from openerp import api, models, fields
@@ -17,6 +19,9 @@ from openerp.tools.translate import _
 from openerp.addons.base.ir.ir_qweb import QWebContext
 
 _logger = logging.getLogger(__name__)
+
+CALLBACK_DATA_MAX_SIZE = 64
+# see https://core.telegram.org/bots/api#inlinekeyboardbutton
 
 
 class TelegramCommand(models.Model):
@@ -79,13 +84,30 @@ Check Help Tab for the rest variables.
         """callback_query is https://core.telegram.org/bots/api#callbackquery"""
         if not callback_query.data:
             return
-        command_name = callback_query.data.split('_')[0]
-        command = self.search([('name', '=', '/' + command_name)], limit=1)
+        command, callback_data = self.decode_callback_data(callback_query.data)
         if not command:
-            _logger.error('Command %s not found.', command_name, exc_info=True)
+            _logger.error('Command not found for callback_data %s ', callback_query.data)
             return
         tsession = self.env['telegram.session'].get_session(callback_query.message.chat.id)
-        command.execute(tsession, bot, {'callback_query': callback_query})
+        command.execute(tsession, bot, {
+            'callback_query': callback_query,
+            'callback_data': callback_data,
+        })
+
+    @api.multi
+    def encode_callback_data(self, callback_data, raise_on_error=True):
+        self.ensure_one()
+        value = simplejson.dumps([self.id, callback_data])
+        if len(value) > CALLBACK_DATA_MAX_SIZE:
+            if raise_on_error:
+                raise Exception(_('too big size of callback_data'))
+            return False
+        return value
+
+    @api.model
+    def decode_callback_data(self, data):
+        command_id, callback_data = simplejson.loads(data)
+        return self.browse(command_id), callback_data
 
     @api.multi
     def execute(self, tsession, bot, locals_dict):
@@ -164,6 +186,7 @@ Check Help Tab for the rest variables.
             'tools': tools,
             'types': types,
             '_': _,
+            'emoji': emoji,
         }
 
     @api.multi
@@ -183,6 +206,7 @@ Check Help Tab for the rest variables.
 
     @api.multi
     def _eval(self, code, locals_dict=None, tsession=None):
+        """Prepare data for rendering"""
         _logger.debug("_eval locals_dict: %s" % locals_dict)
         t0 = time.time()
         locals_dict = self._update_locals_dict(locals_dict, tsession)
@@ -201,6 +225,7 @@ Check Help Tab for the rest variables.
         return qcontext
 
     def _render(self, template, locals_dict, tsession):
+        """Render / process data for sending"""
         t0 = time.time()
         dom = etree.fromstring(template)
         qcontext = self._qcontext(locals_dict, tsession)
@@ -208,8 +233,11 @@ Check Help Tab for the rest variables.
         render_time = time.time() - t0
         _logger.debug('Render in %.2fs\n qcontext:\n%s \nTemplate:\n%s\n', render_time, qcontext, template)
         ret = {'photos': [],
-               'markup': _convert_markup(locals_dict.get('data', {}).get('reply_markup', {})),
                'html': html}
+        reply_markup = locals_dict['options'].get('reply_markup')
+        if reply_markup:
+            ret['markup'] = _convert_markup(reply_markup)
+
         for photo in locals_dict['options'].get('photos', []):
             if photo.get('type') == 'file':
                 f = photo['data']
@@ -233,6 +261,7 @@ Check Help Tab for the rest variables.
 
     @api.model
     def _send(self, bot, rendered, tsession):
+        """Send processed / rendered data"""
         _logger.debug('_send rendered %s' % rendered)
         reply_markup = rendered.get('markup', None)
         if rendered.get('html'):

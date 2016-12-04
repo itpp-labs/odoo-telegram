@@ -102,6 +102,12 @@ Libs that can be used:
 * time
 * tools (openerp.tools)
 * pygal (module telegram_chart is required)
+* types - telebot.types . See https://github.com/eternnoir/pyTelegramBotAPI/blob/master/telebot/types.py and https://core.telegram.org/bots/api#available-types
+  * types.InlineKeyboardMarkup
+  * types.InlineKeyboardButton
+* emoji - see https://pypi.python.org/pypi/emoji
+  * emoji.emojize(':thumbsup:', use_aliases=True) - convert alias to emoji unicode. See http://www.webpagefx.com/tools/emoji-cheat-sheet/
+
 </pre>
                             </p>
 
