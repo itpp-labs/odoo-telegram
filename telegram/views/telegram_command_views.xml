@@ -73,19 +73,28 @@ Check official qweb documentation: <a href="https://www.odoo.com/documentation/8
 <pre>
 Vars that can be updated:
 * data - empty dictonary to be filled with any data for rendering
-* charts (module telegram_chart is required) - empty list to be filled by pygal chart objects
 * options - dictonary to control processing
   * options['notify_user_ids'] - list interger user ids to be notified in subscription commands (will affect only if user is subscribed). With empty list nobody receives notification. With unspecified value all subscribers receive notification.
+  * options['reply_markup']
+  * options['charts'] (module telegram_chart is required) - empty list to be filled by pygal chart objects
+  * options['photos'] - empty list of dictionaries with keys
+    * data
+    * type = "file"|"base64". Default is "base64".
+    * filename
 
 Vars that can be used:
 * command - telegram.command record
+  * command.encode_callback_data(data) - prepare data to attach to InlineKeyboardButton. See https://core.telegram.org/bots/api#inlinekeyboardbutton
 * tsession - telegram.session record. 
-* tsession.user_id - current user
+  * tsession.user_id - current user
 * tmessage - message from telegram. See https://core.telegram.org/bots/api#message
   * tmessage.text - actual UTF-8 text of the message
+* callback_query - see https://core.telegram.org/bots/api#callbackquery
+* callback_data - decoded data, that was created via command.encode_callback_data and passed to types.Inlinekeyboardbutton
 * event - dictonary with keys 'active_model', 'active_id', 'active_ids'. Only for commands triggered by base.action.rule.
 * env - odoo Environment
 * _logger - logger
+* _ - translate tool
 
 Libs that can be used:
 * datetime
