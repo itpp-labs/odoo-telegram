@@ -85,7 +85,10 @@ Vars that can be updated:
 
 Vars that can be used:
 * command - telegram.command record
-  * command.inline_keyboard_button(options, text=TEXT, callback_data=ANY_DATA) adds inline button to response. See https://core.telegram.org/bots/api#inlinekeyboardbutton
+  * command.inline_keyboard_buttons(options, buttons, row_width=None) adds set of inline button to response. See https://core.telegram.org/bots/api#inlinekeyboardbutton . buttons is a list of dictonary
+    * text=TEXT
+    * callback_data=ANY_DATA
+
 * tsession - telegram.session record. 
   * tsession.user_id - current user
 * tmessage - message from telegram. See https://core.telegram.org/bots/api#message
