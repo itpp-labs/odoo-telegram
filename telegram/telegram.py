@@ -83,6 +83,7 @@ Check Help Tab for the rest variables.
     def telegram_listener_callback_query(self, callback_query, bot):
         """callback_query is https://core.telegram.org/bots/api#callbackquery"""
         if not callback_query.data:
+            _logger.warning('callback_query without data', callback_query)
             return
         command, callback_data = self._decode_callback_data(callback_query.data)
         if not command:
@@ -242,13 +243,15 @@ Check Help Tab for the rest variables.
         html = self.pool['ir.qweb'].render_node(dom, qcontext)
         render_time = time.time() - t0
         _logger.debug('Render in %.2fs\n qcontext:\n%s \nTemplate:\n%s\n', render_time, qcontext, template)
+        options = locals_dict['options']
         ret = {'photos': [],
+               'options': options,
                'html': html}
-        reply_markup = locals_dict['options'].get('reply_markup')
+        reply_markup = options.get('reply_markup')
         if reply_markup:
             ret['markup'] = _convert_markup(reply_markup)
 
-        for photo in locals_dict['options'].get('photos', []):
+        for photo in options.get('photos', []):
             if photo.get('type') == 'file':
                 f = photo['data']
             else:
@@ -274,9 +277,18 @@ Check Help Tab for the rest variables.
         """Send processed / rendered data"""
         _logger.debug('_send rendered %s' % rendered)
         reply_markup = rendered.get('markup', None)
-        if rendered.get('html'):
-            _logger.debug('Send:\n%s', rendered.get('html'))
-            bot.send_message(tsession.chat_ID, rendered.get('html'), parse_mode='HTML', reply_markup=reply_markup)
+        options = rendered.get('options') or {}
+        if rendered.get('html') or reply_markup:
+            if options.get('editMessageText'):
+                _logger.debug('editMessageText:\n%s', rendered.get('html'))
+                kwargs = options.get('editMessageText')
+                kwargs['reply_markup'] = reply_markup
+                if 'message_id' in kwargs:
+                    kwargs['chat_id'] = tsession.chat_ID
+                bot.edit_message_text(rendered.get('html'), **kwargs)
+            else:
+                _logger.debug('Send:\n%s', rendered.get('html'))
+                bot.send_message(tsession.chat_ID, rendered.get('html'), parse_mode='HTML', reply_markup=reply_markup)
         if rendered.get('photos'):
             _logger.debug('send photos %s' % len(rendered.get('photos')))
             for photo in rendered.get('photos'):
