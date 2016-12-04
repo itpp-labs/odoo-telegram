@@ -26,8 +26,6 @@ if product_id:
     options['photos'] = [{'data':product.image}]
 
 else:
-
-    keyboard = types.InlineKeyboardMarkup()
     parent = None
     if categ_id:
         domain = [('parent_id','=', categ_id)]
@@ -39,28 +37,26 @@ else:
     # Up button
     up_icon = emoji.emojize(':arrow_heading_up:', use_aliases=True)
     if parent:
-        keyboard.add(types.InlineKeyboardButton(
+        command.inline_keyboard_button(options,
             text=_('Go Up %s %s') % (up_icon, parent.name),
-            callback_data=command.encode_callback_data({
+            callback_data={
                 CATEGORY_KEY: parent.id
             })
-        ))
     elif categ_id:
-        keyboard.add(types.InlineKeyboardButton(
+        command.inline_keyboard_button(options,
             text=_('Go Up %s') % up_icon,
-            callback_data=command.encode_callback_data({})
-        ))
+        )
 
     # subcategories
     res = env['product.public.category'].search(domain)
     if res:
         data['type'] = 'categories'
     for r in res:
-        keyboard.add(types.InlineKeyboardButton(
+        command.inline_keyboard_button(options,
             text=r.name, 
-            callback_data=command.encode_callback_data({
+            callback_data={
                 CATEGORY_KEY: r.id,
-            })))
+            })
 
     if not res:
         # products
@@ -71,17 +67,14 @@ else:
         if res:
             data['type'] = 'products'
         for r in res:
-            keyboard.add(types.InlineKeyboardButton(
+            command.inline_keyboard_button(options,
                 text=r.name, 
-                callback_data=command.encode_callback_data({
+                callback_data={
                     PRODUCT_KEY: r.id,
-                })))
+                })
         if not res:
             data['type'] = 'not_found'
-            keyboard = None
-
-    if keyboard:
-        options['reply_markup'] = keyboard
+            options['reply_markup'] = None
     
 ]]>
         </field>
@@ -97,6 +90,9 @@ else:
                     <t t-if="data['type'] == 'product'">
 <b><t t-esc="data['product'].name"/></b>
 <em>Price: <t t-esc="data['product'].price"/></em>
+                    </t>
+                    <t t-if="data['type'] == 'not_found'">
+                        <t>Nothing is found in this category</t>
                     </t>
                 </t>
             </t>

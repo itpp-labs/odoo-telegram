@@ -84,7 +84,7 @@ Check Help Tab for the rest variables.
         """callback_query is https://core.telegram.org/bots/api#callbackquery"""
         if not callback_query.data:
             return
-        command, callback_data = self.decode_callback_data(callback_query.data)
+        command, callback_data = self._decode_callback_data(callback_query.data)
         if not command:
             _logger.error('Command not found for callback_data %s ', callback_query.data)
             return
@@ -95,7 +95,17 @@ Check Help Tab for the rest variables.
         })
 
     @api.multi
-    def encode_callback_data(self, callback_data, raise_on_error=True):
+    def inline_keyboard_button(self, options, **kwargs):
+        self.ensure_one()
+        kwargs = kwargs.copy()
+        callback_data = kwargs.get('callback_data') or {}
+        kwargs['callback_data'] = self._encode_callback_data(callback_data)
+        if 'reply_markup' not in options:
+            options['reply_markup'] = types.InlineKeyboardMarkup()
+        options['reply_markup'].add(types.InlineKeyboardButton(**kwargs))
+
+    @api.multi
+    def _encode_callback_data(self, callback_data, raise_on_error=True):
         self.ensure_one()
         value = simplejson.dumps([self.id, callback_data])
         if len(value) > CALLBACK_DATA_MAX_SIZE:
@@ -105,7 +115,7 @@ Check Help Tab for the rest variables.
         return value
 
     @api.model
-    def decode_callback_data(self, data):
+    def _decode_callback_data(self, data):
         command_id, callback_data = simplejson.loads(data)
         return self.browse(command_id), callback_data
 
