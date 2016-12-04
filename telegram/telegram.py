@@ -45,7 +45,7 @@ class TelegramCommand(models.Model):
     notification_code = fields.Text(help='''Code to be executed before rendering Notification Template
 
 Vars that can be created to be handled by telegram module
-* notify_user_ids - by default all subscribers get notification. With notify_user_ids you can specify list of users who has to receive notification. Then only ones who subscribed and are specified in notify_user_ids will receive notification.
+* options['notify_user_ids'] - by default all subscribers get notification. With notify_user_ids you can specify list of users who has to receive notification. Then only ones who subscribed and are specified in notify_user_ids will receive notification.
 
 Check Help Tab for the rest variables.
 
@@ -172,6 +172,7 @@ Check Help Tab for the rest variables.
         locals_dict = locals_dict or {}
         user = tsession and tsession.get_user()
         locals_dict.update({
+            'options': {},
             'command': self.sudo(user),
             'env': self.env(user=user),
             'data': {},
@@ -430,8 +431,8 @@ Check Help Tab for the rest variables.
 
             if command.type == 'subscription':
                 notify_user_ids = set(command.user_ids.ids)
-                if 'notify_user_ids' in locals_dict:
-                    notify_user_ids = notify_user_ids.intersection(set(locals_dict.get('notify_user_ids', [])))
+                if 'notify_user_ids' in locals_dict['options']:
+                    notify_user_ids = notify_user_ids.intersection(set(locals_dict['options'].get('notify_user_ids', [])))
 
                 notify_sessions = self.env['telegram.session'].search([('user_id', 'in', list(notify_user_ids))])
 
