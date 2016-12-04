@@ -84,7 +84,7 @@ Vars that can be updated:
 
 Vars that can be used:
 * command - telegram.command record
-  * command.encode_callback_data(data) - prepare data to attach to InlineKeyboardButton. See https://core.telegram.org/bots/api#inlinekeyboardbutton
+  * command.inline_keyboard_button(options, text=TEXT, callback_data=ANY_DATA) adds inline button to response. See https://core.telegram.org/bots/api#inlinekeyboardbutton
 * tsession - telegram.session record. 
   * tsession.user_id - current user
 * tmessage - message from telegram. See https://core.telegram.org/bots/api#message
@@ -103,8 +103,6 @@ Libs that can be used:
 * tools (openerp.tools)
 * pygal (module telegram_chart is required)
 * types - telebot.types . See https://github.com/eternnoir/pyTelegramBotAPI/blob/master/telebot/types.py and https://core.telegram.org/bots/api#available-types
-  * types.InlineKeyboardMarkup
-  * types.InlineKeyboardButton
 * emoji - see https://pypi.python.org/pypi/emoji
   * emoji.emojize(':thumbsup:', use_aliases=True) - convert alias to emoji unicode. See http://www.webpagefx.com/tools/emoji-cheat-sheet/
 
