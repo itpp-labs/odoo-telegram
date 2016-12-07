@@ -11,6 +11,9 @@
         <field name="response_code"><![CDATA[
 CATEGORY_KEY='c'
 PRODUCT_KEY='p'
+PRODUCT_ACTION_KEY='pa'
+SHOW_PRODUCT='show'
+ADD_TO_CART='add'
 
 categ_id = None
 product_id = None
@@ -22,12 +25,28 @@ if callback_query:
     if not product_id and callback_query.message.message_id:
         options['editMessageText'] = {'message_id': callback_query.message.message_id}
 
-if product_id:
+if product_id and callback_data.get(PRODUCT_ACTION_KEY) == ADD_TO_CART:
+    # add to cart
 
-    product = env['product.template'].browse(product_id)
+    # show cart
+    data['type'] = 'cart'
+
+elif product_id:
+
+    pricelist = command.get_pricelist(env.user, context)
+    product = env['product.template'].with_context(pricelist=pricelist.id).browse(product_id)
     data['type'] = 'product'
     data['product'] = product
     options['photos'] = [{'data':product.image}]
+
+    # [ADD To Cart] button
+    icon = emoji.emojize(':heart:', use_aliases=True)
+    command.inline_keyboard_buttons(options,[{
+        'text': _('Add to cart %s %s') % (icon, product.name),
+        'callback_data': {
+            PRODUCT_KEY: product.id,
+            PRODUCT_ACTION_KEY: ADD_TO_CART,
+        }}])
 
 else:
     parent = None
@@ -77,6 +96,7 @@ else:
                 'text': r.name, 
                 'callback_data': {
                     PRODUCT_KEY: r.id,
+                    PRODUCT_ACTION_KEY: SHOW_PRODUCT,
                 }})
         if not res:
             data['type'] = 'not_found'
