@@ -214,14 +214,18 @@ Check Help Tab for the rest variables.
     @api.multi
     def _update_locals_dict(self, locals_dict, tsession):
         locals_dict = locals_dict or {}
-        user = tsession and tsession.get_user()
+        user = tsession.get_user()
+        context = {}
+        if tsession.context:
+            context = simplejson.loads(tsession.context)
         locals_dict.update({
+            'data': {},
             'options': {
                 'photos': [],
             },
+            'context': context,
             'command': self.sudo(user),
             'env': self.env(user=user),
-            'data': {},
             'callback_data': locals_dict.get('callback_data', False),
             'callback_query': locals_dict.get('callback_query', False),
             'tsession': tsession})
@@ -238,6 +242,9 @@ Check Help Tab for the rest variables.
             safe_eval(code, globals_dict, locals_dict, mode="exec", nocopy=True)
             eval_time = time.time() - t0
             _logger.debug('Eval in %.2fs \nlocals_dict:\n%s\nCode:\n%s\n', eval_time, locals_dict, code)
+        context_value = simplejson.dumps(locals_dict.get('context', {}))
+        if context_value != tsession.context:
+            tsession.context = context_value
         return locals_dict
 
     def _qcontext(self, locals_dict, tsession):
@@ -583,6 +590,7 @@ class TelegramSession(models.Model):
     token = fields.Char(default=lambda self: res_users.random_token())
     logged_in = fields.Boolean()
     user_id = fields.Many2one('res.users')
+    context = fields.Text('Context', help='Any json serializable data. Can be used to share data between user requests.')
 
     @api.multi
     def get_user(self):
