@@ -614,6 +614,7 @@ class TelegramSession(models.Model):
             tsession = self.env['telegram.session'].create({'chat_ID': chat_ID})
         return tsession
 
+
 class ResUsers(models.Model):
     _inherit = "res.users"
 

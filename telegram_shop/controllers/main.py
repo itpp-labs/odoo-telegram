@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
+
 from openerp import http
 from openerp.http import request
 from openerp.addons.web.controllers.main import login_redirect
 
 
-class telegram_website_sale(http.Controller):
+class TelegramWebsiteSale(http.Controller):
 
     @http.route(['/shop/telegram_cart/<int:sale_order_id>'], type='http', auth="public", website=True)
     def telegram_cart(self, sale_order_id):
