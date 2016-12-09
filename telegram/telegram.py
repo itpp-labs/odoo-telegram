@@ -217,7 +217,7 @@ Check Help Tab for the rest variables.
         locals_dict = locals_dict or {}
         user = tsession.get_user() if tsession else self.env.user
         context = {}
-        if tsession.context:
+        if tsession and tsession.context:
             context = simplejson.loads(tsession.context)
         base_url = self.env['ir.config_parameter'].get_param('web.base.url', '')
         locals_dict.update({
