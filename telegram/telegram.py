@@ -245,9 +245,10 @@ Check Help Tab for the rest variables.
             safe_eval(code, globals_dict, locals_dict, mode="exec", nocopy=True)
             eval_time = time.time() - t0
             _logger.debug('Eval in %.2fs \nlocals_dict:\n%s\nCode:\n%s\n', eval_time, locals_dict, code)
-        context_value = simplejson.dumps(locals_dict.get('context', {}))
-        if context_value != tsession.context:
-            tsession.context = context_value
+        if tsession:
+            context_value = simplejson.dumps(locals_dict.get('context', {}))
+            if context_value != tsession.context:
+                tsession.context = context_value
         return locals_dict
 
     def _qcontext(self, locals_dict, tsession):
