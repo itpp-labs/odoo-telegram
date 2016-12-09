@@ -7,6 +7,7 @@
         <field name="sequence" eval="100"/>
         <field name="type">normal</field>
         <field name="universal">True</field>
+        <field name="group_ids" eval="[]"/>
         <field name="response_code"><![CDATA[
 CATEGORY_KEY='c'
 PRODUCT_KEY='p'
