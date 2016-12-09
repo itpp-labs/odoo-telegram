@@ -20,7 +20,10 @@ class TelegramLogin(http.Controller):
             _logger.error('Attempt to login with wrong token')
             return utils.redirect('/web')
 
-        tsession.user_id = request.env.uid
+        tsession.write({
+            'user_id': request.env.uid,
+            'odoo_session_sid': request.session.sid,
+        })
 
         message = {'action': 'send_notifications',
                    'command_ids': command_ids,

@@ -7,7 +7,6 @@
         <field name="sequence" eval="100"/>
         <field name="type">normal</field>
         <field name="universal">True</field>
-        <field name="group_ids" eval="[(4, ref('base.group_user'))]" />
         <field name="response_code"><![CDATA[
 CATEGORY_KEY='c'
 PRODUCT_KEY='p'
@@ -27,14 +26,20 @@ if callback_query:
 
 if product_id and callback_data.get(PRODUCT_ACTION_KEY) == ADD_TO_CART:
     # add to cart
+    add_qty = 1
+    set_qty = 0
+    sale_order = command.sale_get_order(context)
+    sale_order._cart_update(product_id=int(product_id), add_qty=float(add_qty), set_qty=float(set_qty))    
 
     # show cart
     data['type'] = 'cart'
+    data['sale_order'] = sale_order
+    data['checkout_url'] = base_url + '/shop/telegram_cart/%s' % sale_order.id
 
 elif product_id:
 
-    pricelist = command.get_pricelist(env.user, context)
-    product = env['product.template'].with_context(pricelist=pricelist.id).browse(product_id)
+    pricelist = command.get_pricelist(context)
+    product = env['product.template'].sudo().with_context(pricelist=pricelist.id).browse(product_id)
     data['type'] = 'product'
     data['product'] = product
     options['photos'] = [{'data':product.image}]
@@ -88,7 +93,7 @@ else:
         domain = []
         if categ_id:
             domain = [('public_categ_ids','child_of', categ_id)]
-        res = env['product.template'].search(domain)
+        res = env['product.template'].sudo().search(domain)
         if res:
             data['type'] = 'products'
         for r in res:
@@ -116,6 +121,16 @@ else:
                     <t t-if="data['type'] == 'product'">
 <b><t t-esc="data['product'].name"/></b>
 <em>Price: <t t-esc="data['product'].price"/></em>
+                    </t>
+                    <t t-if="data['type'] == 'cart'">
+<b>Your Cart:</b>
+<t t-foreach="data['sale_order'].website_order_line" t-as="line">
+<b><t t-esc="line.product_id.name"/> </b><em><t t-esc="line.product_uom_qty"/> x <t t-esc="line.discounted_price"/></em>
+</t><t t-if="data['sale_order'].website_order_line">
+Checkout on website: <t t-esc="data['checkout_url']"/>
+                    </t>
+
+
                     </t>
                     <t t-if="data['type'] == 'not_found'">
                         <t>Nothing is found in this category</t>

@@ -15,6 +15,7 @@
     "depends": [
         "telegram",
         "product",
+        "website_sale",
     ],
     "external_dependencies": {},
     "data": [

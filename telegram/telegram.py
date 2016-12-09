@@ -17,6 +17,7 @@ import openerp.addons.auth_signup.res_users as res_users
 from openerp.tools.safe_eval import safe_eval
 from openerp.tools.translate import _
 from openerp.addons.base.ir.ir_qweb import QWebContext
+import openerp
 
 _logger = logging.getLogger(__name__)
 
@@ -214,15 +215,17 @@ Check Help Tab for the rest variables.
     @api.multi
     def _update_locals_dict(self, locals_dict, tsession):
         locals_dict = locals_dict or {}
-        user = tsession.get_user()
+        user = tsession.get_user() if tsession else self.env.user
         context = {}
         if tsession.context:
             context = simplejson.loads(tsession.context)
+        base_url = self.env['ir.config_parameter'].get_param('web.base.url', '')
         locals_dict.update({
             'data': {},
             'options': {
                 'photos': [],
             },
+            'base_url': base_url,
             'context': context,
             'command': self.sudo(user),
             'env': self.env(user=user),
@@ -260,6 +263,7 @@ Check Help Tab for the rest variables.
         dom = etree.fromstring(template)
         qcontext = self._qcontext(locals_dict, tsession)
         html = self.pool['ir.qweb'].render_node(dom, qcontext)
+        html = html and html.strip()
         render_time = time.time() - t0
         _logger.debug('Render in %.2fs\n qcontext:\n%s \nTemplate:\n%s\n', render_time, qcontext, template)
         options = locals_dict['options']
@@ -294,7 +298,7 @@ Check Help Tab for the rest variables.
     @api.model
     def _send(self, bot, rendered, tsession):
         """Send processed / rendered data"""
-        _logger.debug('_send rendered %s' % rendered)
+        _logger.debug('_send rendered %s', rendered)
         reply_markup = rendered.get('markup', None)
         options = rendered.get('options') or {}
         if rendered.get('html') or reply_markup:
@@ -588,6 +592,7 @@ class TelegramSession(models.Model):
 
     chat_ID = fields.Char()
     token = fields.Char(default=lambda self: res_users.random_token())
+    odoo_session_sid = fields.Char(help="Equal to request.session.sid")
     logged_in = fields.Boolean()
     user_id = fields.Many2one('res.users')
     context = fields.Text('Context', help='Any json serializable data. Can be used to share data between user requests.')
@@ -596,6 +601,11 @@ class TelegramSession(models.Model):
     def get_user(self):
         self.ensure_one()
         return self.user_id or self.env.ref('base.public_user')
+
+    @api.multi
+    def get_odoo_session(self):
+        self.ensure_one()
+        return openerp.http.root.session_store.get(self.odoo_session_sid)
 
     @api.model
     def get_session(self, chat_ID):
