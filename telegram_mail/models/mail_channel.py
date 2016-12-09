@@ -4,7 +4,7 @@ from openerp import models, fields, api
 
 class Channel(models.Model):
 
-    _inherit = 'mail.group'
+    _inherit = 'mail.channel'
 
     telegram_subscribed = fields.Boolean(
         'Notify to Telegram', compute='_compute_subscribed',

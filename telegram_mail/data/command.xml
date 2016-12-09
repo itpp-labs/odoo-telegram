@@ -57,17 +57,8 @@ Currently, you haven't specified channels. To do that open odoo and switch on <b
         <field name="notification_code">data = {}
 notify_user_ids = []
 message = env['mail.message'].browse(event['active_id'])
-# 8.0:
-if message.model != 'mail.group':
-    # empty list
-    partners = env['res.partner']
-else:
-    channel =  env['mail.group'].browse(message.res_id)
-    partners = channel.telegram_subscriber_ids
-    data['message_channel'] = channel.name
-# 9.0:
-# partners = message.channel_ids.mapped('telegram_subscriber_ids')
-# data['message_channel'] = ", ".join(message.channel_ids.mapped('name'))
+partners = message.channel_ids.mapped('telegram_subscriber_ids')
+data['message_channel'] = ", ".join(message.channel_ids.mapped('name'))
 
 if message.author_id:
     partners -= message.author_id

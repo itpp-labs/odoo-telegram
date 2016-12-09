@@ -3,26 +3,14 @@
     <data>
         <record id="mail_channel_view_form" model="ir.ui.view">
             <field name="name">mail.channel.form</field>
-            <!-- 9.0+
             <field name="model">mail.channel</field>
             <field name="inherit_id" ref="mail.mail_channel_view_form"/>
-            -->
-            <field name="model">mail.group</field>
-            <field name="inherit_id" ref="mail.view_group_form"/>
             <field name="arch" type="xml">
-                <!-- 9.0+
                 <xpath expr="//notebook" position="before">
                     <group>
                         <field name="telegram_subscribed"/>
                     </group>
                 </xpath>
-                -->
-                <xpath expr="//sheet" position="inside">
-                    <group>
-                        <field name="telegram_subscribed"/>
-                    </group>
-                </xpath>
-
             </field>
         </record>
     </data>
