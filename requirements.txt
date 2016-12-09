@@ -1,5 +1,5 @@
 pyTelegramBotAPI
 pygal
-cairosvg
+cairosvg<2.0.0
 tinycss
 cssselect
