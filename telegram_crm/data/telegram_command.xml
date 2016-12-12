@@ -8,7 +8,7 @@
         <field name="type">cacheable</field>
         <field name="universal">False</field>
         <field name="menu_id" ref="crm.crm_opportunity_report_menu"/>
-        <field name="group_ids" eval="[(4, ref('base.group_sale_salesman'))]" />
+        <field name="group_ids" eval="[(4, ref('sales_team.group_sale_salesman'))]" />
         <field name="model_ids" eval="[(4, ref('crm.model_crm_lead'))]"/>
         <field name="response_code">
 graph_data = command.get_graph_data()
