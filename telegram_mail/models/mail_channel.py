@@ -9,7 +9,7 @@ class Channel(models.Model):
     telegram_subscribed = fields.Boolean(
         'Notify to Telegram', compute='_compute_subscribed',
         inverse='_set_subscribed',
-        help='Get copies of messages via telegram bot. '
+        help='Personal setting to get copies of messages via telegram bot. '
         'Use command /mail_channels '
         'to switch on/off notifications globally')
 
