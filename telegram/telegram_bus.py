@@ -8,7 +8,7 @@ import threading
 import time
 
 import odoo
-from odoo import api, fields, models
+from odoo import api, fields, models, SUPERUSER_ID
 from odoo.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT
 
 _logger = logging.getLogger(__name__)
@@ -136,7 +136,8 @@ class TelegramDispatch(object):
         with registry.cursor() as cr:
             with odoo.api.Environment.manage():
                 if registry.get('telegram.bus', False):
-                    notifications = registry['telegram.bus'].poll(cr, odoo.SUPERUSER_ID, channels, last, options)
+                    env = odoo.api.Environment(cr, SUPERUSER_ID, {})
+                    notifications = env['telegram.bus'].poll(channels, last, options)
                 else:
                     notifications = []
         # or wait for future ones
@@ -147,7 +148,8 @@ class TelegramDispatch(object):
             try:
                 event.wait(timeout=timeout)
                 with registry.cursor() as cr:
-                    notifications = registry['telegram.bus'].poll(cr, odoo.SUPERUSER_ID, channels, last, options, force_status=True)
+                    env = odoo.api.Environment(cr, SUPERUSER_ID, {})
+                    notifications = env['telegram.bus'].poll(channels, last, options, force_status=True)
             except Exception:
                 # timeout
                 pass

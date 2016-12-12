@@ -263,7 +263,7 @@ Check Help Tab for the rest variables.
         t0 = time.time()
         dom = etree.fromstring(template)
         qcontext = self._qcontext(locals_dict, tsession)
-        html = QWeb.render(dom, qcontext)
+        html = QWeb().render(dom, qcontext)
         html = html and html.strip()
         render_time = time.time() - t0
         _logger.debug('Render in %.2fs\n qcontext:\n%s \nTemplate:\n%s\n', render_time, qcontext, template)

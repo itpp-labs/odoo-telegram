@@ -62,7 +62,8 @@ class WorkerTelegram(Worker):
         for dbname in db_names:
             if self.threads_bundles.get(dbname, False):
                 continue
-            registry = tools.get_registry(dbname)
+
+            registry = odoo.registry(dbname).check_signaling()
             if registry.get('telegram.bus', False):
                 # _logger.info("telegram.bus in %s" % db_name)
                 odoo_thread = OdooTelegramThread(self.odoo_dispatch, dbname, False)
@@ -119,11 +120,12 @@ class OdooTelegramThread(threading.Thread):
     def odoo_execute(self, dbname, model, method, args, kwargs=None):
         kwargs = kwargs or {}
         db = odoo.sql_db.db_connect(dbname)
-        registry = tools.get_registry(dbname)
+        odoo.registry(dbname).check_signaling()
         with odoo.api.Environment.manage(), db.cursor() as cr:
             try:
                 _logger.debug('%s: %s %s', method, args, kwargs)
-                getattr(registry[model], method)(cr, SUPERUSER_ID, *args, **kwargs)
+                env = odoo.api.Environment(cr, SUPERUSER_ID, {})
+                getattr(env[model], method)(*args, **kwargs)
             except:
                 _logger.error('Error while executing method=%s, args=%s, kwargs=%s',
                               method, args, kwargs, exc_info=True)

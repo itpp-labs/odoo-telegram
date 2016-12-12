@@ -8,17 +8,12 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-def get_registry(db_name):
-    odoo.modules.registry.RegistryManager.check_registry_signaling(db_name)
-    registry = odoo.registry(db_name)
-    return registry
-
-
 def get_parameter(dbname, key):
     db = odoo.sql_db.db_connect(dbname)
-    registry = get_registry(dbname)
+    odoo.registry(dbname).check_signaling()
     with odoo.api.Environment.manage(), db.cursor() as cr:
-        return registry['ir.config_parameter'].get_param(cr, SUPERUSER_ID, key)
+        env = odoo.api.Environment(cr, SUPERUSER_ID, {})
+        return env['ir.config_parameter'].get_param(key)
 
 
 def running_workers_num(workers):
