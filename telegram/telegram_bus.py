@@ -16,6 +16,8 @@ _logger = logging.getLogger(__name__)
 # longpolling timeout connection
 TIMEOUT = 50
 
+TELEGRAM_CHANNEL = 'telegram'
+
 
 def json_dump(v):
     return json.dumps(v, separators=(',', ':'))
@@ -70,7 +72,11 @@ class TelegramBus(models.Model):
             self._cr.after('commit', notify)
 
     @api.model
-    def sendone(self, channel, message):
+    def sendone(self, message):
+        self.sendone_channel(TELEGRAM_CHANNEL, message)
+
+    @api.model
+    def sendone_channel(self, channel, message):
         self.sendmany([[channel, message]])
 
     @api.model
@@ -116,7 +122,9 @@ class TelegramDispatch(object):
     def __init__(self):
         self.channels = {}
 
-    def poll(self, dbname, channels, last, options=None, timeout=TIMEOUT):
+    def poll(self, dbname, channels=None, last=None, options=None, timeout=TIMEOUT):
+        if not channels:
+            channels = [TELEGRAM_CHANNEL]
         if options is None:
             options = {}
         if not openerp.evented:

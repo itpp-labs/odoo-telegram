@@ -8,11 +8,13 @@ Installation
 Base dependencies
 -----------------
 
-Install foloowing python libs::
+Install following python libs::
 
-    pip2 install -U requests
-    pip2 install 'requests[security]'
-    pip2 install pyTelegramBotAPI
+    pip install -U pip
+    pip install -U requests
+    pip install 'requests[security]'
+    pip install pyTelegramBotAPI
+    pip install emoji
 
 Charts
 ------
@@ -37,6 +39,27 @@ Odoo parameters
 * Add ``telegram`` to ``--load`` parameters, e.g.::
 
     ./openerp-server --workers=2 --load telegram,web --config=/path/to/openerp-server.conf
+
+* Additionaly you can decrease log output by adding
+
+    --log-handler=requests.packages.urllib3.connectionpool:ERROR
+
+  It prevents log output like below::
+
+    INFO telegram.local requests.packages.urllib3.connectionpool: Starting new HTTPS connection (1): api.telegram.org
+    INFO telegram.local requests.packages.urllib3.connectionpool: Starting new HTTPS connection (1): api.telegram.org
+    INFO telegram.local requests.packages.urllib3.connectionpool: Starting new HTTPS connection (1): api.telegram.org
+    INFO telegram.local requests.packages.urllib3.connectionpool: Starting new HTTPS connection (1): api.telegram.org
+    INFO telegram.local requests.packages.urllib3.connectionpool: Starting new HTTPS connection (1): api.telegram.org
+    INFO telegram.local requests.packages.urllib3.connectionpool: Starting new HTTPS connection (1): api.telegram.org
+    INFO telegram.local requests.packages.urllib3.connectionpool: Starting new HTTPS connection (1): api.telegram.org
+    INFO telegram.local requests.packages.urllib3.connectionpool: Starting new HTTPS connection (1): api.telegram.org
+    INFO telegram.local requests.packages.urllib3.connectionpool: Starting new HTTPS connection (1): api.telegram.org
+    INFO telegram.local requests.packages.urllib3.connectionpool: Starting new HTTPS connection (1): api.telegram.org
+
+* For debugging you can increase log output for telegram module:
+
+    --log-handler=openerp.addons.telegram:DEBUG
 
 Configuration
 =============
