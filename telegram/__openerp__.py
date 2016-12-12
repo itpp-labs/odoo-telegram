@@ -17,7 +17,10 @@
         "web",
         "base_action_rule",
     ],
-    "external_dependencies": {"python": ['telebot'], "bin": []},
+    "external_dependencies": {"python": [
+        'telebot',
+        'emoji',
+    ], "bin": []},
     "data": [
         "data/config_parameter.xml",
         "data/ir_action_server.xml",

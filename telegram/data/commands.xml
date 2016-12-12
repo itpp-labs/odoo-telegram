@@ -39,15 +39,10 @@ if tsession.user_id:
     data['authed'] = True
 else:
     data['authed'] = False
-    data['login_token'] = tsession.token
-    res = env['ir.config_parameter'].search([('key', '=', 'web.base.url')])
-    if len(res) == 1:
-        data['web_base'] = res[0].value
-    else:
-        _logger.warning('No value for key web.base.url')
+    data['auth_url'] = base_url + '/web/login/telegram?token=%s' % tsession.token
         </field>
         <field name="response_template" type="xml">
-        <t><t t-if="data['authed']">You already logged in</t><t t-if="not data['authed']"><t>Please follow login link: <t t-esc="data['web_base']"/>/web/login/telegram?token=<t t-esc="data['login_token']"/></t></t></t></field>
+        <t><t t-if="data['authed']">You already logged in</t><t t-if="not data['authed']"><t>Please follow login link: <t t-esc="data['auth_url']"/></t></t></t></field>
         <field name="notification_template" type="xml"><t>Hello <t t-esc="tsession.user_id.name"/>!</t></field>
         <field name="group_ids" eval="[]"/>
     </record>
@@ -60,6 +55,7 @@ else:
         <field name="post_response_code">
 tsession.unlink()
         </field>
+        <field name="group_ids" eval="[]"/>
     </record>
 
     <record model="telegram.command" id="users_command">
@@ -92,6 +88,7 @@ You logged in as <t t-raw="tsession.user_id.name"/>
     You haven't logged in yet. Use /login to do it
 </t>
 </t></field>
+        <field name="group_ids" eval="[]"/>
     </record>
 </data>
 </openerp>
