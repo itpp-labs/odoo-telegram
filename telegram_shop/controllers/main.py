@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import werkzeug
 from openerp import http
 from openerp.http import request
-from openerp.addons.web.controllers.main import login_and_redirect
-
 
 class TelegramWebsiteSale(http.Controller):
 
@@ -11,6 +10,9 @@ class TelegramWebsiteSale(http.Controller):
     def telegram_cart(self, sale_order_id):
         sale_order = request.env['sale.order'].sudo().browse(sale_order_id)
         if request.env.user.partner_id != sale_order.partner_id:
-            return login_and_redirect()
+            query = werkzeug.urls.url_encode({
+                'redirect': request.httprequest.url,
+            })
+            return request.redirect('/web/login?%s' % query)
         request.session['sale_order_id'] = sale_order.id
         return request.redirect('/shop/cart')
