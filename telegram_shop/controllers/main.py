@@ -4,6 +4,7 @@ import werkzeug
 from openerp import http
 from openerp.http import request
 
+
 class TelegramWebsiteSale(http.Controller):
 
     @http.route(['/shop/telegram_cart/<int:sale_order_id>'], type='http', auth="public", website=True)
