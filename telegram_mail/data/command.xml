@@ -20,16 +20,16 @@ data['message_from'] = data['message'].author_id.name
 data['message_subject'] = data['message'].subject
 data['message_date'] = data['message'].date
 data['message_body'] = tools.html2plaintext(data['message'].body)
-partner_ids = data['partner_message'].partner_ids + data['partner_message'].channel_ids.mapped('channel_partner_ids')
+partner_ids = data['message'].partner_ids + data['message'].channel_ids.mapped('channel_partner_ids')
 options['notify_user_ids'] = partner_ids.mapped('user_ids').ids
         </field>
         <field name="notification_template" type="xml">
             <t>
 <b>New message!</b>
-<b>From:</b> <t t-raw="data['partner_message_from']"/>
-<b>Subject:</b> <t t-raw="data['partner_message_subject']"/>
-<b>Time:</b> <t t-raw="data['partner_message_date']"/>
-<b>Text: </b><t t-esc="data['partner_message_body']"/>
+<b>From:</b> <t t-raw="data['message_from']"/>
+<b>Subject:</b> <t t-raw="data['message_subject']"/>
+<b>Time:</b> <t t-raw="data['message_date']"/>
+<b>Text: </b><t t-esc="data['message_body']"/>
             </t>
         </field>
     </record>
