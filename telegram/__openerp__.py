@@ -8,7 +8,7 @@
 
     "author": "IT-Projects LLC",
     "website": "https://it-projects.info",
-    "license": "GPL-3",
+    "license": "LGPL-3",
     "price": 200.00,
     "currency": "EUR",
 
@@ -17,7 +17,10 @@
         "web",
         "base_action_rule",
     ],
-    "external_dependencies": {"python": ['telebot'], "bin": []},
+    "external_dependencies": {"python": [
+        'telebot',
+        'emoji',
+    ], "bin": []},
     "data": [
         "data/config_parameter.xml",
         "data/ir_action_server.xml",
