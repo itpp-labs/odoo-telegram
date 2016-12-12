@@ -7,7 +7,7 @@
         <field name="condition">True</field>
         <field name="type">ir.actions.server</field>
         <field name="state">code</field>
-        <field name="code">self.action_update_cache(cr, uid, context=context)</field>
+        <field name="code">model.action_update_cache()</field>
     </record>
     <record id="action_handle_subscriptions" model="ir.actions.server">
         <field name="name">Telegram: handle subscriptions (finds commands via "Related models" field)</field>
@@ -15,7 +15,7 @@
         <field name="condition">True</field>
         <field name="type">ir.actions.server</field>
         <field name="state">code</field>
-        <field name="code">self.action_handle_subscriptions(cr, uid, context=context)</field>
+        <field name="code">model.action_handle_subscriptions()</field>
     </record>
     <record id="action_manage_threads" model="ir.actions.server">
         <field name="name">Telegram: Manage threads</field>
@@ -23,7 +23,7 @@
         <field name="condition">True</field>
         <field name="type">ir.actions.server</field>
         <field name="state">code</field>
-        <field name="code">self.proceed_telegram_configs(cr, uid, context=context)</field>
+        <field name="code">model.proceed_telegram_configs()</field>
     </record>
 </data>
 </openerp>
