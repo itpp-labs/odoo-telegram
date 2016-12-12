@@ -7,14 +7,16 @@ import select
 import threading
 import time
 
-import openerp
-from openerp import api, fields, models
-from openerp.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT
+import odoo
+from odoo import api, fields, models, SUPERUSER_ID
+from odoo.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT
 
 _logger = logging.getLogger(__name__)
 
 # longpolling timeout connection
 TIMEOUT = 50
+
+TELEGRAM_CHANNEL = 'telegram'
 
 
 def json_dump(v):
@@ -65,12 +67,16 @@ class TelegramBus(models.Model):
             # transaction is not commited yet, there will be nothing to fetch,
             # and the longpolling will return no notification.
             def notify():
-                with openerp.sql_db.db_connect('postgres').cursor() as cr:
+                with odoo.sql_db.db_connect('postgres').cursor() as cr:
                     cr.execute("notify telegram_bus, %s", (json_dump(list(channels)),))
             self._cr.after('commit', notify)
 
     @api.model
-    def sendone(self, channel, message):
+    def sendone(self, message):
+        self.sendone_channel(TELEGRAM_CHANNEL, message)
+
+    @api.model
+    def sendone_channel(self, channel, message):
         self.sendmany([[channel, message]])
 
     @api.model
@@ -116,19 +122,22 @@ class TelegramDispatch(object):
     def __init__(self):
         self.channels = {}
 
-    def poll(self, dbname, channels, last, options=None, timeout=TIMEOUT):
+    def poll(self, dbname, channels=None, last=None, options=None, timeout=TIMEOUT):
+        if not channels:
+            channels = [TELEGRAM_CHANNEL]
         if options is None:
             options = {}
-        if not openerp.evented:
+        if not odoo.evented:
             current = threading.current_thread()
             current._Thread__daemonic = True
             # rename the thread to avoid tests waiting for a longpolling
-            current.setName("openerp.longpolling.request.%s" % current.ident)
-        registry = openerp.registry(dbname)
+            current.setName("odoo.longpolling.request.%s" % current.ident)
+        registry = odoo.registry(dbname)
         with registry.cursor() as cr:
-            with openerp.api.Environment.manage():
+            with odoo.api.Environment.manage():
                 if registry.get('telegram.bus', False):
-                    notifications = registry['telegram.bus'].poll(cr, openerp.SUPERUSER_ID, channels, last, options)
+                    env = odoo.api.Environment(cr, SUPERUSER_ID, {})
+                    notifications = env['telegram.bus'].poll(channels, last, options)
                 else:
                     notifications = []
         # or wait for future ones
@@ -139,7 +148,8 @@ class TelegramDispatch(object):
             try:
                 event.wait(timeout=timeout)
                 with registry.cursor() as cr:
-                    notifications = registry['telegram.bus'].poll(cr, openerp.SUPERUSER_ID, channels, last, options, force_status=True)
+                    env = odoo.api.Environment(cr, SUPERUSER_ID, {})
+                    notifications = env['telegram.bus'].poll(channels, last, options, force_status=True)
             except Exception:
                 # timeout
                 pass
@@ -148,7 +158,7 @@ class TelegramDispatch(object):
     def loop(self):
         """ Dispatch postgres notifications to the relevant polling threads/greenlets """
         _logger.info("Bus.loop listen imbus on db postgres")
-        with openerp.sql_db.db_connect('postgres').cursor() as cr:
+        with odoo.sql_db.db_connect('postgres').cursor() as cr:
             conn = cr._cnx
             cr.execute("listen telegram_bus")
             # Commit

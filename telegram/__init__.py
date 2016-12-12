@@ -1,17 +1,19 @@
 # -*- encoding: utf-8 -*-
 
+# local imports, that can be unused:
 from . import telegram
 from . import telegram_bus
 from . import controllers
 from . import tools
-
 from . import tools as teletools
+
+# usual imports
 import time
-import openerp
-from openerp.service.server import Worker
-from openerp.service.server import PreforkServer
+import odoo
+from odoo.service.server import Worker
+from odoo.service.server import PreforkServer
 from telebot import TeleBot
-from openerp import SUPERUSER_ID
+from odoo import SUPERUSER_ID
 import threading
 import logging
 from telebot import util
@@ -60,7 +62,8 @@ class WorkerTelegram(Worker):
         for dbname in db_names:
             if self.threads_bundles.get(dbname, False):
                 continue
-            registry = tools.get_registry(dbname)
+
+            registry = odoo.registry(dbname).check_signaling()
             if registry.get('telegram.bus', False):
                 # _logger.info("telegram.bus in %s" % db_name)
                 odoo_thread = OdooTelegramThread(self.odoo_dispatch, dbname, False)
@@ -114,6 +117,19 @@ class OdooTelegramThread(threading.Thread):
 
         self.odoo_thread_pool = util.ThreadPool(self.num_odoo_threads)
 
+    def odoo_execute(self, dbname, model, method, args, kwargs=None):
+        kwargs = kwargs or {}
+        db = odoo.sql_db.db_connect(dbname)
+        odoo.registry(dbname).check_signaling()
+        with odoo.api.Environment.manage(), db.cursor() as cr:
+            try:
+                _logger.debug('%s: %s %s', method, args, kwargs)
+                env = odoo.api.Environment(cr, SUPERUSER_ID, {})
+                getattr(env[model], method)(*args, **kwargs)
+            except:
+                _logger.error('Error while executing method=%s, args=%s, kwargs=%s',
+                              method, args, kwargs, exc_info=True)
+
     def run(self):
         _logger.info("OdooTelegramThread started with %s threads" % self.num_odoo_threads)
 
@@ -129,13 +145,11 @@ class OdooTelegramThread(threading.Thread):
                 _logger.info('telegram_threads_changed')
                 self.update_telegram_threads(dbname, odoo_thread)
             else:
-                db = openerp.sql_db.db_connect(dbname)
-                registry = tools.get_registry(dbname)
-                with openerp.api.Environment.manage(), db.cursor() as cr:
-                    try:
-                        registry['telegram.command'].odoo_listener(cr, SUPERUSER_ID, message, self, bot)
-                    except:
-                        _logger.error('Error while processing Odoo message: %s' % message, exc_info=True)
+                self.odoo_execute(
+                    dbname,
+                    'telegram.command',
+                    'odoo_listener',
+                    (message, bot))
 
         token = teletools.get_parameter(self.dbname, 'telegram.token')
         if not self.bot and tools.token_is_valid(token):
@@ -146,7 +160,7 @@ class OdooTelegramThread(threading.Thread):
         while True:
             # Exeptions ?
             # ask TelegramDispatch about some messages.
-            msg_list = self.dispatch.poll(dbname=self.dbname, channels=['telegram_channel'], last=self.last)
+            msg_list = self.dispatch.poll(self.dbname, last=self.last)
             for msg in msg_list:
                 if msg['id'] > self.last:
                     self.last = msg['id']
@@ -155,42 +169,37 @@ class OdooTelegramThread(threading.Thread):
                         self.odoo_thread_pool.raise_exceptions()
 
     def build_new_proc_bundle(self, dbname, odoo_thread):
-        def listener(messages):
-            db = openerp.sql_db.db_connect(dbname)
-            registry = teletools.get_registry(dbname)
-            with openerp.api.Environment.manage(), db.cursor() as cr:
-                try:
-                    registry['telegram.command'].telegram_listener(cr, SUPERUSER_ID, messages, bot)
-                except:
-                    _logger.error('Error while processing Telegram messages: %s' % messages, exc_info=True)
-
         token = teletools.get_parameter(dbname, 'telegram.token')
         _logger.debug(token)
         if teletools.token_is_valid(token):
-            res = self.get_bundle_action(dbname, odoo_thread)
-            if res == 'complete':
+            if not odoo_thread.bot:
                 _logger.info("Database %s just obtained new token or on-boot launch.", dbname)
                 num_telegram_threads = teletools.get_int_parameter(dbname, 'telegram.num_telegram_threads')
                 bot = TeleBotMod(token, threaded=True, num_threads=num_telegram_threads)
                 bot.num_telegram_threads = num_telegram_threads
-                bot.set_update_listener(listener)
+                bot.set_update_listener(
+                    lambda messages:
+                    self.odoo_execute(
+                        dbname,
+                        'telegram.command',
+                        'telegram_listener_message',
+                        (messages, bot))
+                )
                 bot.dbname = dbname
+                bot.add_callback_query_handler({
+                    'function': lambda call:
+                    self.odoo_execute(
+                        dbname,
+                        'telegram.command',
+                        'telegram_listener_callback_query',
+                        (call, bot)
+                    ),
+                    'filters': {}})
                 bot_thread = BotPollingThread(bot)
                 bot_thread.start()
                 odoo_thread.token = token
                 odoo_thread.bot = bot
                 odoo_thread.bot_thread = bot_thread
-
-    @staticmethod
-    def get_bundle_action(dbname, odoo_thread):
-        # update - means token was updated
-        # complete - means TelegramDispatch and OdooTelegramThread already created and we just need complete threads_bundles with bot and BotPollingThread
-        # new - means there is no even TelegramDispatch and OdooTelegramThread
-        if odoo_thread.bot:
-            return 'update'
-        elif dbname:
-            return 'complete'
-        return 'new'
 
     @staticmethod
     def update_odoo_threads(dbname, odoo_thread):

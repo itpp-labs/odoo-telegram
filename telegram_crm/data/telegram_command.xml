@@ -8,7 +8,7 @@
         <field name="type">cacheable</field>
         <field name="universal">False</field>
         <field name="menu_id" ref="crm.crm_opportunity_report_menu"/>
-        <field name="group_ids" eval="[(4, ref('base.group_sale_salesman'))]" />
+        <field name="group_ids" eval="[(4, ref('sales_team.group_sale_salesman'))]" />
         <field name="model_ids" eval="[(4, ref('crm.model_crm_lead'))]"/>
         <field name="response_code">
 graph_data = command.get_graph_data()
@@ -18,7 +18,7 @@ bar_chart = pygal.StackedBar(title="Pipeline", x_labels=map(str, graph_data['x_l
 for d_value, d in graph_data['data_lines'].items():
     bar_chart.add(d_value or 'Undefined', d['values'])
 
-charts.append(bar_chart)
+options['charts'].append(bar_chart)
         </field>
         <field name="response_template" type="xml">
             <t>Pipeline<t t-foreach="data['filters']" t-as="f"> [x] <t t-esc="f['string']"/></t></t>

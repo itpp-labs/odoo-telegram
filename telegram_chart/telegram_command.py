@@ -8,8 +8,8 @@ try:
 except:
     pygal = None
 
-from openerp import api
-from openerp import models
+from odoo import api
+from odoo import models
 
 _logger = logging.getLogger(__name__)
 
@@ -25,18 +25,17 @@ class TelegramCommand(models.Model):
         return res
 
     @api.multi
-    def _eval(self, *args, **kwargs):
-        locals_dict = kwargs.get('locals_dict') or {}
-        locals_dict['charts'] = []
-        kwargs['locals_dict'] = locals_dict
-        return super(TelegramCommand, self)._eval(*args, **kwargs)
+    def _update_locals_dict(self, *args, **kwargs):
+        locals_dict = super(TelegramCommand, self)._update_locals_dict(*args, **kwargs)
+        locals_dict['options']['charts'] = []
+        return locals_dict
 
     def _render(self, template, locals_dict, tsession):
         res = super(TelegramCommand, self)._render(template, locals_dict, tsession)
         t0 = time.time()
         photos = []
 
-        for obj in locals_dict.get('charts', []):
+        for obj in locals_dict['options'].get('charts', []):
             f = StringIO(obj.render_to_png())
             f.name = 'chart.png'
             photos.append({'file': f})
