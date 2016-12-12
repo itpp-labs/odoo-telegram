@@ -9,11 +9,11 @@ from . import tools as teletools
 
 # usual imports
 import time
-import openerp
-from openerp.service.server import Worker
-from openerp.service.server import PreforkServer
+import odoo
+from odoo.service.server import Worker
+from odoo.service.server import PreforkServer
 from telebot import TeleBot
-from openerp import SUPERUSER_ID
+from odoo import SUPERUSER_ID
 import threading
 import logging
 from telebot import util
@@ -118,9 +118,9 @@ class OdooTelegramThread(threading.Thread):
 
     def odoo_execute(self, dbname, model, method, args, kwargs=None):
         kwargs = kwargs or {}
-        db = openerp.sql_db.db_connect(dbname)
+        db = odoo.sql_db.db_connect(dbname)
         registry = tools.get_registry(dbname)
-        with openerp.api.Environment.manage(), db.cursor() as cr:
+        with odoo.api.Environment.manage(), db.cursor() as cr:
             try:
                 _logger.debug('%s: %s %s', method, args, kwargs)
                 getattr(registry[model], method)(cr, SUPERUSER_ID, *args, **kwargs)

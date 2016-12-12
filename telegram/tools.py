@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
 
-import openerp
+import odoo
 import odoo.tools.config as config
-from openerp import SUPERUSER_ID
+from odoo import SUPERUSER_ID
 import logging
 
 _logger = logging.getLogger(__name__)
 
 
 def get_registry(db_name):
-    openerp.modules.registry.RegistryManager.check_registry_signaling(db_name)
-    registry = openerp.registry(db_name)
+    odoo.modules.registry.RegistryManager.check_registry_signaling(db_name)
+    registry = odoo.registry(db_name)
     return registry
 
 
 def get_parameter(dbname, key):
-    db = openerp.sql_db.db_connect(dbname)
+    db = odoo.sql_db.db_connect(dbname)
     registry = get_registry(dbname)
-    with openerp.api.Environment.manage(), db.cursor() as cr:
+    with odoo.api.Environment.manage(), db.cursor() as cr:
         return registry['ir.config_parameter'].get_param(cr, SUPERUSER_ID, key)
 
 
@@ -33,7 +33,7 @@ def db_list():
     if config['db_name']:
         db_names = config['db_name'].split(',')
     else:
-        db_names = openerp.service.db.list_dbs(True)
+        db_names = odoo.service.db.list_dbs(True)
     return db_names
 
 
