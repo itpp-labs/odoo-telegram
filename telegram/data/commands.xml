@@ -55,6 +55,7 @@ else:
         <field name="post_response_code">
 tsession.unlink()
         </field>
+        <field name="group_ids" eval="[]"/>
     </record>
 
     <record model="telegram.command" id="users_command">
@@ -87,6 +88,7 @@ You logged in as <t t-raw="tsession.user_id.name"/>
     You haven't logged in yet. Use /login to do it
 </t>
 </t></field>
+        <field name="group_ids" eval="[]"/>
     </record>
 </data>
 </openerp>
