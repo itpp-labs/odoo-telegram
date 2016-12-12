@@ -18,7 +18,7 @@ bar_chart = pygal.StackedBar(title="Pipeline", x_labels=map(str, graph_data['x_l
 for d_value, d in graph_data['data_lines'].items():
     bar_chart.add(d_value or 'Undefined', d['values'])
 
-charts.append(bar_chart)
+options['charts'].append(bar_chart)
         </field>
         <field name="response_template" type="xml">
             <t>Pipeline<t t-foreach="data['filters']" t-as="f"> [x] <t t-esc="f['string']"/></t></t>

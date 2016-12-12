@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+    <record model="telegram.command" id="shop_command">
+        <field name="name">/shop</field>
+        <field name="description">Shows available goods</field>
+        <field name="sequence" eval="100"/>
+        <field name="type">normal</field>
+        <field name="universal">True</field>
+        <field name="group_ids" eval="[]"/>
+        <field name="response_code"><![CDATA[
+CATEGORY_KEY='c'
+PRODUCT_KEY='p'
+PRODUCT_ACTION_KEY='pa'
+SHOW_PRODUCT='show'
+ADD_TO_CART='add'
+
+categ_id = None
+product_id = None
+if callback_data:
+    categ_id = callback_data.get(CATEGORY_KEY)
+    product_id = callback_data.get(PRODUCT_KEY)
+
+if callback_query:
+    if not product_id and callback_query.message.message_id:
+        options['editMessageText'] = {'message_id': callback_query.message.message_id}
+
+if product_id and callback_data.get(PRODUCT_ACTION_KEY) == ADD_TO_CART:
+    # add to cart
+    add_qty = 1
+    set_qty = 0
+    sale_order = command.sale_get_order(context)
+    sale_order._cart_update(product_id=int(product_id), add_qty=float(add_qty), set_qty=float(set_qty))    
+
+    # show cart
+    data['type'] = 'cart'
+    data['sale_order'] = sale_order
+    data['checkout_url'] = base_url + '/shop/telegram_cart/%s' % sale_order.id
+
+elif product_id:
+
+    pricelist = command.get_pricelist(context)
+    product = env['product.template'].sudo().with_context(pricelist=pricelist.id).browse(product_id)
+    data['type'] = 'product'
+    data['product'] = product
+    options['photos'] = [{'data':product.image}]
+
+    # [ADD To Cart] button
+    icon = emoji.emojize(':heart:', use_aliases=True)
+    command.inline_keyboard_buttons(options,[{
+        'text': _('Add to cart %s %s') % (icon, product.name),
+        'callback_data': {
+            PRODUCT_KEY: product.id,
+            PRODUCT_ACTION_KEY: ADD_TO_CART,
+        }}])
+
+else:
+    parent = None
+    if categ_id:
+        domain = [('parent_id','=', categ_id)]
+        category = env['product.public.category'].browse(categ_id)
+        parent = category.parent_id
+    else:
+        domain = [('parent_id', '=', None)]
+
+    # Go Up button
+    up_icon = emoji.emojize(':arrow_heading_up:', use_aliases=True)
+    if parent:
+        command.inline_keyboard_buttons(options,[{
+            'text': _('Go Up %s %s') % (up_icon, parent.name),
+            'callback_data': {
+                CATEGORY_KEY: parent.id,
+            }}])
+
+    elif categ_id:
+        command.inline_keyboard_buttons(options, [{
+                'text': _('Go Up %s') % up_icon,
+            }]
+        )
+    buttons = []
+    # subcategories
+    res = env['product.public.category'].search(domain)
+    if res:
+        data['type'] = 'categories'
+    for r in res:
+        buttons.append({
+            'text': r.name, 
+            'callback_data': {
+                CATEGORY_KEY: r.id,
+            }})
+
+    if not res:
+        # products
+        domain = []
+        if categ_id:
+            domain = [('public_categ_ids','child_of', categ_id)]
+        res = env['product.template'].sudo().search(domain)
+        if res:
+            data['type'] = 'products'
+        for r in res:
+            buttons.append({
+                'text': r.name, 
+                'callback_data': {
+                    PRODUCT_KEY: r.id,
+                    PRODUCT_ACTION_KEY: SHOW_PRODUCT,
+                }})
+        if not res:
+            data['type'] = 'not_found'
+    if buttons:
+        command.inline_keyboard_buttons(options, buttons, row_width=2)
+]]>
+        </field>
+        <field name="response_template" type="xml">
+            <t>
+                <t t-if="data.get('type', False)">
+                    <t t-if="data['type'] == 'categories'">
+                        <t>Select category:</t>
+                    </t>
+                    <t t-if="data['type'] == 'products'">
+                        <t>Select product:</t>
+                    </t>
+                    <t t-if="data['type'] == 'product'">
+<b><t t-esc="data['product'].name"/></b>
+<em>Price: <t t-esc="data['product'].price"/></em>
+                    </t>
+                    <t t-if="data['type'] == 'cart'">
+<b>Your Cart:</b>
+<t t-foreach="data['sale_order'].website_order_line" t-as="line">
+<b><t t-esc="line.product_id.name"/> </b><em><t t-esc="line.product_uom_qty"/> x <t t-esc="line.discounted_price"/></em>
+</t><t t-if="data['sale_order'].website_order_line">
+Checkout on website: <t t-esc="data['checkout_url']"/>
+                    </t>
+
+
+                    </t>
+                    <t t-if="data['type'] == 'not_found'">
+                        <t>Nothing is found in this category</t>
+                    </t>
+                </t>
+            </t>
+        </field>
+    </record>
+</data>
+</openerp>
