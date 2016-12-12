@@ -31,7 +31,7 @@ class TelegramCommand(models.Model):
             'user_id': user.id,
             'partner_id': partner.id,
             'pricelist_id': partner.property_product_pricelist.id,
-            'section_id': self.env.ref('website.salesteam_website_sales').id,
+            'section_id': self.env.ref('sales_team.salesteam_website_sales').id,
         }
         sale_order = self.env['sale.order'].sudo().create(values)
         context['sale_order'] = sale_order.id

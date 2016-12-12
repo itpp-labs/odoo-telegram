@@ -126,7 +126,7 @@ else:
                     <t t-if="data['type'] == 'cart'">
 <b>Your Cart:</b>
 <t t-foreach="data['sale_order'].website_order_line" t-as="line">
-<b><t t-esc="line.product_id.name"/> </b><em><t t-esc="line.product_uom_qty"/> x <t t-esc="line.discounted_price"/></em>
+<b><t t-esc="line.product_id.name"/> </b><em><t t-esc="line.product_uom_qty"/> x <t t-esc="line.price_reduce_taxinc"/></em>
 </t><t t-if="data['sale_order'].website_order_line">
 Checkout on website: <t t-esc="data['checkout_url']"/>
                     </t>
