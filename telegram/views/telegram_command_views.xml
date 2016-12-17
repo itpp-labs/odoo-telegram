@@ -52,7 +52,7 @@
                             </group>
                         </page>
                         <page String="Notification">
-                            <p>Notification can be used in subscriptions or for delayed repsonse</p>
+                            <p>Notification can be used in subscriptions or for delayed response</p>
                             <group>
                                 <field name="notification_code"/>
                                 <field name="notification_template"/>
@@ -82,24 +82,31 @@ Vars that can be updated:
     * type = "file"|"base64". Default is "base64".
     * filename
   * options['editMessageText'] - dictonary with identifier (message_id or inline_message_id). Allows to update existed message instead of sending new one. See https://core.telegram.org/bots/api#editmessagetext. 
+  * options['handle_response'] - dictonary {'responses': {RESPONSE: DATA}, 'unknown_response': DATA}. If user send some value from RESPONSE, then this command will be called again with response_data equal to corresponded DATA. If unknown_response is present and user send response not from 'responses', then this command is called with unknown_response_data
 * context - dictonary to save json serializable data between user requests.
 
 Vars that can be used:
 * command - telegram.command record
-  * command.inline_keyboard_buttons(options, buttons, row_width=None) adds set of inline button to response. See https://core.telegram.org/bots/api#inlinekeyboardbutton . buttons is a list of dictonary
+  * command.inline_keyboard_buttons(options, buttons, row_width=None) adds set of inline button to response. See https://core.telegram.org/bots/api#inlinekeyboardbutton . Argument buttons is a list of dictonary
     * text=TEXT
     * callback_data=ANY_DATA
+  * command.keyboard_buttons(options, buttons, row_width=None) adds set of reply button to response. See https://core.telegram.org/bots/api#keyboardbutton . Argument buttons is a list of dictonary
+    * text=TEXT
+    * callback_data=ANY_DATA
+* telegram - dictonary with some input data
+  * telegram['tsession'] - telegram.session record. 
+    * telegram['tsession'].get_odoo_session() - the same as request.session in odoo
+  * telegram['tmessage'] - message from telegram. See https://core.telegram.org/bots/api#message
+    * telegram['tmessage'].text - actual UTF-8 text of the message
+  * telegram['callback_query'] - see https://core.telegram.org/bots/api#callbackquery
+  * telegram['callback_data'] - decoded data, that was created via command.encode_callback_data and passed to types.Inlinekeyboardbutton
+  * telegram['event'] - dictonary with keys 'active_model', 'active_id', 'active_ids'. Only for commands triggered by base.action.rule.
+  * telegram['response_data'] - see options['handle_response'] above
+  * telegram['unknown_response_data'] - see options['handle_response'] above
+  * telegram['base_url'] - url of odoo database
 
-* tsession - telegram.session record. 
-  * tsession.get_odoo_session() - the same as request.session in odoo
-* tmessage - message from telegram. See https://core.telegram.org/bots/api#message
-  * tmessage.text - actual UTF-8 text of the message
-* callback_query - see https://core.telegram.org/bots/api#callbackquery
-* callback_data - decoded data, that was created via command.encode_callback_data and passed to types.Inlinekeyboardbutton
-* event - dictonary with keys 'active_model', 'active_id', 'active_ids'. Only for commands triggered by base.action.rule.
 * env - odoo Environment
   * env.user - current user
-* base_url - url of odoo database
 * _logger - logger
 * _ - translate tool
 

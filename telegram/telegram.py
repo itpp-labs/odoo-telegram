@@ -9,6 +9,11 @@ import logging
 import simplejson
 from telebot.apihelper import ApiException, _convert_markup
 from telebot import types
+try:
+    from telebot.types import ReplyKeyboardRemove
+except:
+    from telebot.types import ReplyKeyboardHide as ReplyKeyboardRemove
+
 import emoji
 from lxml import etree
 from openerp import tools
@@ -61,6 +66,7 @@ Check Help Tab for the rest variables.
     model_ids = fields.Many2many('ir.model', 'command_to_model_rel', 'command_id', 'model_id', string="Related models", help='Is used by Server Action to find commands to proceed')
     user_ids = fields.Many2many('res.users', 'command_to_user_rel', 'telegram_command_id', 'user_id', string='Subscribed users')
     menu_id = fields.Many2one('ir.ui.menu', 'Related Menu', help='Menu that can be used in command, for example to make search')
+    active = fields.Boolean('Active', default=True)
 
     _sql_constraints = [
         ('command_name_uniq', 'unique (name)', 'Command name must be unique!'),
@@ -69,16 +75,30 @@ Check Help Tab for the rest variables.
     @api.model
     def telegram_listener_message(self, messages, bot):
         for tmessage in messages:  # messages from telegram server
+            locals_dict = {'telegram': {'tmessage': tmessage}}
             tsession = self.env['telegram.session'].get_session(tmessage.chat.id)
 
             command = self.env['telegram.command'].sudo(tsession.get_user()).search([('name', '=', tmessage.text)], limit=1)
+            if tsession.handle_response:
+                if command:
+                    # new command is came. Ignore and remove handle_response
+                    tsession.handle_response = False
+                else:
+                    command = tsession.handle_response_command_id
+                    handle_response = simplejson.loads(tsession.handle_response)
+                    responses = handle_response.get('responses', {})
+                    if tmessage.text in responses:
+                        locals_dict['telegram']['response_data'] = responses[tmessage.text]
+                    else:
+                        locals_dict['telegram']['unknown_response_data'] = handle_response.get('unknown_response')
+
             if not command:
                 not_found = {'html': _("There is no such command or you don't have access:  <i>%s</i>.  \n Use /help to see all available for you commands.") % tmessage.text}
                 self.send(bot, not_found, tsession)
                 if not tsession.user_id:
                     self.send(bot, {'html': _('Or try to /login.')}, tsession)
                 return
-            command.execute(tsession, bot, {'tmessage': tmessage})
+            command.execute(tsession, bot, locals_dict)
 
     @api.model
     def telegram_listener_callback_query(self, callback_query, bot):
@@ -91,15 +111,31 @@ Check Help Tab for the rest variables.
             _logger.error('Command not found for callback_data %s ', callback_query.data)
             return
         tsession = self.env['telegram.session'].get_session(callback_query.message.chat.id)
-        command.execute(tsession, bot, {
+        command.execute(tsession, bot, {'telegram': {
             'callback_query': callback_query,
             'callback_data': callback_data,
-        })
+        }})
+
+    @api.multi
+    def keyboard_buttons(self, options, buttons, row_width=None):
+        self.ensure_one()
+        if 'handle_response' not in options:
+            options['handle_response'] = {
+                'responses': {},
+                'unknown_response': True
+            }
+
+        row = []
+        for b in buttons:
+            b = b.copy()
+            callback_data = b.pop('callback_data')
+            options['handle_response']['responses'][b.get('text')] = callback_data
+            row.append(types.KeyboardButton(**b))
+        return self._add_row_to_keyboard(options, row, row_width,
+                                         types.ReplyKeyboardMarkup)
 
     @api.multi
     def inline_keyboard_buttons(self, options, buttons, row_width=None):
-        """Adds set of buttons.
-           Splits buttons to several rows, if row_width is specified"""
         self.ensure_one()
         row = []
         for b in buttons:
@@ -108,8 +144,15 @@ Check Help Tab for the rest variables.
             b['callback_data'] = self._encode_callback_data(callback_data)
             row.append(types.InlineKeyboardButton(**b))
 
+        return self._add_row_to_keyboard(options, row, row_width,
+                                         types.InlineKeyboardMarkup)
+
+    def _add_row_to_keyboard(self, options, row, row_width, KeyboardClass):
+        """Adds set of buttons.
+           Splits buttons to several rows, if row_width is specified"""
+
         if 'reply_markup' not in options:
-            options['reply_markup'] = types.InlineKeyboardMarkup()
+            options['reply_markup'] = KeyboardClass()
 
         if row_width:
             options['reply_markup'].row_width = row_width
@@ -140,7 +183,7 @@ Check Help Tab for the rest variables.
             locals_dict = locals_dict_origin and locals_dict_origin.copy() or {}
             if command.type == 'subscription':
                 if not tsession.user_id:
-                    self.send(bot, {'html': _('You have to /login first.')}, tsession)
+                    command.send(bot, {'html': _('You have to /login first.')}, tsession)
                     return
 
                 if tsession.user_id.id in command.user_ids.ids:
@@ -160,7 +203,7 @@ Check Help Tab for the rest variables.
             if not response:
                 response = command.get_response(locals_dict, tsession)
                 bot.cache.set_value(command, response, tsession)
-            self.send(bot, response, tsession)
+            command.send(bot, response, tsession)
             command.eval_post_response(tsession)
 
     # bus listener
@@ -225,13 +268,17 @@ Check Help Tab for the rest variables.
             'options': {
                 'photos': [],
             },
-            'base_url': base_url,
             'context': context,
             'command': self.sudo(user),
             'env': self.env(user=user),
-            'callback_data': locals_dict.get('callback_data', False),
-            'callback_query': locals_dict.get('callback_query', False),
-            'tsession': tsession})
+        })
+        locals_dict.setdefault('telegram', {})
+        locals_dict['telegram'].update({
+            'base_url': base_url,
+            'tsession': tsession,
+        })
+        # Temporary, for backward compatibility
+        locals_dict.update(locals_dict['telegram'])
         return locals_dict
 
     @api.multi
@@ -245,10 +292,6 @@ Check Help Tab for the rest variables.
             safe_eval(code, globals_dict, locals_dict, mode="exec", nocopy=True)
             eval_time = time.time() - t0
             _logger.debug('Eval in %.2fs \nlocals_dict:\n%s\nCode:\n%s\n', eval_time, locals_dict, code)
-        if tsession:
-            context_value = simplejson.dumps(locals_dict.get('context', {}))
-            if context_value != tsession.context:
-                tsession.context = context_value
         return locals_dict
 
     def _qcontext(self, locals_dict, tsession):
@@ -259,7 +302,9 @@ Check Help Tab for the rest variables.
         return qcontext
 
     def _render(self, template, locals_dict, tsession):
-        """Render / process data for sending"""
+        """Render / process data for sending.
+        Result can be cached and sent later.
+        """
         t0 = time.time()
         dom = etree.fromstring(template)
         qcontext = self._qcontext(locals_dict, tsession)
@@ -268,24 +313,35 @@ Check Help Tab for the rest variables.
         render_time = time.time() - t0
         _logger.debug('Render in %.2fs\n qcontext:\n%s \nTemplate:\n%s\n', render_time, qcontext, template)
         options = locals_dict['options']
-        ret = {'photos': [],
-               'options': options,
+        handle_response = options.get('handle_response') or None
+        if handle_response:
+            handle_response = simplejson.dumps(handle_response)
+
+        res = {'photos': [],
+               'editMessageText': options.get('editMessageText'),
+               'handle_response_dump': handle_response,
+               'reply_keyboard': False,
+               'context_dump': simplejson.dumps(locals_dict.get('context', {})),
                'html': html}
         reply_markup = options.get('reply_markup')
         if reply_markup:
-            ret['markup'] = _convert_markup(reply_markup)
+            res['markup'] = _convert_markup(reply_markup)
+            if isinstance(reply_markup, types.ReplyKeyboardMarkup) \
+               and not reply_markup.one_time_keyboard:
+                res['reply_keyboard'] = res['markup']
 
         for photo in options.get('photos', []):
             if photo.get('type') == 'file':
                 f = photo['data']
             else:
-                # type is 'base64' by default'
+                # type is 'base64' by default
                 f = StringIO(base64.b64decode(photo['data']))
                 f.name = photo.get('filename', 'item.png')
-            ret['photos'].append({'file': f})
-        return ret
+            res['photos'].append({'file': f})
 
-    @api.model
+        return res
+
+    @api.multi
     def send(self, bot, rendered, tsession):
         try:
             self._send(bot, rendered, tsession)
@@ -296,16 +352,27 @@ Check Help Tab for the rest variables.
             _logger.error('Cannot send message', exc_info=True)
             return False
 
-    @api.model
+    @api.multi
     def _send(self, bot, rendered, tsession):
         """Send processed / rendered data"""
         _logger.debug('_send rendered %s', rendered)
         reply_markup = rendered.get('markup', None)
-        options = rendered.get('options') or {}
+
+        if not reply_markup and tsession.reply_keyboard:
+            # remove old keyboard
+            reply_markup = ReplyKeyboardRemove()
+            tsession.reply_keyboard = False
+        elif rendered.get('reply_keyboard'):
+            # mark that user has reply keyboard
+            tsession.reply_keyboard = True
+        elif reply_markup and tsession.reply_keyboard:
+            # reply keyboard is replaced by inline keyboard.
+            tsession.reply_keyboard = False
+
         if rendered.get('html') or reply_markup:
-            if options.get('editMessageText'):
+            if rendered.get('editMessageText'):
                 _logger.debug('editMessageText:\n%s', rendered.get('html'))
-                kwargs = options.get('editMessageText')
+                kwargs = rendered.get('editMessageText')
                 kwargs['reply_markup'] = reply_markup
                 if 'message_id' in kwargs:
                     kwargs['chat_id'] = tsession.chat_ID
@@ -328,6 +395,18 @@ Check Help Tab for the rest variables.
                 _logger.debug('photo[file] %s ' % photo['file'])
                 res = bot.send_photo(tsession.chat_ID, photo['file'])
                 photo['file_id'] = res.photo[0].file_id
+
+        handle_response_dump = rendered.get('handle_response_dump')
+        handle_response_command_id = None
+        if self.id and handle_response_dump:
+            handle_response_command_id = self.id
+        context_dump = rendered.get('context_dump')
+        tsession.write({
+            'context': context_dump,
+            'handle_response_command_id': handle_response_command_id,
+            'handle_response': handle_response_dump,
+        })
+
 
     @api.multi
     def get_graph_data(self):
@@ -597,6 +676,9 @@ class TelegramSession(models.Model):
     logged_in = fields.Boolean()
     user_id = fields.Many2one('res.users')
     context = fields.Text('Context', help='Any json serializable data. Can be used to share data between user requests.')
+    reply_keyboard = fields.Boolean('Reply Keyboard', help='User is shown ReplyKeyboardMarkup without one_time_keyboard. Such keyboard has to be removed explicitly')
+    handle_response = fields.Text('Response handling') 
+    handle_response_command_id = fields.Many2one('telegram.command') 
 
     @api.multi
     def get_user(self):
