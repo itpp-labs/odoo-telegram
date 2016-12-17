@@ -78,7 +78,7 @@ Check Help Tab for the rest variables.
             locals_dict = {'telegram': {'tmessage': tmessage}}
             tsession = self.env['telegram.session'].get_session(tmessage.chat.id)
 
-            command = self.env['telegram.command'].sudo(tsession.get_user()).search([('name', '=', tmessage.text)], limit=1)
+            command = self.env['telegram.command'].sudo(tsession.get_user()).with_context(active_test=False).search([('name', '=', tmessage.text)], limit=1)
             if tsession.handle_response:
                 if command:
                     # new command is came. Ignore and remove handle_response
