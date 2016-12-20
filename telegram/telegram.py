@@ -277,8 +277,6 @@ Check Help Tab for the rest variables.
             'base_url': base_url,
             'tsession': tsession,
         })
-        # Temporary, for backward compatibility
-        locals_dict.update(locals_dict['telegram'])
         return locals_dict
 
     @api.multi
@@ -298,7 +296,6 @@ Check Help Tab for the rest variables.
         qcontext = QWebContext(self._cr, self._uid, {})
         qcontext['data'] = locals_dict['data']
         qcontext['subscribed'] = locals_dict.get('subscribed')
-        qcontext['tsession'] = tsession
         return qcontext
 
     def _render(self, template, locals_dict, tsession):
