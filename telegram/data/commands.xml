@@ -54,7 +54,6 @@ else:
         <field name="sequence" eval="990"/>
         <field name="response_template" type="xml"><t>You successfully logged out.</t></field>
         <field name="post_response_code">
-_logger.info('unlink %s', telegram['tsession'])
 telegram['tsession'].unlink()
         </field>
         <field name="group_ids" eval="[]"/>
