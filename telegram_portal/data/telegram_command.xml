@@ -25,7 +25,6 @@ if env.ref('base.public_user').id == env.user.id:
     # register new user
     template_user_id = env['ir.config_parameter'].get_param('telegram_portal.template_user_id')
     template_user = env['res.users'].browse(int(template_user_id))
-    _logger.warning('tmessage: %s', telegram['tmessage'])
     tuser = telegram['tmessage'].from_user
     login = 'telegram_%s' % tuser.id
     user = env['res.users'].sudo().with_context(active_test=False).search([('login', '=', login)])
@@ -63,13 +62,12 @@ if ask_lang:
     # 10.0+
     #languages = env['res.lang'].get_installed()
 
-    _logger.info('languages %s', languages)
+    _logger.debug('languages %s', languages)
     if len(languages) > 1:
         # ask for his language
         data['type'] = 'choose_language'
         buttons = [{'text': text, 'callback_data':  code} for (code, text) in languages]
         command.keyboard_buttons(options, buttons, row_width=1)
-        _logger.info('response_data=%s, unknown_response_data=%s', telegram.get('response_data'), telegram.get('unknown_response_data'))
     else:
         finish = True
 
