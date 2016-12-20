@@ -422,7 +422,6 @@ Check Help Tab for the rest variables.
             'handle_response': handle_response_dump,
         })
 
-
     @api.multi
     def get_graph_data(self):
         self.ensure_one()
@@ -692,8 +691,8 @@ class TelegramSession(models.Model):
     user_id = fields.Many2one('res.users')
     context = fields.Text('Context', help='Any json serializable data. Can be used to share data between user requests.')
     reply_keyboard = fields.Boolean('Reply Keyboard', help='User is shown ReplyKeyboardMarkup without one_time_keyboard. Such keyboard has to be removed explicitly')
-    handle_response = fields.Text('Response handling') 
-    handle_response_command_id = fields.Many2one('telegram.command') 
+    handle_response = fields.Text('Response handling')
+    handle_response_command_id = fields.Many2one('telegram.command')
 
     @api.multi
     def get_user(self):
