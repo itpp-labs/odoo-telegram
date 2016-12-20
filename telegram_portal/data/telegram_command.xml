@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+
+    <record model="telegram.command" id="telegram.login_command">
+        <field name="active" eval="False"/>
+    </record>
+
+    <record model="telegram.command" id="telegram.logout_command">
+        <field name="active" eval="False"/>
+    </record>
+
+    <record model="telegram.command" id="telegram.who_command">
+        <field name="active" eval="False"/>
+    </record>
+
+    <record model="telegram.command" id="telegram.command_start">
+        <field name="name">/start</field>
+        <field name="description">Start here</field>
+        <field name="sequence" eval="900"/>
+        <field name="response_code">
+ask_lang = False
+finish = False
+if env.ref('base.public_user').id == env.user.id:
+    # register new user
+    template_user_id = env['ir.config_parameter'].get_param('telegram_portal.template_user_id')
+    template_user = env['res.users'].browse(int(template_user_id))
+    tuser = telegram['tmessage'].from_user
+    login = 'telegram_%s' % tuser.id
+    user = env['res.users'].sudo().with_context(active_test=False).search([('login', '=', login)])
+
+    if user:
+        finish = True
+    else:
+        name = ''
+        #if tuser.username:
+        #    name = '@' + tuser.username
+        name += ' ' + tuser.first_name
+        name += ' ' + tuser.last_name
+        name = name.strip()
+
+        user = template_user.sudo().copy({
+            'login': login,
+            'name': name,
+            'active': True,
+        })
+        telegram['tsession'].write({'user_id': user.id})
+
+        ask_lang = True
+else:
+    user = env.user
+
+if telegram.get('response_data'):
+    env.user.write({'lang': telegram.get('response_data')})
+    finish = True
+elif not finish:
+    ask_lang = True
+
+if ask_lang:
+    languages = env['res.lang'].search([])
+    languages = [(language.code, language.name) for language in languages]
+    # 10.0+
+    #languages = env['res.lang'].get_installed()
+
+    _logger.debug('languages %s', languages)
+    if len(languages) > 1:
+        # ask for his language
+        data['type'] = 'choose_language'
+        buttons = [{'text': text, 'callback_data':  code} for (code, text) in languages]
+        command.keyboard_buttons(options, buttons, row_width=1)
+    else:
+        finish = True
+
+if finish:
+    data['type'] = 'finish'
+    data['name'] = user.name
+        </field>
+        <field name="response_template" type="xml">
+<t>
+<t t-if="data['type'] == 'choose_language'">
+Choose your language
+</t>
+<t t-if="data['type'] == 'finish'">
+Welcome, <t t-esc="data['name']"/>!
+</t>
+</t>
+        </field>
+        <field name="group_ids" eval="[]"/>
+    </record>
+
+</data>
+</openerp>

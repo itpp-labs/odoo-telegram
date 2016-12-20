@@ -11,7 +11,7 @@
         <field name="model_ids" eval="[(4, ref('mail.model_mail_message'))]"/>
         <field name="response_code"></field>
         <field name="response_template" type="xml"><t>
-<t t-if="subscribed">You have subscribed to yours new mail messages in odoo.</t>
+<t t-if="subscribed">You have subscribed to your new mail messages in odoo.</t>
 <t t-if="not subscribed">You have opted out.</t>
         </t></field>
         <field name="notification_code">data = {}
