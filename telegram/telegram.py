@@ -40,7 +40,11 @@ class TelegramCommand(models.Model):
     _name = "telegram.command"
     _order = "sequence"
 
-    name = fields.Char('Name', help='Command name. Usually starts with slash symbol, e.g. "/mycommand"', required=True)
+    name = fields.Char('Command', help="""Command string.
+Usually starts with slash symbol, e.g. "/mycommand".
+SQL Reg Exp can be used. See https://www.postgresql.org/docs/current/static/functions-matching.html#FUNCTIONS-SIMILARTO-REGEXP
+For example /user_% handles requests like /user_1, /user_2 etc.""",
+                       required=True, index=True)
     description = fields.Char('Description', help='What command does. It will be used in /help command')
     sequence = fields.Integer(default=16)
     type = fields.Selection([('normal', 'Normal'), ('cacheable', 'Normal (with caching)'), ('subscription', 'Subscription')], help='''
@@ -66,7 +70,7 @@ Check Help Tab for the rest variables.
     model_ids = fields.Many2many('ir.model', 'command_to_model_rel', 'command_id', 'model_id', string="Related models", help='Is used by Server Action to find commands to proceed')
     user_ids = fields.Many2many('res.users', 'command_to_user_rel', 'telegram_command_id', 'user_id', string='Subscribed users')
     menu_id = fields.Many2one('ir.ui.menu', 'Related Menu', help='Menu that can be used in command, for example to make search')
-    active = fields.Boolean('Active', default=True)
+    active = fields.Boolean('Active', default=True, help="Switch it off to hide from /help output. The command will work anyway. To make command not available apply some Access Group to it.")
 
     _sql_constraints = [
         ('command_name_uniq', 'unique (name)', 'Command name must be unique!'),
@@ -77,8 +81,22 @@ Check Help Tab for the rest variables.
         for tmessage in messages:  # messages from telegram server
             locals_dict = {'telegram': {'tmessage': tmessage}}
             tsession = self.env['telegram.session'].get_session(tmessage.chat.id)
+            cr = self.env.cr
+            cr.execute(
+                'SELECT id '
+                'FROM telegram_command '
+                'WHERE %s SIMILAR TO name ',
+                (tmessage.text, ))
+            ids = [x[0] for x in cr.fetchall()]
+            command = None
+            if ids:
+                # use search to apply access rights
+                command = self.env['telegram.command']\
+                              .sudo(tsession.get_user())\
+                              .with_context(active_test=False)\
+                              .search([('id', 'in', ids)], limit=1)\
+                              .with_context(active_test=True)
 
-            command = self.env['telegram.command'].sudo(tsession.get_user()).with_context(active_test=False).search([('name', '=', tmessage.text)], limit=1)
             if tsession.handle_response:
                 if command:
                     # new command is came. Ignore and remove handle_response

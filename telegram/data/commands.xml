@@ -72,8 +72,27 @@ data['users'] = env['res.users'].search([('share', '=', False)])
         </field>
         <field name="response_template" type="xml">
             <t><t t-foreach="data['users']" t-as="user">
-<b><t t-esc="user.name"/></b>
-<i>Last login at:</i> <t t-esc="user.login_date"/></t></t>
+/user_<t t-esc="user.id"/> <t t-esc="user.name"/>, <i>Last login at:</i> <t t-esc="user.login_date"/></t></t>
+        </field>
+    </record>
+
+    <record model="telegram.command" id="user_command">
+        <field name="name">/user_%</field>
+        <field name="description">Get information about specific</field>
+        <field name="sequence" eval="800"/>
+        <field name="universal">True</field>
+        <field name="active" eval="False"/>
+        <field name="group_ids" eval="[(4, ref('base.group_erp_manager'))]" />
+        <field name="model_ids" eval="[(4, ref('base.model_res_users'))]"/>
+        <field name="response_code">
+user_id = telegram['tmessage'].text.split('_')[1]
+user_id = int(user_id)
+data['user'] = env['res.users'].browse(user_id)
+        </field>
+        <field name="response_template" type="xml">
+            <t>
+<t t-set="user" t-value="data['user']"/>
+/user_<t t-esc="user.id"/> <t t-esc="user.name"/>, <i>Last login at:</i> <t t-esc="user.login_date"/></t>
         </field>
     </record>
 
