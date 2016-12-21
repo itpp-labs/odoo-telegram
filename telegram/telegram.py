@@ -27,7 +27,7 @@ import openerp
 # 8.0
 xml_translate = True
 # 9.0+
-#from openerp.tools.translate import xml_translate
+# from openerp.tools.translate import xml_translate
 _logger = logging.getLogger(__name__)
 
 CALLBACK_DATA_MAX_SIZE = 64
