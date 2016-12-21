@@ -17,6 +17,8 @@ ADD_TO_CART='add'
 
 categ_id = None
 product_id = None
+callback_data = telegram.get('callback_data') or {}
+callback_query = telegram.get('callback_query') or {}
 if callback_data:
     categ_id = callback_data.get(CATEGORY_KEY)
     product_id = callback_data.get(PRODUCT_KEY)
@@ -35,7 +37,7 @@ if product_id and callback_data.get(PRODUCT_ACTION_KEY) == ADD_TO_CART:
     # show cart
     data['type'] = 'cart'
     data['sale_order'] = sale_order
-    data['checkout_url'] = base_url + '/shop/telegram_cart/%s' % sale_order.id
+    data['checkout_url'] = telegram['base_url'] + '/shop/telegram_cart/%s' % sale_order.id
 
 elif product_id:
 
