@@ -234,7 +234,7 @@ Check Help Tab for the rest variables.
             if bot:
                 self.update_cache(bus_message, bot)
         elif bus_message['action'] == 'send_notifications':
-            self.send_notifications(bus_message, bot)
+            self._send_notifications(bus_message, bot)
         elif bus_message['action'] == 'emulate_request':
             self.execute_emulated_request(bus_message, bot)
 
@@ -253,7 +253,9 @@ Check Help Tab for the rest variables.
     @api.multi
     def eval_notification(self, event, tsession):
         self.ensure_one()
-        return self._eval(self.notification_code, locals_dict={'event': event}, tsession=tsession)
+        return self._eval(self.notification_code,
+                          locals_dict={'telegram': {'event': event}},
+                          tsession=tsession)
 
     @api.multi
     def render_notification(self, locals_dict, tsession=None):
@@ -575,13 +577,7 @@ Check Help Tab for the rest variables.
             subscription_commands = self.env['telegram.command'].search([('model_ids.model', '=', context['active_model']), ('type', '=', 'subscription')])
         _logger.debug('subscription_commands %s' % [c.name for c in subscription_commands])
         event = dict((k, context.get(k)) for k in ['active_model', 'active_id', 'active_ids'])
-        if len(subscription_commands):
-            message = {
-                'action': 'send_notifications',
-                'event': event,
-                'command_ids': subscription_commands.ids
-            }
-            self.env['telegram.bus'].sendone(message)
+        subscription_commands.send_notifications(event=event)
 
     # bus reaction methods
     def update_cache(self, bus_message, bot):
@@ -596,7 +592,21 @@ Check Help Tab for the rest variables.
                     response = command.get_response(tsession=tsession)
                     bot.cache.set_value(command, response, tsession)
 
-    def send_notifications(self, bus_message, bot):
+    @api.multi
+    def send_notifications(self, event=None, tsession=None):
+        """Pass command to telegram process,
+        because current process doesn't have access to bot"""
+        if not len(self.ids):
+            return
+        message = {
+            'action': 'send_notifications',
+            'event': event,
+            'tsession_id': tsession and tsession.id,
+            'command_ids': self.ids,
+        }
+        self.env['telegram.bus'].sendone(message)
+
+    def _send_notifications(self, bus_message, bot):
         _logger.debug('send_notifications(). bus_message=%s', bus_message)
         tsession = None
         if bus_message.get('tsession_id'):

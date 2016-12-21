@@ -37,13 +37,15 @@ for command in all_commands:
 
 if telegram['tsession'].user_id:
     data['authed'] = True
-    data['name'] = telegram['tsession'].user_id.name
 else:
     data['authed'] = False
     data['auth_url'] = telegram['base_url'] + '/web/login/telegram?token=%s' % telegram['tsession'].token
         </field>
         <field name="response_template" type="xml">
         <t><t t-if="data['authed']">You already logged in</t><t t-if="not data['authed']"><t>Please follow login link: <t t-esc="data['auth_url']"/></t></t></t></field>
+        <field name="notification_code">
+data['name'] = telegram['tsession'].user_id.name
+        </field>
         <field name="notification_template" type="xml"><t>Hello <t t-esc="data['name']"/>!</t></field>
         <field name="group_ids" eval="[]"/>
     </record>
