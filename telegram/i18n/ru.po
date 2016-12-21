@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 9.0c\n"
+"Project-Id-Version: Odoo Server 10.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-21 10:07+0000\n"
-"PO-Revision-Date: 2016-12-21 10:07+0000\n"
+"POT-Creation-Date: 2016-12-21 11:02+0000\n"
+"PO-Revision-Date: 2016-12-21 11:02+0000\n"
 "Last-Translator: <>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -48,14 +48,29 @@ msgid "Access Groups"
 msgstr "Access Groups"
 
 #. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_property_account_payable_id
+msgid "Account Payable"
+msgstr "Счета к оплате"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_property_account_receivable_id
+msgid "Account Receivable"
+msgstr "Дебиторская задолженность"
+
+#. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_telegram_command_active
 msgid "Active"
-msgstr "Активен"
+msgstr "Активно"
 
 #. module: telegram
 #: model:ir.model.fields,help:telegram.field_telegram_session_context
 msgid "Any json serializable data. Can be used to share data between user requests."
 msgstr "Any json serializable data. Can be used to share data between user requests."
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_bank_account_count
+msgid "Bank"
+msgstr "Банк"
 
 #. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_telegram_bus_channel
@@ -128,9 +143,20 @@ msgstr "Command string.\n"
 "For example /user_% handles requests like /user_1, /user_2 etc."
 
 #. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_ref_company_ids
+msgid "Companies that refers to partner"
+msgstr "Связанные с партнёром организации"
+
+#. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_telegram_session_context
 msgid "Context"
 msgstr "Context"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_contract_ids
+#: model:ir.model.fields,field_description:telegram.field_res_users_contracts_count
+msgid "Contracts"
+msgstr "Договоры"
 
 #. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_telegram_bus_create_date
@@ -142,13 +168,28 @@ msgstr "Create date"
 #: model:ir.model.fields,field_description:telegram.field_telegram_command_create_uid
 #: model:ir.model.fields,field_description:telegram.field_telegram_session_create_uid
 msgid "Created by"
-msgstr "Создано"
+msgstr "Создал"
 
 #. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_telegram_command_create_date
 #: model:ir.model.fields,field_description:telegram.field_telegram_session_create_date
 msgid "Created on"
-msgstr "Создан"
+msgstr "Создано"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_currency_id
+msgid "Currency"
+msgstr "Валюта"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_property_payment_term_id
+msgid "Customer Payment Terms"
+msgstr "Условия оплаты для покупателя"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_trust
+msgid "Degree of trust you have in this debtor"
+msgstr "Степень доверия у вас к этому должнику"
 
 #. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_telegram_command_description
@@ -160,7 +201,7 @@ msgstr "Описание"
 #: model:ir.model.fields,field_description:telegram.field_telegram_command_display_name
 #: model:ir.model.fields,field_description:telegram.field_telegram_session_display_name
 msgid "Display Name"
-msgstr "Отображаемое Имя"
+msgstr "Отображаемое имя"
 
 #. module: telegram
 #: model:ir.model.fields,help:telegram.field_telegram_session_odoo_session_sid
@@ -168,9 +209,19 @@ msgid "Equal to request.session.sid"
 msgstr "Equal to request.session.sid"
 
 #. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_property_account_position_id
+msgid "Fiscal Position"
+msgstr "Система налогов"
+
+#. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_telegram_session_handle_response_command_id
 msgid "Handle response command id"
 msgstr "Handle response command id"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_has_unreconciled_entries
+msgid "Has unreconciled entries"
+msgstr "Имеет несогласованные проводки"
 
 #. module: telegram
 #: model:telegram.command,notification_template:telegram.login_command
@@ -190,9 +241,25 @@ msgid "ID"
 msgstr "ID"
 
 #. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_invoice_warn
+msgid "Invoice"
+msgstr "Счет"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_invoice_ids
+msgid "Invoices"
+msgstr "Счета"
+
+#. module: telegram
 #: model:ir.model.fields,help:telegram.field_telegram_command_model_ids
 msgid "Is used by Server Action to find commands to proceed"
 msgstr "Is used by Server Action to find commands to proceed"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_issued_total
+#: model:ir.model.fields,field_description:telegram.field_res_users_journal_item_count
+msgid "Journal Items"
+msgstr "Элементы журнала"
 
 #. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_telegram_bus___last_update
@@ -206,7 +273,7 @@ msgstr "Последний раз изменено"
 #: model:ir.model.fields,field_description:telegram.field_telegram_command_write_uid
 #: model:ir.model.fields,field_description:telegram.field_telegram_session_write_uid
 msgid "Last Updated by"
-msgstr "Последний раз обновлено"
+msgstr "Последний раз обновил"
 
 #. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_telegram_bus_write_date
@@ -214,6 +281,16 @@ msgstr "Последний раз обновлено"
 #: model:ir.model.fields,field_description:telegram.field_telegram_session_write_date
 msgid "Last Updated on"
 msgstr "Последний раз обновлено"
+
+#. module: telegram
+#: model:ir.model.fields,help:telegram.field_res_users_last_time_entries_checked
+msgid "Last time the invoices & payments matching was performed for this partner. It is set either if there's not at least an unreconciled debit and an unreconciled credit or if you click the \"Done\" button."
+msgstr "Последний раз  было выполнено сопоставление  счетов-фактур и платежей для данного партнера. Он устанавливается или если нет, по крайней мере, не согласован дебет и кредит или если вы нажмете кнопку \"Готово\"."
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_last_time_entries_checked
+msgid "Latest Invoices & Payments Matching Date"
+msgstr "Последние Счета & Платежи, Соответствующие Дате"
 
 #. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_telegram_session_logged_in
@@ -229,6 +306,11 @@ msgstr "Menu that can be used in command, for example to make search"
 #: model:ir.model.fields,field_description:telegram.field_telegram_bus_message
 msgid "Message"
 msgstr "Message"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_invoice_warn_msg
+msgid "Message for Invoice"
+msgstr "Сообщение при выставлении счета"
 
 #. module: telegram
 #: selection:telegram.command,type:0
@@ -265,6 +347,11 @@ msgstr "Odoo session sid"
 #, python-format
 msgid "Or try to /login."
 msgstr "Or try to /login."
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_debit_limit
+msgid "Payable Limit"
+msgstr "Лимит Кредиторской Задолженности"
 
 #. module: telegram
 #: model:telegram.command,response_template:telegram.login_command
@@ -312,19 +399,19 @@ msgid "Response handling"
 msgstr "Response handling"
 
 #. module: telegram
-#: model:ir.model.fields,field_description:telegram.field_res_users_property_product_pricelist
-msgid "Sale Pricelist"
-msgstr "Каталог продаж"
-
-#. module: telegram
 #: model:ir.model.fields,help:telegram.field_telegram_command_universal
 msgid "Same answer for all users or not."
 msgstr "Same answer for all users or not."
 
 #. module: telegram
+#: model:ir.model.fields,help:telegram.field_res_users_invoice_warn
+msgid "Selecting the \"Warning\" option will notify user with the message, Selecting \"Blocking Message\" will throw an exception with the message and block the flow. The Message has to be written in the next field."
+msgstr "\"Предупреждение\" - сообщить пользователю. \"Блокирующее сообщение\" - исключительная ситуация, сообщить пользователю и заблокировать рабочий процесс. Текст сообщения должен быть записан в следующее поле."
+
+#. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_telegram_command_sequence
 msgid "Sequence"
-msgstr "Нумерация"
+msgstr "Последовательность"
 
 #. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_res_users_telegram_command_ids
@@ -394,6 +481,16 @@ msgid "Template for the message, that user will receive when event happens"
 msgstr "Template for the message, that user will receive when event happens"
 
 #. module: telegram
+#: model:ir.model.fields,help:telegram.field_res_users_property_account_position_id
+msgid "The fiscal position will determine taxes and accounts used for the partner."
+msgstr "Система налогов будет определять используемые для партнера налоги и счета."
+
+#. module: telegram
+#: model:ir.model.fields,help:telegram.field_res_users_has_unreconciled_entries
+msgid "The partner has at least one unreconciled debit and credit since last time the invoices & payments matching was performed."
+msgstr "У партнера есть по крайней мере один невыверенный дебет и кредит с прошлого раза, когда согласование счет-фактур и платежей были выполнены."
+
+#. module: telegram
 #: code:addons/telegram/telegram.py:123
 #, python-format
 msgid "There is no such command or you don't have access:  <i>%s</i>.  \n"
@@ -402,14 +499,54 @@ msgstr "There is no such command or you don't have access:  <i>%s</i>.  \n"
 " Use /help to see all available for you commands."
 
 #. module: telegram
-#: model:ir.model.fields,help:telegram.field_res_users_property_product_pricelist
-msgid "This pricelist will be used, instead of the default one, for sales to the current partner"
-msgstr "Для продаж текущему партнеру, вместо прайс-листа по умолчанию, будет использоваться этот прайс-лист"
+#: model:ir.model.fields,help:telegram.field_res_users_property_account_payable_id
+msgid "This account will be used instead of the default one as the payable account for the current partner"
+msgstr "Этот счёт будет использоваться вместо счёта по умолчанию как кредитовый для текущего контрагента"
+
+#. module: telegram
+#: model:ir.model.fields,help:telegram.field_res_users_property_account_receivable_id
+msgid "This account will be used instead of the default one as the receivable account for the current partner"
+msgstr "Этот счёт будет использоваться вместо счёта по умолчанию в качестве счёта дебиторской задолженности по текущему партнеру."
+
+#. module: telegram
+#: model:ir.model.fields,help:telegram.field_res_users_property_supplier_payment_term_id
+msgid "This payment term will be used instead of the default one for purchase orders and vendor bills"
+msgstr "Это условие оплаты для заказов на покупку и счетов поставщика будет использоваться вместо установленного по умолчанию"
+
+#. module: telegram
+#: model:ir.model.fields,help:telegram.field_res_users_property_payment_term_id
+msgid "This payment term will be used instead of the default one for sale orders and customer invoices"
+msgstr "Это условие оплаты для заказов продаж и счетов-фактур покупателей будет использоваться вместо используемого по умолчанию"
 
 #. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_telegram_session_token
 msgid "Token"
 msgstr "Token"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_total_invoiced
+msgid "Total Invoiced"
+msgstr "Итого по счетам"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_debit
+msgid "Total Payable"
+msgstr "Итого кредиторской задолженности"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_credit
+msgid "Total Receivable"
+msgstr "Итого дебиторской задолженности"
+
+#. module: telegram
+#: model:ir.model.fields,help:telegram.field_res_users_credit
+msgid "Total amount this customer owes you."
+msgstr "Итоговая сумма долга покупателя перед вами."
+
+#. module: telegram
+#: model:ir.model.fields,help:telegram.field_res_users_debit
+msgid "Total amount you have to pay to this vendor."
+msgstr "Итоговая сумма к уплате этому поставщику."
 
 #. module: telegram
 #: model:ir.model.fields,field_description:telegram.field_telegram_command_type
@@ -435,6 +572,11 @@ msgstr "User is shown ReplyKeyboardMarkup without one_time_keyboard. Such keyboa
 #: model:ir.model,name:telegram.model_res_users
 msgid "Users"
 msgstr "Пользователи"
+
+#. module: telegram
+#: model:ir.model.fields,help:telegram.field_res_users_currency_id
+msgid "Utility field to express amount currency"
+msgstr "Служебное поле, чтобы выразить суммы в валюте"
 
 #. module: telegram
 #: model:ir.ui.view,arch_db:telegram.view_telegram_command_form
@@ -534,6 +676,11 @@ msgstr "Vars that can be updated:\n"
 "* types - telebot.types . See https://github.com/eternnoir/pyTelegramBotAPI/blob/master/telebot/types.py and https://core.telegram.org/bots/api#available-types\n"
 "* emoji - see https://pypi.python.org/pypi/emoji\n"
 "  * emoji.emojize(':thumbsup:', use_aliases=True) - convert alias to emoji unicode. See http://www.webpagefx.com/tools/emoji-cheat-sheet/"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_res_users_property_supplier_payment_term_id
+msgid "Vendor Payment Terms"
+msgstr "Условия оплаты поставщика"
 
 #. module: telegram
 #: model:telegram.command,response_template:telegram.command_start
