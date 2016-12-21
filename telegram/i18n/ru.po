@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 8.0\n"
+"Project-Id-Version: Odoo Server 9.0c\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-21 09:05+0000\n"
-"PO-Revision-Date: 2016-12-21 09:05+0000\n"
+"POT-Creation-Date: 2016-12-21 10:07+0000\n"
+"PO-Revision-Date: 2016-12-21 10:07+0000\n"
 "Last-Translator: <>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. module: telegram
-#: help:telegram.command,type:0
+#: model:ir.model.fields,help:telegram.field_telegram_command_type
 msgid "\n"
 "* Normal - usual request-response commands\n"
 "* Normal (with caching) - prepares and caches response to send it immediately after requesting\n"
@@ -31,140 +31,59 @@ msgstr "\n"
 "    "
 
 #. module: telegram
-#: model:telegram.command,response_template:telegram.who_command
-msgid "<?xml version=\"1.0\"?>\n"
-"<t>\n"
-"<t t-if=\"data['name']\">\n"
-"You logged in as <t t-raw=\"data['name']\"/>\n"
-"</t>\n"
-"<t t-if=\"not data['name']\">\n"
-"    You haven't logged in yet. Use /login to do it\n"
-"</t>\n"
-"</t>"
-msgstr "<?xml version=\"1.0\"?>\n"
-"<t>\n"
-"<t t-if=\"data['name']\">\n"
-"You logged in as <t t-raw=\"data['name']\"/>\n"
-"</t>\n"
-"<t t-if=\"not data['name']\">\n"
-"    You haven't logged in yet. Use /login to do it\n"
-"</t>\n"
-"</t>"
-
-#. module: telegram
-#: model:telegram.command,response_template:telegram.command_start
-msgid "<?xml version=\"1.0\"?>\n"
-"<t>\n"
-"<t t-if=\"data['type'] == 'choose_language'\">\n"
-"Choose your language\n"
-"</t>\n"
-"<t t-if=\"data['type'] == 'finish'\">\n"
-"Welcome, <t t-esc=\"data['name']\"/>!\n"
-"</t>\n"
-"</t>\n"
-"        "
-msgstr "<?xml version=\"1.0\"?>\n"
-"<t>\n"
-"<t t-if=\"data['type'] == 'choose_language'\">\n"
-"Choose your language\n"
-"</t>\n"
-"<t t-if=\"data['type'] == 'finish'\">\n"
-"Welcome, <t t-esc=\"data['name']\"/>!\n"
-"</t>\n"
-"</t>\n"
-"        "
+#: model:telegram.command,response_template:telegram.user_command
+#: model:telegram.command,response_template:telegram.users_command
+msgid ", <i>Last login at:</i>"
+msgstr ", <i>Дата последней авторизации:</i>"
 
 #. module: telegram
 #: model:telegram.command,response_template:telegram.user_command
-msgid "<?xml version=\"1.0\"?>\n"
-"<t>\n"
-"<t t-set=\"user\" t-value=\"data['user']\"/>\n"
-"/user_<t t-esc=\"user.id\"/> <t t-esc=\"user.name\"/>, <i>Last login at:</i> <t t-esc=\"user.login_date\"/></t>\n"
-"        "
-msgstr "<?xml version=\"1.0\"?>\n"
-"<t>\n"
-"<t t-set=\"user\" t-value=\"data['user']\"/>\n"
-"/user_<t t-esc=\"user.id\"/> <t t-esc=\"user.name\"/>, <i>Дата последней авторизации:</i> <t t-esc=\"user.login_date\"/></t>\n"
-"        "
-
-#. module: telegram
 #: model:telegram.command,response_template:telegram.users_command
-msgid "<?xml version=\"1.0\"?>\n"
-"<t><t t-foreach=\"data['users']\" t-as=\"user\">\n"
-"/user_<t t-esc=\"user.id\"/> <t t-esc=\"user.name\"/>, <i>Last login at:</i> <t t-esc=\"user.login_date\"/></t></t>\n"
-"        "
-msgstr "<?xml version=\"1.0\"?>\n"
-"<t><t t-foreach=\"data['users']\" t-as=\"user\">\n"
-"/user_<t t-esc=\"user.id\"/> <t t-esc=\"user.name\"/>, <i>Дата последней авторизации:</i> <t t-esc=\"user.login_date\"/></t></t>\n"
-"        "
+msgid "/user_"
+msgstr "/user_"
 
 #. module: telegram
-#: model:telegram.command,response_template:telegram.login_command
-msgid "<?xml version=\"1.0\"?>\n"
-"<t><t t-if=\"data['authed']\">You already logged in</t><t t-if=\"not data['authed']\"><t>Please follow login link: <t t-esc=\"data['auth_url']\"/></t></t></t>"
-msgstr "<?xml version=\"1.0\"?>\n"
-"<t><t t-if=\"data['authed']\">You already logged in</t><t t-if=\"not data['authed']\"><t>Please follow login link: <t t-esc=\"data['auth_url']\"/></t></t></t>"
-
-#. module: telegram
-#: model:telegram.command,response_template:telegram.help_command
-msgid "<?xml version=\"1.0\"?>\n"
-"<t><t t-raw=\"data['all_commands']\"/></t>\n"
-"        "
-msgstr "<?xml version=\"1.0\"?>\n"
-"<t><t t-raw=\"data['all_commands']\"/></t>\n"
-"        "
-
-#. module: telegram
-#: model:telegram.command,notification_template:telegram.login_command
-msgid "<?xml version=\"1.0\"?>\n"
-"<t>Hello <t t-esc=\"data['name']\"/>!</t>"
-msgstr "<?xml version=\"1.0\"?>\n"
-"<t>Hello <t t-esc=\"data['name']\"/>!</t>"
-
-#. module: telegram
-#: model:telegram.command,response_template:telegram.logout_command
-msgid "<?xml version=\"1.0\"?>\n"
-"<t>You successfully logged out.</t>"
-msgstr "<?xml version=\"1.0\"?>\n"
-"<t>You successfully logged out.</t>"
-
-#. module: telegram
-#: field:telegram.command,group_ids:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_group_ids
 msgid "Access Groups"
 msgstr "Access Groups"
 
 #. module: telegram
-#: field:telegram.command,active:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_active
 msgid "Active"
-msgstr "Active"
+msgstr "Активен"
 
 #. module: telegram
-#: help:telegram.session,context:0
+#: model:ir.model.fields,help:telegram.field_telegram_session_context
 msgid "Any json serializable data. Can be used to share data between user requests."
 msgstr "Any json serializable data. Can be used to share data between user requests."
 
 #. module: telegram
-#: field:telegram.bus,channel:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_bus_channel
 msgid "Channel"
-msgstr "Channel"
+msgstr "Канал"
 
 #. module: telegram
-#: field:telegram.session,chat_ID:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_chat_ID
 msgid "Chat id"
 msgstr "Chat id"
 
 #. module: telegram
-#: view:telegram.command:telegram.view_telegram_command_form
+#: model:ir.ui.view,arch_db:telegram.view_telegram_command_form
 msgid "Check official qweb documentation:"
 msgstr "Check official qweb documentation:"
 
 #. module: telegram
-#: view:telegram.command:telegram.view_telegram_command_form
+#: model:telegram.command,response_template:telegram.command_start
+msgid "Choose your language"
+msgstr "Choose your language"
+
+#. module: telegram
+#: model:ir.ui.view,arch_db:telegram.view_telegram_command_form
 msgid "Code fields"
 msgstr "Code fields"
 
 #. module: telegram
-#: help:telegram.command,notification_code:0
+#: model:ir.model.fields,help:telegram.field_telegram_command_notification_code
 msgid "Code to be executed before rendering Notification Template\n"
 "\n"
 "Vars that can be created to be handled by telegram module\n"
@@ -183,12 +102,12 @@ msgstr "Code to be executed before rendering Notification Template\n"
 "    "
 
 #. module: telegram
-#: help:telegram.command,response_code:0
+#: model:ir.model.fields,help:telegram.field_telegram_command_response_code
 msgid "Code to be executed before rendering Response Template. "
 msgstr "Code to be executed before rendering Response Template. "
 
 #. module: telegram
-#: field:telegram.command,name:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_name
 msgid "Command"
 msgstr "Command"
 
@@ -198,7 +117,7 @@ msgid "Command name must be unique!"
 msgstr "Command name must be unique!"
 
 #. module: telegram
-#: help:telegram.command,name:0
+#: model:ir.model.fields,help:telegram.field_telegram_command_name
 msgid "Command string.\n"
 "Usually starts with slash symbol, e.g. \"/mycommand\".\n"
 "SQL Reg Exp can be used. See https://www.postgresql.org/docs/current/static/functions-matching.html#FUNCTIONS-SIMILARTO-REGEXP\n"
@@ -209,105 +128,105 @@ msgstr "Command string.\n"
 "For example /user_% handles requests like /user_1, /user_2 etc."
 
 #. module: telegram
-#: field:telegram.session,context:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_context
 msgid "Context"
 msgstr "Context"
 
 #. module: telegram
-#: field:telegram.bus,create_date:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_bus_create_date
 msgid "Create date"
 msgstr "Create date"
 
 #. module: telegram
-#: field:telegram.bus,create_uid:0
-#: field:telegram.command,create_uid:0
-#: field:telegram.session,create_uid:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_bus_create_uid
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_create_uid
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_create_uid
 msgid "Created by"
-msgstr "Created by"
+msgstr "Создано"
 
 #. module: telegram
-#: field:telegram.command,create_date:0
-#: field:telegram.session,create_date:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_create_date
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_create_date
 msgid "Created on"
-msgstr "Created on"
+msgstr "Создан"
 
 #. module: telegram
-#: field:telegram.command,description:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_description
 msgid "Description"
-msgstr "Description"
+msgstr "Описание"
 
 #. module: telegram
-#: field:telegram.bus,display_name:0
-#: field:telegram.command,display_name:0
-#: field:telegram.session,display_name:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_bus_display_name
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_display_name
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_display_name
 msgid "Display Name"
-msgstr "Display Name"
+msgstr "Отображаемое Имя"
 
 #. module: telegram
-#: help:telegram.session,odoo_session_sid:0
+#: model:ir.model.fields,help:telegram.field_telegram_session_odoo_session_sid
 msgid "Equal to request.session.sid"
 msgstr "Equal to request.session.sid"
 
 #. module: telegram
-#: field:telegram.session,handle_response_command_id:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_handle_response_command_id
 msgid "Handle response command id"
 msgstr "Handle response command id"
 
 #. module: telegram
-#: view:telegram.command:telegram.view_telegram_command_form
+#: model:telegram.command,notification_template:telegram.login_command
+msgid "Hello"
+msgstr "Hello"
+
+#. module: telegram
+#: model:ir.ui.view,arch_db:telegram.view_telegram_command_form
 msgid "Help"
 msgstr "Help"
 
 #. module: telegram
-#: field:telegram.bus,id:0
-#: field:telegram.command,id:0
-#: field:telegram.session,id:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_bus_id
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_id
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_id
 msgid "ID"
 msgstr "ID"
 
 #. module: telegram
-#: help:telegram.command,model_ids:0
+#: model:ir.model.fields,help:telegram.field_telegram_command_model_ids
 msgid "Is used by Server Action to find commands to proceed"
 msgstr "Is used by Server Action to find commands to proceed"
 
 #. module: telegram
-#: field:telegram.bus,__last_update:0
-#: field:telegram.command,__last_update:0
-#: field:telegram.session,__last_update:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_bus___last_update
+#: model:ir.model.fields,field_description:telegram.field_telegram_command___last_update
+#: model:ir.model.fields,field_description:telegram.field_telegram_session___last_update
 msgid "Last Modified on"
-msgstr "Last Modified on"
+msgstr "Последний раз изменено"
 
 #. module: telegram
-#: field:telegram.bus,write_uid:0
-#: field:telegram.command,write_uid:0
-#: field:telegram.session,write_uid:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_bus_write_uid
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_write_uid
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_write_uid
 msgid "Last Updated by"
-msgstr "Last Updated by"
+msgstr "Последний раз обновлено"
 
 #. module: telegram
-#: field:telegram.bus,write_date:0
-#: field:telegram.command,write_date:0
-#: field:telegram.session,write_date:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_bus_write_date
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_write_date
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_write_date
 msgid "Last Updated on"
-msgstr "Last Updated on"
+msgstr "Последний раз обновлено"
 
 #. module: telegram
-#: field:res.users,calendar_last_notif_ack:0
-msgid "Last notification marked as read from base Calendar"
-msgstr "Last notification marked as read from base Calendar"
-
-#. module: telegram
-#: field:telegram.session,logged_in:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_logged_in
 msgid "Logged in"
 msgstr "Logged in"
 
 #. module: telegram
-#: help:telegram.command,menu_id:0
+#: model:ir.model.fields,help:telegram.field_telegram_command_menu_id
 msgid "Menu that can be used in command, for example to make search"
 msgstr "Menu that can be used in command, for example to make search"
 
 #. module: telegram
-#: field:telegram.bus,message:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_bus_message
 msgid "Message"
 msgstr "Message"
 
@@ -322,88 +241,98 @@ msgid "Normal (with caching)"
 msgstr "Normal (with caching)"
 
 #. module: telegram
-#: field:telegram.command,notification_template:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_notification_template
 msgid "Notification Template"
 msgstr "Notification Template"
 
 #. module: telegram
-#: view:telegram.command:telegram.view_telegram_command_form
+#: model:ir.ui.view,arch_db:telegram.view_telegram_command_form
 msgid "Notification can be used in subscriptions or for delayed response"
 msgstr "Notification can be used in subscriptions or for delayed response"
 
 #. module: telegram
-#: field:telegram.command,notification_code:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_notification_code
 msgid "Notification code"
 msgstr "Notification code"
 
 #. module: telegram
-#: field:telegram.session,odoo_session_sid:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_odoo_session_sid
 msgid "Odoo session sid"
 msgstr "Odoo session sid"
 
 #. module: telegram
-#: code:addons/telegram/telegram.py:127
+#: code:addons/telegram/telegram.py:126
 #, python-format
 msgid "Or try to /login."
 msgstr "Or try to /login."
 
 #. module: telegram
-#: field:telegram.command,post_response_code:0
+#: model:telegram.command,response_template:telegram.login_command
+msgid "Please follow login link:"
+msgstr "Please follow login link:"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_post_response_code
 msgid "Post response code"
 msgstr "Post response code"
 
 #. module: telegram
-#: help:telegram.command,post_response_code:0
+#: model:ir.model.fields,help:telegram.field_telegram_command_post_response_code
 msgid "Python code to be executed after sending response"
 msgstr "Python code to be executed after sending response"
 
 #. module: telegram
-#: field:telegram.command,menu_id:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_menu_id
 msgid "Related Menu"
 msgstr "Related Menu"
 
 #. module: telegram
-#: field:telegram.command,model_ids:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_model_ids
 msgid "Related models"
 msgstr "Related models"
 
 #. module: telegram
-#: field:telegram.session,reply_keyboard:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_reply_keyboard
 msgid "Reply Keyboard"
 msgstr "Reply Keyboard"
 
 #. module: telegram
-#: field:telegram.command,response_template:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_response_template
 msgid "Response Template"
 msgstr "Response Template"
 
 #. module: telegram
-#: field:telegram.command,response_code:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_response_code
 msgid "Response code"
 msgstr "Response code"
 
 #. module: telegram
-#: field:telegram.session,handle_response:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_handle_response
 msgid "Response handling"
 msgstr "Response handling"
 
 #. module: telegram
-#: help:telegram.command,universal:0
+#: model:ir.model.fields,field_description:telegram.field_res_users_property_product_pricelist
+msgid "Sale Pricelist"
+msgstr "Каталог продаж"
+
+#. module: telegram
+#: model:ir.model.fields,help:telegram.field_telegram_command_universal
 msgid "Same answer for all users or not."
 msgstr "Same answer for all users or not."
 
 #. module: telegram
-#: field:telegram.command,sequence:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_sequence
 msgid "Sequence"
-msgstr "Sequence"
+msgstr "Нумерация"
 
 #. module: telegram
-#: field:res.users,telegram_command_ids:0
+#: model:ir.model.fields,field_description:telegram.field_res_users_telegram_command_ids
 msgid "Subscribed Commands"
 msgstr "Subscribed Commands"
 
 #. module: telegram
-#: field:telegram.command,user_ids:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_user_ids
 msgid "Subscribed users"
 msgstr "Subscribed users"
 
@@ -413,7 +342,7 @@ msgid "Subscription"
 msgstr "Subscription"
 
 #. module: telegram
-#: help:telegram.command,active:0
+#: model:ir.model.fields,help:telegram.field_telegram_command_active
 msgid "Switch it off to hide from /help output. The command will work anyway. To make command not available apply some Access Group to it."
 msgstr "Switch it off to hide from /help output. The command will work anyway. To make command not available apply some Access Group to it."
 
@@ -423,8 +352,8 @@ msgid "Telegram"
 msgstr "Telegram"
 
 #. module: telegram
-#: view:telegram.command:telegram.view_telegram_command_form
-#: view:telegram.command:telegram.view_telegram_command_tree
+#: model:ir.ui.view,arch_db:telegram.view_telegram_command_form
+#: model:ir.ui.view,arch_db:telegram.view_telegram_command_tree
 msgid "Telegram Command"
 msgstr "Telegram Command"
 
@@ -450,22 +379,22 @@ msgid "Telegram: handle subscriptions (finds commands via \"Related models\" fie
 msgstr "Telegram: handle subscriptions (finds commands via \"Related models\" field)"
 
 #. module: telegram
-#: view:telegram.command:telegram.view_telegram_command_form
+#: model:ir.ui.view,arch_db:telegram.view_telegram_command_form
 msgid "Template fields"
 msgstr "Template fields"
 
 #. module: telegram
-#: help:telegram.command,response_template:0
+#: model:ir.model.fields,help:telegram.field_telegram_command_response_template
 msgid "Template for the message, that user will receive immediately after sending command"
 msgstr "Template for the message, that user will receive immediately after sending command"
 
 #. module: telegram
-#: help:telegram.command,notification_template:0
+#: model:ir.model.fields,help:telegram.field_telegram_command_notification_template
 msgid "Template for the message, that user will receive when event happens"
 msgstr "Template for the message, that user will receive when event happens"
 
 #. module: telegram
-#: code:addons/telegram/telegram.py:124
+#: code:addons/telegram/telegram.py:123
 #, python-format
 msgid "There is no such command or you don't have access:  <i>%s</i>.  \n"
 " Use /help to see all available for you commands."
@@ -473,27 +402,32 @@ msgstr "There is no such command or you don't have access:  <i>%s</i>.  \n"
 " Use /help to see all available for you commands."
 
 #. module: telegram
-#: field:telegram.session,token:0
+#: model:ir.model.fields,help:telegram.field_res_users_property_product_pricelist
+msgid "This pricelist will be used, instead of the default one, for sales to the current partner"
+msgstr "Для продаж текущему партнеру, вместо прайс-листа по умолчанию, будет использоваться этот прайс-лист"
+
+#. module: telegram
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_token
 msgid "Token"
 msgstr "Token"
 
 #. module: telegram
-#: field:telegram.command,type:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_type
 msgid "Type"
-msgstr "Type"
+msgstr "Тип"
 
 #. module: telegram
-#: field:telegram.command,universal:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_command_universal
 msgid "Universal"
 msgstr "Universal"
 
 #. module: telegram
-#: field:telegram.session,user_id:0
+#: model:ir.model.fields,field_description:telegram.field_telegram_session_user_id
 msgid "User id"
 msgstr "User id"
 
 #. module: telegram
-#: help:telegram.session,reply_keyboard:0
+#: model:ir.model.fields,help:telegram.field_telegram_session_reply_keyboard
 msgid "User is shown ReplyKeyboardMarkup without one_time_keyboard. Such keyboard has to be removed explicitly"
 msgstr "User is shown ReplyKeyboardMarkup without one_time_keyboard. Such keyboard has to be removed explicitly"
 
@@ -503,7 +437,7 @@ msgid "Users"
 msgstr "Пользователи"
 
 #. module: telegram
-#: view:telegram.command:telegram.view_telegram_command_form
+#: model:ir.ui.view,arch_db:telegram.view_telegram_command_form
 msgid "Vars that can be updated:\n"
 "* data - empty dictonary to be filled with any data for rendering\n"
 "* options - dictonary to control processing\n"
@@ -602,28 +536,73 @@ msgstr "Vars that can be updated:\n"
 "  * emoji.emojize(':thumbsup:', use_aliases=True) - convert alias to emoji unicode. See http://www.webpagefx.com/tools/emoji-cheat-sheet/"
 
 #. module: telegram
-#: help:telegram.command,description:0
+#: model:telegram.command,response_template:telegram.command_start
+msgid "Welcome,"
+msgstr "Welcome,"
+
+#. module: telegram
+#: model:ir.model.fields,help:telegram.field_telegram_command_description
 msgid "What command does. It will be used in /help command"
 msgstr "What command does. It will be used in /help command"
 
 #. module: telegram
-#: help:telegram.command,group_ids:0
+#: model:ir.model.fields,help:telegram.field_telegram_command_group_ids
 msgid "Who can use this command. Set empty list for public commands (e.g. /login)"
 msgstr "Who can use this command. Set empty list for public commands (e.g. /login)"
 
 #. module: telegram
-#: code:addons/telegram/telegram.py:214
+#: model:telegram.command,response_template:telegram.login_command
+msgid "You already logged in"
+msgstr "You already logged in"
+
+#. module: telegram
+#: code:addons/telegram/telegram.py:213
 #, python-format
 msgid "You have to /login first."
 msgstr "You have to /login first."
 
 #. module: telegram
-#: view:telegram.command:telegram.view_telegram_command_form
+#: model:telegram.command,response_template:telegram.who_command
+msgid "You haven't logged in yet. Use /login to do it"
+msgstr "You haven't logged in yet. Use /login to do it"
+
+#. module: telegram
+#: model:telegram.command,response_template:telegram.who_command
+msgid "You logged in as"
+msgstr "You logged in as"
+
+#. module: telegram
+#: model:telegram.command,response_template:telegram.logout_command
+msgid "You successfully logged out."
+msgstr "You successfully logged out."
+
+#. module: telegram
+#: model:ir.ui.view,arch_db:telegram.view_telegram_command_form
 msgid "https://www.odoo.com/documentation/8.0/reference/qweb.html"
 msgstr "https://www.odoo.com/documentation/8.0/reference/qweb.html"
 
 #. module: telegram
-#: code:addons/telegram/telegram.py:197
+#: model:ir.model,name:telegram.model_ir_config_parameter
+msgid "ir.config_parameter"
+msgstr "ir.config_parameter"
+
+#. module: telegram
+#: model:ir.model,name:telegram.model_telegram_bus
+msgid "telegram.bus"
+msgstr "telegram.bus"
+
+#. module: telegram
+#: model:ir.model,name:telegram.model_telegram_command
+msgid "telegram.command"
+msgstr "telegram.command"
+
+#. module: telegram
+#: model:ir.model,name:telegram.model_telegram_session
+msgid "telegram.session"
+msgstr "telegram.session"
+
+#. module: telegram
+#: code:addons/telegram/telegram.py:196
 #, python-format
 msgid "too big size of callback_data"
 msgstr "too big size of callback_data"
