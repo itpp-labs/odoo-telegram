@@ -35,15 +35,18 @@ for command in all_commands:
         <field name="sequence" eval="0"/>
         <field name="response_code">
 
-if tsession.user_id:
+if telegram['tsession'].user_id:
     data['authed'] = True
 else:
     data['authed'] = False
-    data['auth_url'] = base_url + '/web/login/telegram?token=%s' % tsession.token
+    data['auth_url'] = telegram['base_url'] + '/web/login/telegram?token=%s' % telegram['tsession'].token
         </field>
         <field name="response_template" type="xml">
         <t><t t-if="data['authed']">You already logged in</t><t t-if="not data['authed']"><t>Please follow login link: <t t-esc="data['auth_url']"/></t></t></t></field>
-        <field name="notification_template" type="xml"><t>Hello <t t-esc="tsession.user_id.name"/>!</t></field>
+        <field name="notification_code">
+data['name'] = telegram['tsession'].user_id.name
+        </field>
+        <field name="notification_template" type="xml"><t>Hello <t t-esc="data['name']"/>!</t></field>
         <field name="group_ids" eval="[]"/>
     </record>
 
@@ -53,7 +56,7 @@ else:
         <field name="sequence" eval="990"/>
         <field name="response_template" type="xml"><t>You successfully logged out.</t></field>
         <field name="post_response_code">
-tsession.unlink()
+telegram['tsession'].unlink()
         </field>
         <field name="group_ids" eval="[]"/>
     </record>
@@ -71,8 +74,27 @@ data['users'] = env['res.users'].search([('share', '=', False)])
         </field>
         <field name="response_template" type="xml">
             <t><t t-foreach="data['users']" t-as="user">
-<b><t t-esc="user.name"/></b>
-<i>Last login at:</i> <t t-esc="user.login_date"/></t></t>
+/user_<t t-esc="user.id"/> <t t-esc="user.name"/>, <i>Last login at:</i> <t t-esc="user.login_date"/></t></t>
+        </field>
+    </record>
+
+    <record model="telegram.command" id="user_command">
+        <field name="name">/user_%</field>
+        <field name="description">Get information about specific</field>
+        <field name="sequence" eval="800"/>
+        <field name="universal">True</field>
+        <field name="active" eval="False"/>
+        <field name="group_ids" eval="[(4, ref('base.group_erp_manager'))]" />
+        <field name="model_ids" eval="[(4, ref('base.model_res_users'))]"/>
+        <field name="response_code">
+user_id = telegram['tmessage'].text.split('_')[1]
+user_id = int(user_id)
+data['user'] = env['res.users'].browse(user_id)
+        </field>
+        <field name="response_template" type="xml">
+            <t>
+<t t-set="user" t-value="data['user']"/>
+/user_<t t-esc="user.id"/> <t t-esc="user.name"/>, <i>Last login at:</i> <t t-esc="user.login_date"/></t>
         </field>
     </record>
 
@@ -80,11 +102,14 @@ data['users'] = env['res.users'].search([('share', '=', False)])
         <field name="name">/me</field>
         <field name="description">Discover who you are</field>
         <field name="sequence" eval="980"/>
+        <field name="response_code">
+data['name'] = telegram['tsession'].user_id.name if telegram['tsession'].user_id else None
+        </field>
         <field name="response_template" type="xml"><t>
-<t t-if="tsession.user_id">
-You logged in as <t t-raw="tsession.user_id.name"/>
+<t t-if="data['name']">
+You logged in as <t t-raw="data['name']"/>
 </t>
-<t t-if="not tsession.user_id">
+<t t-if="not data['name']">
     You haven't logged in yet. Use /login to do it
 </t>
 </t></field>

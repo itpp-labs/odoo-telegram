@@ -13,7 +13,9 @@ class TelegramLogin(http.Controller):
     @http.route('/web/login/telegram', type='http', auth='user')
     def do_login(self, *args, **kw):
         token = kw['token']
-        command_ids = request.env['telegram.command'].search([('name', '=', '/login')]).ids
+        command = request.env['telegram.command']\
+                         .with_context(active_test=False)\
+                         .search([('name', '=', '/login')])
 
         tsession = request.env['telegram.session'].sudo().search([('token', '=', token)])
         if not tsession:
@@ -24,9 +26,5 @@ class TelegramLogin(http.Controller):
             'user_id': request.env.uid,
             'odoo_session_sid': request.session.sid,
         })
-
-        message = {'action': 'send_notifications',
-                   'command_ids': command_ids,
-                   'tsession_id': tsession.id}
-        request.env['telegram.bus'].sendone(message)
+        command.send_notifications(tsession=tsession)
         return utils.redirect('/web')
