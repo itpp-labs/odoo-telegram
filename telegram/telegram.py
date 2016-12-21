@@ -24,6 +24,10 @@ from openerp.tools.translate import _
 from openerp.addons.base.ir.ir_qweb import QWebContext
 import openerp
 
+# 8.0
+xml_translate = True
+# 9.0+
+#from openerp.tools.translate import xml_translate
 _logger = logging.getLogger(__name__)
 
 CALLBACK_DATA_MAX_SIZE = 64
@@ -55,7 +59,10 @@ For example /user_% handles requests like /user_1, /user_2 etc.""",
     ''', default='normal', required=True)
     universal = fields.Boolean(help='Same answer for all users or not.', default=False)
     response_code = fields.Text(help='''Code to be executed before rendering Response Template. ''')
-    response_template = fields.Text(help='Template for the message, that user will receive immediately after sending command')
+    response_template = fields.Text(
+        "Response Template",
+        translate=xml_translate,
+        help='Template for the message, that user will receive immediately after sending command')
     post_response_code = fields.Text(help='Python code to be executed after sending response')
     notification_code = fields.Text(help='''Code to be executed before rendering Notification Template
 
@@ -65,7 +72,10 @@ Vars that can be created to be handled by telegram module
 Check Help Tab for the rest variables.
 
     ''')
-    notification_template = fields.Text(help='Template for the message, that user will receive when event happens')
+    notification_template = fields.Text(
+        "Notification Template",
+        translate=xml_translate,
+        help='Template for the message, that user will receive when event happens')
     group_ids = fields.Many2many('res.groups', string="Access Groups", help='Who can use this command. Set empty list for public commands (e.g. /login)', default=lambda self: [self.env.ref('base.group_user').id])
     model_ids = fields.Many2many('ir.model', 'command_to_model_rel', 'command_id', 'model_id', string="Related models", help='Is used by Server Action to find commands to proceed')
     user_ids = fields.Many2many('res.users', 'command_to_user_rel', 'telegram_command_id', 'user_id', string='Subscribed users')
@@ -93,7 +103,8 @@ Check Help Tab for the rest variables.
                 # use search to apply access rights
                 command = self.env['telegram.command']\
                               .sudo(tsession.get_user())\
-                              .with_context(active_test=False)\
+                              .with_context(active_test=False,
+                                            lang=tsession.user_id.lang)\
                               .search([('id', 'in', ids)], limit=1)\
                               .with_context(active_test=True)
 
