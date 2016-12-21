@@ -24,6 +24,10 @@ from openerp.tools.translate import _
 from openerp.addons.base.ir.ir_qweb import QWebContext
 import openerp
 
+# 8.0
+xml_translate = True
+# 9.0+
+# from openerp.tools.translate import xml_translate
 _logger = logging.getLogger(__name__)
 
 CALLBACK_DATA_MAX_SIZE = 64
@@ -55,7 +59,10 @@ For example /user_% handles requests like /user_1, /user_2 etc.""",
     ''', default='normal', required=True)
     universal = fields.Boolean(help='Same answer for all users or not.', default=False)
     response_code = fields.Text(help='''Code to be executed before rendering Response Template. ''')
-    response_template = fields.Text(help='Template for the message, that user will receive immediately after sending command')
+    response_template = fields.Text(
+        "Response Template",
+        translate=xml_translate,
+        help='Template for the message, that user will receive immediately after sending command')
     post_response_code = fields.Text(help='Python code to be executed after sending response')
     notification_code = fields.Text(help='''Code to be executed before rendering Notification Template
 
@@ -65,7 +72,10 @@ Vars that can be created to be handled by telegram module
 Check Help Tab for the rest variables.
 
     ''')
-    notification_template = fields.Text(help='Template for the message, that user will receive when event happens')
+    notification_template = fields.Text(
+        "Notification Template",
+        translate=xml_translate,
+        help='Template for the message, that user will receive when event happens')
     group_ids = fields.Many2many('res.groups', string="Access Groups", help='Who can use this command. Set empty list for public commands (e.g. /login)', default=lambda self: [self.env.ref('base.group_user').id])
     model_ids = fields.Many2many('ir.model', 'command_to_model_rel', 'command_id', 'model_id', string="Related models", help='Is used by Server Action to find commands to proceed')
     user_ids = fields.Many2many('res.users', 'command_to_user_rel', 'telegram_command_id', 'user_id', string='Subscribed users')
@@ -93,7 +103,8 @@ Check Help Tab for the rest variables.
                 # use search to apply access rights
                 command = self.env['telegram.command']\
                               .sudo(tsession.get_user())\
-                              .with_context(active_test=False)\
+                              .with_context(active_test=False,
+                                            lang=tsession.user_id.lang)\
                               .search([('id', 'in', ids)], limit=1)\
                               .with_context(active_test=True)
 
@@ -234,7 +245,7 @@ Check Help Tab for the rest variables.
             if bot:
                 self.update_cache(bus_message, bot)
         elif bus_message['action'] == 'send_notifications':
-            self.send_notifications(bus_message, bot)
+            self._send_notifications(bus_message, bot)
         elif bus_message['action'] == 'emulate_request':
             self.execute_emulated_request(bus_message, bot)
 
@@ -253,7 +264,9 @@ Check Help Tab for the rest variables.
     @api.multi
     def eval_notification(self, event, tsession):
         self.ensure_one()
-        return self._eval(self.notification_code, locals_dict={'event': event}, tsession=tsession)
+        return self._eval(self.notification_code,
+                          locals_dict={'telegram': {'event': event}},
+                          tsession=tsession)
 
     @api.multi
     def render_notification(self, locals_dict, tsession=None):
@@ -422,7 +435,6 @@ Check Help Tab for the rest variables.
             'handle_response': handle_response_dump,
         })
 
-
     @api.multi
     def get_graph_data(self):
         self.ensure_one()
@@ -575,13 +587,7 @@ Check Help Tab for the rest variables.
             subscription_commands = self.env['telegram.command'].search([('model_ids.model', '=', context['active_model']), ('type', '=', 'subscription')])
         _logger.debug('subscription_commands %s' % [c.name for c in subscription_commands])
         event = dict((k, context.get(k)) for k in ['active_model', 'active_id', 'active_ids'])
-        if len(subscription_commands):
-            message = {
-                'action': 'send_notifications',
-                'event': event,
-                'command_ids': subscription_commands.ids
-            }
-            self.env['telegram.bus'].sendone(message)
+        subscription_commands.send_notifications(event=event)
 
     # bus reaction methods
     def update_cache(self, bus_message, bot):
@@ -596,7 +602,21 @@ Check Help Tab for the rest variables.
                     response = command.get_response(tsession=tsession)
                     bot.cache.set_value(command, response, tsession)
 
-    def send_notifications(self, bus_message, bot):
+    @api.multi
+    def send_notifications(self, event=None, tsession=None):
+        """Pass command to telegram process,
+        because current process doesn't have access to bot"""
+        if not len(self.ids):
+            return
+        message = {
+            'action': 'send_notifications',
+            'event': event,
+            'tsession_id': tsession and tsession.id,
+            'command_ids': self.ids,
+        }
+        self.env['telegram.bus'].sendone(message)
+
+    def _send_notifications(self, bus_message, bot):
         _logger.debug('send_notifications(). bus_message=%s', bus_message)
         tsession = None
         if bus_message.get('tsession_id'):
@@ -691,8 +711,8 @@ class TelegramSession(models.Model):
     user_id = fields.Many2one('res.users')
     context = fields.Text('Context', help='Any json serializable data. Can be used to share data between user requests.')
     reply_keyboard = fields.Boolean('Reply Keyboard', help='User is shown ReplyKeyboardMarkup without one_time_keyboard. Such keyboard has to be removed explicitly')
-    handle_response = fields.Text('Response handling') 
-    handle_response_command_id = fields.Many2one('telegram.command') 
+    handle_response = fields.Text('Response handling')
+    handle_response_command_id = fields.Many2one('telegram.command')
 
     @api.multi
     def get_user(self):

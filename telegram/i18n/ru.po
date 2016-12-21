@@ -1,0 +1,630 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+#	* telegram
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 8.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-12-21 09:05+0000\n"
+"PO-Revision-Date: 2016-12-21 09:05+0000\n"
+"Last-Translator: <>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: telegram
+#: help:telegram.command,type:0
+msgid "\n"
+"* Normal - usual request-response commands\n"
+"* Normal (with caching) - prepares and caches response to send it immediately after requesting\n"
+"* Subscription - allows to subscribe to events or notifications\n"
+"\n"
+"    "
+msgstr "\n"
+"* Normal - usual request-response commands\n"
+"* Normal (with caching) - prepares and caches response to send it immediately after requesting\n"
+"* Subscription - allows to subscribe to events or notifications\n"
+"\n"
+"    "
+
+#. module: telegram
+#: model:telegram.command,response_template:telegram.who_command
+msgid "<?xml version=\"1.0\"?>\n"
+"<t>\n"
+"<t t-if=\"data['name']\">\n"
+"You logged in as <t t-raw=\"data['name']\"/>\n"
+"</t>\n"
+"<t t-if=\"not data['name']\">\n"
+"    You haven't logged in yet. Use /login to do it\n"
+"</t>\n"
+"</t>"
+msgstr "<?xml version=\"1.0\"?>\n"
+"<t>\n"
+"<t t-if=\"data['name']\">\n"
+"You logged in as <t t-raw=\"data['name']\"/>\n"
+"</t>\n"
+"<t t-if=\"not data['name']\">\n"
+"    You haven't logged in yet. Use /login to do it\n"
+"</t>\n"
+"</t>"
+
+#. module: telegram
+#: model:telegram.command,response_template:telegram.command_start
+msgid "<?xml version=\"1.0\"?>\n"
+"<t>\n"
+"<t t-if=\"data['type'] == 'choose_language'\">\n"
+"Choose your language\n"
+"</t>\n"
+"<t t-if=\"data['type'] == 'finish'\">\n"
+"Welcome, <t t-esc=\"data['name']\"/>!\n"
+"</t>\n"
+"</t>\n"
+"        "
+msgstr "<?xml version=\"1.0\"?>\n"
+"<t>\n"
+"<t t-if=\"data['type'] == 'choose_language'\">\n"
+"Choose your language\n"
+"</t>\n"
+"<t t-if=\"data['type'] == 'finish'\">\n"
+"Welcome, <t t-esc=\"data['name']\"/>!\n"
+"</t>\n"
+"</t>\n"
+"        "
+
+#. module: telegram
+#: model:telegram.command,response_template:telegram.user_command
+msgid "<?xml version=\"1.0\"?>\n"
+"<t>\n"
+"<t t-set=\"user\" t-value=\"data['user']\"/>\n"
+"/user_<t t-esc=\"user.id\"/> <t t-esc=\"user.name\"/>, <i>Last login at:</i> <t t-esc=\"user.login_date\"/></t>\n"
+"        "
+msgstr "<?xml version=\"1.0\"?>\n"
+"<t>\n"
+"<t t-set=\"user\" t-value=\"data['user']\"/>\n"
+"/user_<t t-esc=\"user.id\"/> <t t-esc=\"user.name\"/>, <i>Дата последней авторизации:</i> <t t-esc=\"user.login_date\"/></t>\n"
+"        "
+
+#. module: telegram
+#: model:telegram.command,response_template:telegram.users_command
+msgid "<?xml version=\"1.0\"?>\n"
+"<t><t t-foreach=\"data['users']\" t-as=\"user\">\n"
+"/user_<t t-esc=\"user.id\"/> <t t-esc=\"user.name\"/>, <i>Last login at:</i> <t t-esc=\"user.login_date\"/></t></t>\n"
+"        "
+msgstr "<?xml version=\"1.0\"?>\n"
+"<t><t t-foreach=\"data['users']\" t-as=\"user\">\n"
+"/user_<t t-esc=\"user.id\"/> <t t-esc=\"user.name\"/>, <i>Дата последней авторизации:</i> <t t-esc=\"user.login_date\"/></t></t>\n"
+"        "
+
+#. module: telegram
+#: model:telegram.command,response_template:telegram.login_command
+msgid "<?xml version=\"1.0\"?>\n"
+"<t><t t-if=\"data['authed']\">You already logged in</t><t t-if=\"not data['authed']\"><t>Please follow login link: <t t-esc=\"data['auth_url']\"/></t></t></t>"
+msgstr "<?xml version=\"1.0\"?>\n"
+"<t><t t-if=\"data['authed']\">You already logged in</t><t t-if=\"not data['authed']\"><t>Please follow login link: <t t-esc=\"data['auth_url']\"/></t></t></t>"
+
+#. module: telegram
+#: model:telegram.command,response_template:telegram.help_command
+msgid "<?xml version=\"1.0\"?>\n"
+"<t><t t-raw=\"data['all_commands']\"/></t>\n"
+"        "
+msgstr "<?xml version=\"1.0\"?>\n"
+"<t><t t-raw=\"data['all_commands']\"/></t>\n"
+"        "
+
+#. module: telegram
+#: model:telegram.command,notification_template:telegram.login_command
+msgid "<?xml version=\"1.0\"?>\n"
+"<t>Hello <t t-esc=\"data['name']\"/>!</t>"
+msgstr "<?xml version=\"1.0\"?>\n"
+"<t>Hello <t t-esc=\"data['name']\"/>!</t>"
+
+#. module: telegram
+#: model:telegram.command,response_template:telegram.logout_command
+msgid "<?xml version=\"1.0\"?>\n"
+"<t>You successfully logged out.</t>"
+msgstr "<?xml version=\"1.0\"?>\n"
+"<t>You successfully logged out.</t>"
+
+#. module: telegram
+#: field:telegram.command,group_ids:0
+msgid "Access Groups"
+msgstr "Access Groups"
+
+#. module: telegram
+#: field:telegram.command,active:0
+msgid "Active"
+msgstr "Active"
+
+#. module: telegram
+#: help:telegram.session,context:0
+msgid "Any json serializable data. Can be used to share data between user requests."
+msgstr "Any json serializable data. Can be used to share data between user requests."
+
+#. module: telegram
+#: field:telegram.bus,channel:0
+msgid "Channel"
+msgstr "Channel"
+
+#. module: telegram
+#: field:telegram.session,chat_ID:0
+msgid "Chat id"
+msgstr "Chat id"
+
+#. module: telegram
+#: view:telegram.command:telegram.view_telegram_command_form
+msgid "Check official qweb documentation:"
+msgstr "Check official qweb documentation:"
+
+#. module: telegram
+#: view:telegram.command:telegram.view_telegram_command_form
+msgid "Code fields"
+msgstr "Code fields"
+
+#. module: telegram
+#: help:telegram.command,notification_code:0
+msgid "Code to be executed before rendering Notification Template\n"
+"\n"
+"Vars that can be created to be handled by telegram module\n"
+"* options['notify_user_ids'] - by default all subscribers get notification. With notify_user_ids you can specify list of users who has to receive notification. Then only ones who subscribed and are specified in notify_user_ids will receive notification.\n"
+"\n"
+"Check Help Tab for the rest variables.\n"
+"\n"
+"    "
+msgstr "Code to be executed before rendering Notification Template\n"
+"\n"
+"Vars that can be created to be handled by telegram module\n"
+"* options['notify_user_ids'] - by default all subscribers get notification. With notify_user_ids you can specify list of users who has to receive notification. Then only ones who subscribed and are specified in notify_user_ids will receive notification.\n"
+"\n"
+"Check Help Tab for the rest variables.\n"
+"\n"
+"    "
+
+#. module: telegram
+#: help:telegram.command,response_code:0
+msgid "Code to be executed before rendering Response Template. "
+msgstr "Code to be executed before rendering Response Template. "
+
+#. module: telegram
+#: field:telegram.command,name:0
+msgid "Command"
+msgstr "Command"
+
+#. module: telegram
+#: sql_constraint:telegram.command:0
+msgid "Command name must be unique!"
+msgstr "Command name must be unique!"
+
+#. module: telegram
+#: help:telegram.command,name:0
+msgid "Command string.\n"
+"Usually starts with slash symbol, e.g. \"/mycommand\".\n"
+"SQL Reg Exp can be used. See https://www.postgresql.org/docs/current/static/functions-matching.html#FUNCTIONS-SIMILARTO-REGEXP\n"
+"For example /user_% handles requests like /user_1, /user_2 etc."
+msgstr "Command string.\n"
+"Usually starts with slash symbol, e.g. \"/mycommand\".\n"
+"SQL Reg Exp can be used. See https://www.postgresql.org/docs/current/static/functions-matching.html#FUNCTIONS-SIMILARTO-REGEXP\n"
+"For example /user_% handles requests like /user_1, /user_2 etc."
+
+#. module: telegram
+#: field:telegram.session,context:0
+msgid "Context"
+msgstr "Context"
+
+#. module: telegram
+#: field:telegram.bus,create_date:0
+msgid "Create date"
+msgstr "Create date"
+
+#. module: telegram
+#: field:telegram.bus,create_uid:0
+#: field:telegram.command,create_uid:0
+#: field:telegram.session,create_uid:0
+msgid "Created by"
+msgstr "Created by"
+
+#. module: telegram
+#: field:telegram.command,create_date:0
+#: field:telegram.session,create_date:0
+msgid "Created on"
+msgstr "Created on"
+
+#. module: telegram
+#: field:telegram.command,description:0
+msgid "Description"
+msgstr "Description"
+
+#. module: telegram
+#: field:telegram.bus,display_name:0
+#: field:telegram.command,display_name:0
+#: field:telegram.session,display_name:0
+msgid "Display Name"
+msgstr "Display Name"
+
+#. module: telegram
+#: help:telegram.session,odoo_session_sid:0
+msgid "Equal to request.session.sid"
+msgstr "Equal to request.session.sid"
+
+#. module: telegram
+#: field:telegram.session,handle_response_command_id:0
+msgid "Handle response command id"
+msgstr "Handle response command id"
+
+#. module: telegram
+#: view:telegram.command:telegram.view_telegram_command_form
+msgid "Help"
+msgstr "Help"
+
+#. module: telegram
+#: field:telegram.bus,id:0
+#: field:telegram.command,id:0
+#: field:telegram.session,id:0
+msgid "ID"
+msgstr "ID"
+
+#. module: telegram
+#: help:telegram.command,model_ids:0
+msgid "Is used by Server Action to find commands to proceed"
+msgstr "Is used by Server Action to find commands to proceed"
+
+#. module: telegram
+#: field:telegram.bus,__last_update:0
+#: field:telegram.command,__last_update:0
+#: field:telegram.session,__last_update:0
+msgid "Last Modified on"
+msgstr "Last Modified on"
+
+#. module: telegram
+#: field:telegram.bus,write_uid:0
+#: field:telegram.command,write_uid:0
+#: field:telegram.session,write_uid:0
+msgid "Last Updated by"
+msgstr "Last Updated by"
+
+#. module: telegram
+#: field:telegram.bus,write_date:0
+#: field:telegram.command,write_date:0
+#: field:telegram.session,write_date:0
+msgid "Last Updated on"
+msgstr "Last Updated on"
+
+#. module: telegram
+#: field:res.users,calendar_last_notif_ack:0
+msgid "Last notification marked as read from base Calendar"
+msgstr "Last notification marked as read from base Calendar"
+
+#. module: telegram
+#: field:telegram.session,logged_in:0
+msgid "Logged in"
+msgstr "Logged in"
+
+#. module: telegram
+#: help:telegram.command,menu_id:0
+msgid "Menu that can be used in command, for example to make search"
+msgstr "Menu that can be used in command, for example to make search"
+
+#. module: telegram
+#: field:telegram.bus,message:0
+msgid "Message"
+msgstr "Message"
+
+#. module: telegram
+#: selection:telegram.command,type:0
+msgid "Normal"
+msgstr "Normal"
+
+#. module: telegram
+#: selection:telegram.command,type:0
+msgid "Normal (with caching)"
+msgstr "Normal (with caching)"
+
+#. module: telegram
+#: field:telegram.command,notification_template:0
+msgid "Notification Template"
+msgstr "Notification Template"
+
+#. module: telegram
+#: view:telegram.command:telegram.view_telegram_command_form
+msgid "Notification can be used in subscriptions or for delayed response"
+msgstr "Notification can be used in subscriptions or for delayed response"
+
+#. module: telegram
+#: field:telegram.command,notification_code:0
+msgid "Notification code"
+msgstr "Notification code"
+
+#. module: telegram
+#: field:telegram.session,odoo_session_sid:0
+msgid "Odoo session sid"
+msgstr "Odoo session sid"
+
+#. module: telegram
+#: code:addons/telegram/telegram.py:127
+#, python-format
+msgid "Or try to /login."
+msgstr "Or try to /login."
+
+#. module: telegram
+#: field:telegram.command,post_response_code:0
+msgid "Post response code"
+msgstr "Post response code"
+
+#. module: telegram
+#: help:telegram.command,post_response_code:0
+msgid "Python code to be executed after sending response"
+msgstr "Python code to be executed after sending response"
+
+#. module: telegram
+#: field:telegram.command,menu_id:0
+msgid "Related Menu"
+msgstr "Related Menu"
+
+#. module: telegram
+#: field:telegram.command,model_ids:0
+msgid "Related models"
+msgstr "Related models"
+
+#. module: telegram
+#: field:telegram.session,reply_keyboard:0
+msgid "Reply Keyboard"
+msgstr "Reply Keyboard"
+
+#. module: telegram
+#: field:telegram.command,response_template:0
+msgid "Response Template"
+msgstr "Response Template"
+
+#. module: telegram
+#: field:telegram.command,response_code:0
+msgid "Response code"
+msgstr "Response code"
+
+#. module: telegram
+#: field:telegram.session,handle_response:0
+msgid "Response handling"
+msgstr "Response handling"
+
+#. module: telegram
+#: help:telegram.command,universal:0
+msgid "Same answer for all users or not."
+msgstr "Same answer for all users or not."
+
+#. module: telegram
+#: field:telegram.command,sequence:0
+msgid "Sequence"
+msgstr "Sequence"
+
+#. module: telegram
+#: field:res.users,telegram_command_ids:0
+msgid "Subscribed Commands"
+msgstr "Subscribed Commands"
+
+#. module: telegram
+#: field:telegram.command,user_ids:0
+msgid "Subscribed users"
+msgstr "Subscribed users"
+
+#. module: telegram
+#: selection:telegram.command,type:0
+msgid "Subscription"
+msgstr "Subscription"
+
+#. module: telegram
+#: help:telegram.command,active:0
+msgid "Switch it off to hide from /help output. The command will work anyway. To make command not available apply some Access Group to it."
+msgstr "Switch it off to hide from /help output. The command will work anyway. To make command not available apply some Access Group to it."
+
+#. module: telegram
+#: model:ir.ui.menu,name:telegram.menu_telegram
+msgid "Telegram"
+msgstr "Telegram"
+
+#. module: telegram
+#: view:telegram.command:telegram.view_telegram_command_form
+#: view:telegram.command:telegram.view_telegram_command_tree
+msgid "Telegram Command"
+msgstr "Telegram Command"
+
+#. module: telegram
+#: model:ir.actions.act_window,name:telegram.action_telegram_command
+#: model:ir.ui.menu,name:telegram.menu_telegram_command
+msgid "Telegram Commands"
+msgstr "Telegram Commands"
+
+#. module: telegram
+#: model:ir.actions.server,name:telegram.action_manage_threads
+msgid "Telegram: Manage threads"
+msgstr "Telegram: Manage threads"
+
+#. module: telegram
+#: model:ir.actions.server,name:telegram.action_update_cache
+msgid "Telegram: Update cache (finds commands via \"Related models\" field)"
+msgstr "Telegram: Update cache (finds commands via \"Related models\" field)"
+
+#. module: telegram
+#: model:ir.actions.server,name:telegram.action_handle_subscriptions
+msgid "Telegram: handle subscriptions (finds commands via \"Related models\" field)"
+msgstr "Telegram: handle subscriptions (finds commands via \"Related models\" field)"
+
+#. module: telegram
+#: view:telegram.command:telegram.view_telegram_command_form
+msgid "Template fields"
+msgstr "Template fields"
+
+#. module: telegram
+#: help:telegram.command,response_template:0
+msgid "Template for the message, that user will receive immediately after sending command"
+msgstr "Template for the message, that user will receive immediately after sending command"
+
+#. module: telegram
+#: help:telegram.command,notification_template:0
+msgid "Template for the message, that user will receive when event happens"
+msgstr "Template for the message, that user will receive when event happens"
+
+#. module: telegram
+#: code:addons/telegram/telegram.py:124
+#, python-format
+msgid "There is no such command or you don't have access:  <i>%s</i>.  \n"
+" Use /help to see all available for you commands."
+msgstr "There is no such command or you don't have access:  <i>%s</i>.  \n"
+" Use /help to see all available for you commands."
+
+#. module: telegram
+#: field:telegram.session,token:0
+msgid "Token"
+msgstr "Token"
+
+#. module: telegram
+#: field:telegram.command,type:0
+msgid "Type"
+msgstr "Type"
+
+#. module: telegram
+#: field:telegram.command,universal:0
+msgid "Universal"
+msgstr "Universal"
+
+#. module: telegram
+#: field:telegram.session,user_id:0
+msgid "User id"
+msgstr "User id"
+
+#. module: telegram
+#: help:telegram.session,reply_keyboard:0
+msgid "User is shown ReplyKeyboardMarkup without one_time_keyboard. Such keyboard has to be removed explicitly"
+msgstr "User is shown ReplyKeyboardMarkup without one_time_keyboard. Such keyboard has to be removed explicitly"
+
+#. module: telegram
+#: model:ir.model,name:telegram.model_res_users
+msgid "Users"
+msgstr "Пользователи"
+
+#. module: telegram
+#: view:telegram.command:telegram.view_telegram_command_form
+msgid "Vars that can be updated:\n"
+"* data - empty dictonary to be filled with any data for rendering\n"
+"* options - dictonary to control processing\n"
+"  * options['notify_user_ids'] - list interger user ids to be notified in subscription commands (will affect only if user is subscribed). With empty list nobody receives notification. With unspecified value all subscribers receive notification.\n"
+"  * options['reply_markup']\n"
+"  * options['charts'] (module telegram_chart is required) - list of pygal chart objects\n"
+"  * options['photos'] - list of dictionaries with keys\n"
+"    * data\n"
+"    * type = \"file\"|\"base64\". Default is \"base64\".\n"
+"    * filename\n"
+"  * options['editMessageText'] - dictonary with identifier (message_id or inline_message_id). Allows to update existed message instead of sending new one. See https://core.telegram.org/bots/api#editmessagetext. \n"
+"  * options['handle_response'] - dictonary {'responses': {RESPONSE: DATA}, 'unknown_response': DATA}. If user send some value from RESPONSE, then this command will be called again with response_data equal to corresponded DATA. If unknown_response is present and user send response not from 'responses', then this command is called with unknown_response_data\n"
+"* context - dictonary to save json serializable data between user requests.\n"
+"\n"
+"Vars that can be used:\n"
+"* command - telegram.command record\n"
+"  * command.inline_keyboard_buttons(options, buttons, row_width=None) adds set of inline button to response. See https://core.telegram.org/bots/api#inlinekeyboardbutton . Argument buttons is a list of dictonary\n"
+"    * text=TEXT\n"
+"    * callback_data=ANY_DATA\n"
+"  * command.keyboard_buttons(options, buttons, row_width=None) adds set of reply button to response. See https://core.telegram.org/bots/api#keyboardbutton . Argument buttons is a list of dictonary\n"
+"    * text=TEXT\n"
+"    * callback_data=ANY_DATA\n"
+"* telegram - dictonary with some input data\n"
+"  * telegram['tsession'] - telegram.session record. \n"
+"    * telegram['tsession'].get_odoo_session() - the same as request.session in odoo\n"
+"  * telegram['tmessage'] - message from telegram. See https://core.telegram.org/bots/api#message\n"
+"    * telegram['tmessage'].text - actual UTF-8 text of the message\n"
+"  * telegram['callback_query'] - see https://core.telegram.org/bots/api#callbackquery\n"
+"  * telegram['callback_data'] - decoded data, that was created via command.encode_callback_data and passed to types.Inlinekeyboardbutton\n"
+"  * telegram['event'] - dictonary with keys 'active_model', 'active_id', 'active_ids'. Only for commands triggered by base.action.rule.\n"
+"  * telegram['response_data'] - see options['handle_response'] above\n"
+"  * telegram['unknown_response_data'] - see options['handle_response'] above\n"
+"  * telegram['base_url'] - url of odoo database\n"
+"\n"
+"* env - odoo Environment\n"
+"  * env.user - current user\n"
+"* _logger - logger\n"
+"* _ - translate tool\n"
+"\n"
+"Libs that can be used:\n"
+"* datetime\n"
+"* dateutil\n"
+"* time\n"
+"* tools (openerp.tools)\n"
+"* pygal (module telegram_chart is required)\n"
+"* types - telebot.types . See https://github.com/eternnoir/pyTelegramBotAPI/blob/master/telebot/types.py and https://core.telegram.org/bots/api#available-types\n"
+"* emoji - see https://pypi.python.org/pypi/emoji\n"
+"  * emoji.emojize(':thumbsup:', use_aliases=True) - convert alias to emoji unicode. See http://www.webpagefx.com/tools/emoji-cheat-sheet/"
+msgstr "Vars that can be updated:\n"
+"* data - empty dictonary to be filled with any data for rendering\n"
+"* options - dictonary to control processing\n"
+"  * options['notify_user_ids'] - list interger user ids to be notified in subscription commands (will affect only if user is subscribed). With empty list nobody receives notification. With unspecified value all subscribers receive notification.\n"
+"  * options['reply_markup']\n"
+"  * options['charts'] (module telegram_chart is required) - list of pygal chart objects\n"
+"  * options['photos'] - list of dictionaries with keys\n"
+"    * data\n"
+"    * type = \"file\"|\"base64\". Default is \"base64\".\n"
+"    * filename\n"
+"  * options['editMessageText'] - dictonary with identifier (message_id or inline_message_id). Allows to update existed message instead of sending new one. See https://core.telegram.org/bots/api#editmessagetext. \n"
+"  * options['handle_response'] - dictonary {'responses': {RESPONSE: DATA}, 'unknown_response': DATA}. If user send some value from RESPONSE, then this command will be called again with response_data equal to corresponded DATA. If unknown_response is present and user send response not from 'responses', then this command is called with unknown_response_data\n"
+"* context - dictonary to save json serializable data between user requests.\n"
+"\n"
+"Vars that can be used:\n"
+"* command - telegram.command record\n"
+"  * command.inline_keyboard_buttons(options, buttons, row_width=None) adds set of inline button to response. See https://core.telegram.org/bots/api#inlinekeyboardbutton . Argument buttons is a list of dictonary\n"
+"    * text=TEXT\n"
+"    * callback_data=ANY_DATA\n"
+"  * command.keyboard_buttons(options, buttons, row_width=None) adds set of reply button to response. See https://core.telegram.org/bots/api#keyboardbutton . Argument buttons is a list of dictonary\n"
+"    * text=TEXT\n"
+"    * callback_data=ANY_DATA\n"
+"* telegram - dictonary with some input data\n"
+"  * telegram['tsession'] - telegram.session record. \n"
+"    * telegram['tsession'].get_odoo_session() - the same as request.session in odoo\n"
+"  * telegram['tmessage'] - message from telegram. See https://core.telegram.org/bots/api#message\n"
+"    * telegram['tmessage'].text - actual UTF-8 text of the message\n"
+"  * telegram['callback_query'] - see https://core.telegram.org/bots/api#callbackquery\n"
+"  * telegram['callback_data'] - decoded data, that was created via command.encode_callback_data and passed to types.Inlinekeyboardbutton\n"
+"  * telegram['event'] - dictonary with keys 'active_model', 'active_id', 'active_ids'. Only for commands triggered by base.action.rule.\n"
+"  * telegram['response_data'] - see options['handle_response'] above\n"
+"  * telegram['unknown_response_data'] - see options['handle_response'] above\n"
+"  * telegram['base_url'] - url of odoo database\n"
+"\n"
+"* env - odoo Environment\n"
+"  * env.user - current user\n"
+"* _logger - logger\n"
+"* _ - translate tool\n"
+"\n"
+"Libs that can be used:\n"
+"* datetime\n"
+"* dateutil\n"
+"* time\n"
+"* tools (openerp.tools)\n"
+"* pygal (module telegram_chart is required)\n"
+"* types - telebot.types . See https://github.com/eternnoir/pyTelegramBotAPI/blob/master/telebot/types.py and https://core.telegram.org/bots/api#available-types\n"
+"* emoji - see https://pypi.python.org/pypi/emoji\n"
+"  * emoji.emojize(':thumbsup:', use_aliases=True) - convert alias to emoji unicode. See http://www.webpagefx.com/tools/emoji-cheat-sheet/"
+
+#. module: telegram
+#: help:telegram.command,description:0
+msgid "What command does. It will be used in /help command"
+msgstr "What command does. It will be used in /help command"
+
+#. module: telegram
+#: help:telegram.command,group_ids:0
+msgid "Who can use this command. Set empty list for public commands (e.g. /login)"
+msgstr "Who can use this command. Set empty list for public commands (e.g. /login)"
+
+#. module: telegram
+#: code:addons/telegram/telegram.py:214
+#, python-format
+msgid "You have to /login first."
+msgstr "You have to /login first."
+
+#. module: telegram
+#: view:telegram.command:telegram.view_telegram_command_form
+msgid "https://www.odoo.com/documentation/8.0/reference/qweb.html"
+msgstr "https://www.odoo.com/documentation/8.0/reference/qweb.html"
+
+#. module: telegram
+#: code:addons/telegram/telegram.py:197
+#, python-format
+msgid "too big size of callback_data"
+msgstr "too big size of callback_data"
+
