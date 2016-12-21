@@ -57,10 +57,7 @@ elif not finish:
     ask_lang = True
 
 if ask_lang:
-    languages = env['res.lang'].search([])
-    languages = [(language.code, language.name) for language in languages]
-    # 10.0+
-    #languages = env['res.lang'].get_installed()
+    languages = env['res.lang'].get_installed()
 
     _logger.debug('languages %s', languages)
     if len(languages) > 1:
