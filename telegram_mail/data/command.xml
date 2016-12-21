@@ -11,11 +11,11 @@
         <field name="model_ids" eval="[(4, ref('mail.model_mail_message'))]"/>
         <field name="response_code"></field>
         <field name="response_template" type="xml"><t>
-<t t-if="subscribed">You have subscribed to yours new mail messages in odoo.</t>
+<t t-if="subscribed">You have subscribed to your new mail messages in odoo.</t>
 <t t-if="not subscribed">You have opted out.</t>
         </t></field>
         <field name="notification_code">data = {}
-data['message'] = env['mail.message'].browse(event['active_id'])
+data['message'] = env['mail.message'].browse(telegram['event']['active_id'])
 data['message_from'] = data['message'].author_id.name
 data['message_subject'] = data['message'].subject
 data['message_date'] = data['message'].date
@@ -56,7 +56,7 @@ Currently, you haven't specified channels. To do that open odoo and switch on <b
         </t></field>
         <field name="notification_code">data = {}
 notify_user_ids = []
-message = env['mail.message'].browse(event['active_id'])
+message = env['mail.message'].browse(telegram['event']['active_id'])
 partners = message.channel_ids.mapped('telegram_subscriber_ids')
 data['message_channel'] = ", ".join(message.channel_ids.mapped('name'))
 
