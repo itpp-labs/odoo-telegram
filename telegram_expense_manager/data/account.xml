@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<data>
+    <record id="tele_journal" model="account.journal">
+        <field name="name">Expense Manager Bot Journal</field>
+        <field name="code">TELE</field>
+        <field name="type">cash</field>
+        <field name="sequence">20</field>
+    </record>
+</data>
+</odoo>

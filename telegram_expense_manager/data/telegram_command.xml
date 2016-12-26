@@ -31,4 +31,25 @@ https://github.com/it-projects-llc/odoo-telegram
 But my master hopes that I could be helpful for folks.
         </t></field>
     </record>
+
+    <record model="telegram.command" id="command_add_record">
+        <field name="name">%[0-9]+%</field>
+        <field name="description">Add new record</field>
+        <field name="sequence" eval="1000"/>
+        <field name="group_ids" eval="[]"/>
+        <field name="response_code">
+m = re.match(r'(.*?) ([0-9.,]*) ?(.*)', telegram['tmessage'].text)
+text = m.group(1)
+amount = m.group(2)
+currency = m.group(3)
+
+record = command.sudo().em_add_new_record(env.user.partner_id,
+                                   text, amount, currency)
+data['record'] = record
+        </field>
+        <field name="response_template" type="xml">
+<t>New record is added! Check or edit it here: /record_<t t-esc="data['record'].id"/></t>
+        </field>
+        <field name="active" eval="False"/>
+    </record>
 </odoo>

@@ -17,10 +17,14 @@
         "telegram",
         "telegram_portal",
         "telegram_chart",
+        "account",
+        "analytic",
+        "l10n_generic_coa",
     ],
     "external_dependencies": {"python": [], "bin": []},
     "data": [
         "data/telegram_command.xml",
+        "data/account.xml",
     ],
     "qweb": [
     ],

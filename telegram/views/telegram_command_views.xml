@@ -113,6 +113,7 @@ Vars that can be used:
 * _ - translate tool
 
 Libs that can be used:
+* re
 * datetime
 * dateutil
 * time
