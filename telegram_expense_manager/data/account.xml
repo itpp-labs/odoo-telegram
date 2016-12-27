@@ -1,6 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-<data>
+<data noupdate="1">
+    <record id="account_liquidity" model="account.account">
+        <field name="code">TELE-LIQUIDITY</field>
+        <field name="name">Liquidity account for EM Bot</field>
+        <field name="user_type_id" ref="account.data_account_type_liquidity"/>
+    </record>
+
+    <record id="account_payable" model="account.account">
+        <field name="code">TELE-PAYABLE</field>
+        <field name="name">Payable account for EM Bot</field>
+        <field eval="True" name="reconcile"/>
+        <field name="user_type_id" ref="account.data_account_type_payable"/>
+    </record>
+
+    <record id="account_receivable" model="account.account">
+        <field name="code">TELE-RECEIVABLE</field>
+        <field name="name">Receivable account for EM Bot</field>
+        <field eval="True" name="reconcile"/>
+        <field name="user_type_id" ref="account.data_account_type_receivable"/>
+    </record>
+
     <record id="tele_journal" model="account.journal">
         <field name="name">Expense Manager Bot Journal</field>
         <field name="code">TELE</field>

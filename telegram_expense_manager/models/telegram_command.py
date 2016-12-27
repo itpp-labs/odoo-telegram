@@ -25,16 +25,20 @@ class TelegramCommand(models.Model):
         return res and res[0]
 
     @api.model
-    def em_get_default_analytic_id(self, partner):
-        #TODO
-        return None
+    def em_default_analytic_payable(self, partner):
+        return self.env['account.analytic.account']
+
+    @api.model
+    def em_default_analytic_liquidity(self, partner):
+        return self.env['account.analytic.account']
 
 
     @api.model
     def em_add_new_record(self, partner, text, amount, currency):
-        liquidity = self.em_get_liquidity_account()
-        payable = self.em_get_payable_account()
-        analytic_id = self.em_get_default_analytic_id(partner)
+        liquidity = self.env.ref('telegram_expense_manager.account_liquidity')
+        payable = self.env.ref('telegram_expense_manager.account_payable')
+        analytic_payable = self.em_default_analytic_payable(partner)
+        analytic_liquidity = self.em_default_analytic_liquidity(partner)
         journal = self.env.ref('telegram_expense_manager.tele_journal')
 
         amount = float(amount.replace(',', '.'))
@@ -42,19 +46,20 @@ class TelegramCommand(models.Model):
         common = {
             'partner_id': partner.id,
             'name': text or 'unknown',
-            'analytic_account_id': analytic_id,
         }
         # move from source (e.g. wallet)
         credit = common.copy()
         credit.update({
             'account_id': liquidity.id,
             'credit': amount,
+            'analytic_account_id': analytic_liquidity.id,
         })
         # move to target (e.g. cashier)
         debit = common.copy()
         debit.update({
             'account_id': payable.id,
             'debit': amount,
+            'analytic_account_id': analytic_payable.id,
         })
         record = self.env['account.move'].create({
             'journal_id': journal.id,
@@ -63,5 +68,4 @@ class TelegramCommand(models.Model):
                 (0, 0, credit),
             ]
         })
-        print 'journal', journal, journal.name
         return record
