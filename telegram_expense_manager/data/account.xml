@@ -21,10 +21,24 @@
         <field name="user_type_id" ref="account.data_account_type_receivable"/>
     </record>
 
-    <record id="tele_journal" model="account.journal">
-        <field name="name">Expense Manager Bot Journal</field>
-        <field name="code">TELE</field>
-        <field name="type">cash</field>
+    <record id="journal_payable" model="account.journal">
+        <field name="name">EM Bot Payable Journal</field>
+        <field name="code">TELE-PAYABLE</field>
+        <field name="type">purchase</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="journal_receivable" model="account.journal">
+        <field name="name">EM Bot Receivable Journal</field>
+        <field name="code">TELE-RECEIVABLE</field>
+        <field name="type">sale</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="journal_transfer" model="account.journal">
+        <field name="name">EM Bot Transfer Journal</field>
+        <field name="code">TELE-TRANSFER</field>
+        <field name="type">general</field>
         <field name="sequence">20</field>
     </record>
 </data>

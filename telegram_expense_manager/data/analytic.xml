@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<data noupdate="1">
+
+    <record id="analytic_tag_liquidity" model="account.analytic.tag">
+        <field name="name">Liquidity</field>
+    </record>
+
+    <record id="analytic_tag_payable" model="account.analytic.tag">
+        <field name="name">Expenses</field>
+    </record>
+
+    <record id="analytic_tag_receivable" model="account.analytic.tag">
+        <field name="name">Incomes</field>
+    </record>
+
+</data>
+</odoo>

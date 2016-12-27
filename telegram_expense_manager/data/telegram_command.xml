@@ -38,17 +38,75 @@ But my master hopes that I could be helpful for folks.
         <field name="sequence" eval="1000"/>
         <field name="group_ids" eval="[]"/>
         <field name="response_code">
-m = re.match(r'(.*?) ([0-9.,]*) ?(.*)', telegram['tmessage'].text)
-text = m.group(1)
-amount = m.group(2)
-currency = m.group(3)
+partner = env.user.partner_id
+callback_data =  telegram.get('response_data') or telegram.get('unknown_response_data')
+raw_text = telegram['tmessage'].text
+if callback_data:
+    record = env['account.move'].sudo().browse(callback_data.get('record_id'))
+    if callback_data.get('type') == 'new_analytic_liquidity':
+        # apply new analytic to previously created record
+        analytic_liquidity = command.em_create_analytic_liquidity(partner, raw_text)
+        command.em_update_analytic_liquidity(partner, record, analytic_liquidity)
+    elif callback_data.get('type') == 'new_analytic_payable':
+        # apply new analytic to previously created record
+        analytic_payable = command.em_create_analytic_payable(partner, raw_text)
+        command.em_update_analytic_payable(partner, record, analytic_payable)
+    else:
+        assert not callback_data, "bad callback_data"
+else:
+    # create new record
 
-record = command.sudo().em_add_new_record(env.user.partner_id,
-                                   text, amount, currency)
+    m = re.match(r'(.*?) ([0-9.,]*) ?(.*)', telegram['tmessage'].text)
+    text = m.group(1)
+    amount = m.group(2)
+    currency = m.group(3)
+
+    record = command.sudo().em_add_new_record(partner, text, amount, currency)
+
+analytic_liquidity = command.em_record2analytic_liquidity(partner, record)
+analytic_payable = command.em_record2analytic_payable(partner, record)
+
+if not analytic_liquidity:
+    data['type'] = 'no_analytic_liquidity'
+    callback_data={
+        'type': 'new_analytic_liquidity',
+        'record_id': record.id,
+    }
+    buttons = [
+        {'text': _('Wallet'), 'callback_data': callback_data},
+        {'text': _('Bank Card'), 'callback_data': callback_data},
+    ]
+    command.keyboard_buttons(options, buttons, row_width=1)
+    options['handle_response']['unknown_response'] = callback_data
+
+elif not analytic_payable:
+
+    data['type'] = 'no_analytic_payable'
+    callback_data={
+        'type': 'new_analytic_payable',
+        'record_id': record.id,
+    }
+    buttons = [
+        {'text': _('Grocery'), 'callback_data': callback_data},
+        {'text': _('Cafe'), 'callback_data': callback_data},
+        {'text': _('Unitility Service'), 'callback_data': callback_data},
+        {'text': _('Car Service'), 'callback_data': callback_data},
+        {'text': _('Mobile Service'), 'callback_data': callback_data},
+    ]
+    command.keyboard_buttons(options, buttons, row_width=1)
+    options['handle_response']['unknown_response'] = callback_data
+
+
+data['analytic_liquidity'] = analytic_liquidity
+data['analytic_payable'] = analytic_payable
 data['record'] = record
         </field>
         <field name="response_template" type="xml">
-<t>New record is added! Check or edit it here: /record_<t t-esc="data['record'].id"/></t>
+<t>
+    <t t-if="data.get('type') == 'no_analytic_liquidity'">Choose payment way or send name for new one</t>
+    <t t-elif="data.get('type') == 'no_analytic_payable'">Choose expense category or send name for new one</t>
+    <t t-else="">New record is added! Check or edit it here: /record_<t t-esc="data['record'].id"/></t>
+</t>
         </field>
         <field name="active" eval="False"/>
     </record>
