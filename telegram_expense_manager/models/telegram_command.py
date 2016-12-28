@@ -32,7 +32,8 @@ class Partner(models.Model):
 
     @api.multi
     def em_check_access(self, record, raise_on_error=True):
-        if record.partner_id != self:
+        self.ensure_one()
+        if not record.partner_id or record.partner_id != self:
             if raise_on_error:
                 raise AccessError(_("You don't have access to this record"))
             return False
@@ -66,49 +67,6 @@ class Partner(models.Model):
         return analytic
 
     @api.multi
-    def em_update_analytic_liquidity(self, record, analytic_liquidity):
-        return self._em_update_analytic(
-            record,
-            analytic_liquidity, TYPE_LIQUIDITY)
-
-    @api.multi
-    def em_update_analytic_payable(self, record, analytic_payable):
-        return self._em_update_analytic(
-            record,
-            analytic_payable, TYPE_PAYABLE)
-
-    @api.multi
-    def _em_update_analytic(self, record, new_analytic, user_type_ref):
-        self.em_check_access(record)
-        user_type = self.env.ref(user_type_ref)
-        for line in record.line_ids:
-            if line.account_id.user_type_id == user_type:
-                line.analytic_account_id = new_analytic
-                return True
-        return False
-
-    @api.multi
-    def em_record2analytic_liquidity(self, record):
-        return self._em_record2analytic(
-            record,
-            TYPE_LIQUIDITY)
-
-    @api.multi
-    def em_record2analytic_payable(self, record):
-        return self._em_record2analytic(
-            record,
-            TYPE_PAYABLE)
-
-    @api.multi
-    def _em_record2analytic(self, record, user_type_ref):
-        self.em_check_access(record)
-        user_type = self.env.ref(user_type_ref)
-        for line in record.line_ids:
-            if line.account_id.user_type_id == user_type:
-                return line.analytic_account_id
-        return False
-
-    @api.multi
     def em_add_new_record(self, text, amount, currency):
         liquidity = self.env.ref(ACCOUNT_LIQUIDITY)
         payable = self.env.ref(ACCOUNT_PAYABLE)
@@ -137,6 +95,7 @@ class Partner(models.Model):
             'analytic_account_id': analytic_payable.id,
         })
         record = self.env['account.move'].create({
+            'narration': text,
             'journal_id': journal.id,
             'line_ids': [
                 (0, 0, debit),
@@ -144,3 +103,43 @@ class Partner(models.Model):
             ]
         })
         return record
+
+
+class AccountMove(models.Model):
+
+    _inherit = 'account.move'
+
+    @api.multi
+    def em_update_analytic_liquidity(self, analytic_liquidity):
+        return self._em_update_analytic(
+            analytic_liquidity, TYPE_LIQUIDITY)
+
+    @api.multi
+    def em_update_analytic_payable(self, analytic_payable):
+        return self._em_update_analytic(
+            analytic_payable, TYPE_PAYABLE)
+
+    @api.multi
+    def _em_update_analytic(self, new_analytic, user_type_ref):
+        user_type = self.env.ref(user_type_ref)
+        for line in self.line_ids:
+            if line.account_id.user_type_id == user_type:
+                line.analytic_account_id = new_analytic
+                return True
+        return False
+
+    @api.multi
+    def em_get_analytic_liquidity(self):
+        return self._em_get_analytic(TYPE_LIQUIDITY)
+
+    @api.multi
+    def em_get_analytic_payable(self):
+        return self._em_get_analytic(TYPE_PAYABLE)
+
+    @api.multi
+    def _em_get_analytic(self, user_type_ref):
+        user_type = self.env.ref(user_type_ref)
+        for line in self.line_ids:
+            if line.account_id.user_type_id == user_type:
+                return line.analytic_account_id
+        return False
