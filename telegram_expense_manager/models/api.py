@@ -143,3 +143,17 @@ class AccountMove(models.Model):
             if line.account_id.user_type_id == user_type:
                 return line.analytic_account_id
         return False
+
+    @api.multi
+    def em_lines(self):
+        res = {
+            'from': {},
+            'to': {}
+        }
+        for line in self.line_ids:
+            key = 'from' if not line.debit else 'to'
+            res[key] = {
+                'analytic': line.analytic_account_id.name,
+                'id': line.id,
+            }
+        return res

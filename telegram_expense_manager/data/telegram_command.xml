@@ -46,11 +46,11 @@ if callback_data:
     if callback_data.get('type') == 'new_analytic_liquidity':
         # apply new analytic to previously created record
         analytic_liquidity = partner.em_create_analytic_liquidity(raw_text)
-        partner.em_update_analytic_liquidity(record, analytic_liquidity)
+        record.em_update_analytic_liquidity(analytic_liquidity)
     elif callback_data.get('type') == 'new_analytic_payable':
         # apply new analytic to previously created record
         analytic_payable = partner.em_create_analytic_payable(raw_text)
-        partner.em_update_analytic_payable(record, analytic_payable)
+        record.em_update_analytic_payable(analytic_payable)
     else:
         assert not callback_data, "bad callback_data"
 else:
@@ -119,15 +119,81 @@ data['record'] = record
         <field name="active" eval="False"/>
         <field name="group_ids" eval="[]" />
         <field name="response_code">
-partner = env.user.partner_id
-record_id = telegram['tmessage'].text.split('_')[1]
-record = partner.em_browse_record(callback_data.get('record_id'))
+ACTION='a'
+EDIT_AMOUNT='am'
+EDIT_ANALYTIC='an'
+EDIT_NOTE='en'
+EMPTY_ACTION='n'
+RECORD_ID='r'
+LINE_ID='l'
 
+callback_data = telegram.get('callback_data')
+partner = env.user.partner_id
+raw_text = telegram['tmessage'].text
+record_id = callback_data and callback_data.get(RECORD_ID) or '_' in raw_text and int(raw_text.split('_')[1])
+record = partner.em_browse_record(record_id) if record_id else None
+data['record'] = record
+
+def edit_button(action, text, record, line_id=None):
+    ACTION='a'
+    RECORD_ID='r'
+    LINE_ID='l'
+    icon = emoji.emojize(':pencil:', use_aliases=True)
+    button = {
+           'text': '%s %s' % (icon, text),
+           'callback_data': {
+               ACTION: action,
+               RECORD_ID: record.id,
+           }}
+    if line_id:
+        button['callback_data'][LINE_ID] = line_id
+    return button
+
+def text_button(text, record):
+    ACTION='a'
+    RECORD_ID='r'
+    icon = emoji.emojize(':pencil:', use_aliases=True)
+    button = {
+           'text': text,
+           'callback_data': {
+               ACTION: EMPTY_ACTION,
+               RECORD_ID: record.id,
+           }}
+    return button
+
+if not callback_data:
+    # handle initial /record_1234 request
+    lines = record.em_lines()
+    command.inline_keyboard_buttons(options, [
+        edit_button(
+            EDIT_AMOUNT, 
+            _('Amount: %s') % record.amount,
+            record),
+        edit_button(
+            EDIT_NOTE,
+            _('Note: %s') % record.narration, 
+            record),
+    ] + [
+        edit_button(
+            EDIT_ANALYTIC, 
+            label % line_data['analytic'], 
+            record, 
+            line_data['id'])
+        for label, line_data in [
+            (_('Source: %s'), lines['to']), 
+            (_('Destination: %s'), lines['from']),
+        ]
+        if line_data
+    ], row_width=1)
+elif callback_data.get(ACTION) == EMPTY_ACTION:
+    # ignore request
+    pass
+else:
+    # TODO
+    pass
         </field>
         <field name="response_template" type="xml">
-            <t>
-<t t-set="user" t-value="data['user']"/>
-/user_<t t-esc="user.id"/> <t t-esc="user.name"/>, <i>Last login at:</i> <t t-esc="user.login_date"/></t>
+            <t>Record #<t t-esc="data['record'].id"/>:</t>
         </field>
     </record>
 
