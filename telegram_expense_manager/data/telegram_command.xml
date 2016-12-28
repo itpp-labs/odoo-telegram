@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record model="telegram.command" id="command_cancel">
+        <field name="name">/cancel</field>
+        <field name="description">Cancel current command</field>
+        <field name="sequence" eval="1000"/>
+        <field name="group_ids" eval="[]"/>
+        <field name="active" eval="False"/>
+        <field name="response_template" type="xml">
+            <t>Canceled</t>
+</field>
+    </record>
+
     <record model="telegram.command" id="telegram.command_start">
         <field name="response_template" type="xml">
 <t>
@@ -127,10 +138,10 @@ EMPTY_ACTION='n'
 RECORD_ID='r'
 LINE_ID='l'
 
-callback_data = telegram.get('callback_data')
+callback_data = telegram.get('callback_data') or telegram.get('response_data') or telegram.get('unknown_response_data')
 partner = env.user.partner_id
-raw_text = telegram['tmessage'].text
-record_id = callback_data and callback_data.get(RECORD_ID) or '_' in raw_text and int(raw_text.split('_')[1])
+raw_text = telegram.get('tmessage') and telegram.get('tmessage').text
+record_id = callback_data and callback_data.get(RECORD_ID) or raw_text and '_' in raw_text and int(raw_text.split('_')[1])
 record = partner.em_browse_record(record_id) if record_id else None
 data['record'] = record
 
@@ -176,24 +187,49 @@ if not callback_data:
     ] + [
         edit_button(
             EDIT_ANALYTIC, 
-            label % line_data['analytic'], 
+            label % lines[key]['analytic'],
             record, 
-            line_data['id'])
-        for label, line_data in [
-            (_('Source: %s'), lines['to']), 
-            (_('Destination: %s'), lines['from']),
+            lines[key]['id'])
+        for label, key in [
+            (_('Source: %s'), 'from'),
+            (_('Destination: %s'), 'to'),
         ]
         if line_data
     ], row_width=1)
+    data['type'] = 'show_record'
 elif callback_data.get(ACTION) == EMPTY_ACTION:
     # ignore request
     pass
-else:
+
+elif telegram.get('callback_data'):
+    # handle click on "edit" buttons
+    response_data = callback_data.copy()
+    options['handle_response'] = {
+        'responses': {},
+        'unknown_response': response_data,
+    }
+
+    if callback_data.get(ACTION) == EDIT_AMOUNT:
+        data['type'] = 'edit_amount'
+    elif callback_data.get(ACTION) == EDIT_NOTE:
+        data['type'] = 'edit_note'
+    elif callback_data.get(ACTION) == EDIT_ANALYTIC:
+        line_id = callback_data.get(LINE_ID)
+        line = partner.em_browse_line(line_id)
+        data['type'] = 'edit_from' if line.is_from else 'edit_to'
+elif callback_data:
+    # handle new value of attributes (either click on Reply Keyboard or manual typing)
     # TODO
     pass
         </field>
         <field name="response_template" type="xml">
-            <t>Record #<t t-esc="data['record'].id"/>:</t>
+<t>
+    <t t-if="data['type'] == 'show_record'">Record #<t t-esc="data['record'].id"/>. You can delete it by sending /delete_<t t-esc="data['record'].id"/>.</t>
+    <t t-if="data['type'] == 'edit_amount'">Send new Amount or click /cancel</t>
+    <t t-if="data['type'] == 'edit_note'">Send new Note or click /cancel</t>
+    <t t-if="data['type'] == 'edit_from'">Send new Source, choose from existing or click /cancel</t>
+    <t t-if="data['type'] == 'edit_to'">Send new Destination, choose from existing or click /cancel</t>
+</t>
         </field>
     </record>
 

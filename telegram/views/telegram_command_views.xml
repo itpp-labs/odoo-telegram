@@ -92,7 +92,7 @@ Vars that can be used:
   * command.inline_keyboard_buttons(options, buttons, row_width=None) adds set of inline button to response. See https://core.telegram.org/bots/api#inlinekeyboardbutton . Argument buttons is a list of dictonary
     * text=TEXT
     * callback_data=ANY_DATA
-  * command.keyboard_buttons(options, buttons, row_width=None) adds set of reply button to response. See https://core.telegram.org/bots/api#keyboardbutton . Argument buttons is a list of dictonary
+  * command.keyboard_buttons(options, buttons, row_width=None) adds set of reply button to response. See https://core.telegram.org/bots/api#keyboardbutton. Argument buttons is a list of dictonary
     * text=TEXT
     * callback_data=ANY_DATA
 * telegram - dictonary with some input data

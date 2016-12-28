@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, api
+from odoo import models, api, fields
 from odoo.exceptions import AccessError
 from odoo.tools.translate import _
 
@@ -29,6 +29,13 @@ class Partner(models.Model):
         record = self.env['account.move'].sudo().browse(record_id)
         self.em_check_access(record)
         return record
+
+    @api.model
+    def em_browse_line(self, line_id):
+        line = self.env['account.move.line'].sudo().browse(line_id)
+        record = line.move_id
+        self.em_check_access(record)
+        return line
 
     @api.multi
     def em_check_access(self, record, raise_on_error=True):
@@ -151,9 +158,35 @@ class AccountMove(models.Model):
             'to': {}
         }
         for line in self.line_ids:
-            key = 'from' if not line.debit else 'to'
+            key = 'from' if line.is_from else 'to'
             res[key] = {
                 'analytic': line.analytic_account_id.name,
                 'id': line.id,
             }
         return res
+
+
+class AccountMoveLine(models.Model):
+
+    _inherit = 'account.move.line'
+
+    is_from = fields.Boolean(compute='_compute_em_type')
+    is_to = fields.Boolean(compute='_compute_em_type')
+
+    def _compute_em_type(self):
+        for r in self:
+            r.is_from = r.credit or r.account_id == self.env.ref(ACCOUNT_RECEIVABLE)
+            r.is_to = r.debit or r.account_id == self.env.ref(ACCOUNT_PAYABLE)
+
+    @api.multi
+    def em_all_analytics(self, partner):
+        domain = [('partner_id', '=', partner.id)]
+        tag = {
+            self.env.ref(ACCOUNT_RECEIVABLE).id: self.env.ref(TAG_RECEIVABLE),
+            self.env.ref(ACCOUNT_PAYABLE).id: self.env.ref(TAG_PAYABLE),
+            self.env.ref(ACCOUNT_LIQUIDITY).id: self.env.ref(TAG_LIQUIDITY),
+        }.get(self.account_id.id)
+        if not tag:
+            return []
+        domain += [('tag_ids', '=', tag.id)]
+        return self.env['account.analytic.account'].search(domain)
