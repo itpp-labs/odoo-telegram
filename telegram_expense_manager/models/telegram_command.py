@@ -20,60 +20,66 @@ JOURNAL_PAYABLE = 'telegram_expense_manager.journal_payable'
 JOURNAL_RECEIVABLE = 'telegram_expense_manager.journal_receivable'
 
 
-class TelegramCommand(models.Model):
+class Partner(models.Model):
 
-    _inherit = 'telegram.command'
+    _inherit = 'res.partner'
 
-    @api.model
-    def em_check_access(self, partner, record, raise_on_error=True):
-        if record.partner_id != partner:
+    @api.multi
+    def em_browse_record(self, record_id):
+        record = self.env['account.move'].sudo().browse(record_id)
+        self.em_check_access(record)
+        return record
+
+    @api.multi
+    def em_check_access(self, record, raise_on_error=True):
+        if record.partner_id != self:
             if raise_on_error:
                 raise AccessError(_("You don't have access to this record"))
             return False
         return True
 
-    @api.model
-    def em_default_analytic_payable(self, partner):
+    @api.multi
+    def em_default_analytic_payable(self):
         return self.env['account.analytic.account']
 
-    @api.model
-    def em_default_analytic_liquidity(self, partner):
+    @api.multi
+    def em_default_analytic_liquidity(self):
         return self.env['account.analytic.account']
 
-    @api.model
-    def em_create_analytic_liquidity(self, partner, name):
+    @api.multi
+    def em_create_analytic_liquidity(self, name):
         return self._em_create_analytic(
-            partner, name, self.env.ref(TAG_LIQUIDITY))
+            name, self.env.ref(TAG_LIQUIDITY))
 
-    @api.model
-    def em_create_analytic_payable(self, partner, name):
+    @api.multi
+    def em_create_analytic_payable(self, name):
         return self._em_create_analytic(
-            partner, name, self.env.ref(TAG_PAYABLE))
+            name, self.env.ref(TAG_PAYABLE))
 
-    @api.model
-    def _em_create_analytic(self, partner, name, tag):
+    @api.multi
+    def _em_create_analytic(self, name, tag):
         analytic = self.env['account.analytic.account'].sudo().create({
             'name': name,
-            'partner_id': partner.id,
+            'partner_id': self.id,
             'tag_ids': [(4, tag.id, None)],
         })
         return analytic
 
-    @api.model
-    def em_update_analytic_liquidity(self, partner, record, analytic_liquidity):
+    @api.multi
+    def em_update_analytic_liquidity(self, record, analytic_liquidity):
         return self._em_update_analytic(
-            partner, record,
+            record,
             analytic_liquidity, TYPE_LIQUIDITY)
 
-    @api.model
-    def em_update_analytic_payable(self, partner, record, analytic_payable):
+    @api.multi
+    def em_update_analytic_payable(self, record, analytic_payable):
         return self._em_update_analytic(
-            partner, record,
+            record,
             analytic_payable, TYPE_PAYABLE)
 
-    @api.model
-    def _em_update_analytic(self, partner, record, new_analytic, user_type_ref):
-        self.em_check_access(partner, record)
+    @api.multi
+    def _em_update_analytic(self, record, new_analytic, user_type_ref):
+        self.em_check_access(record)
         user_type = self.env.ref(user_type_ref)
         for line in record.line_ids:
             if line.account_id.user_type_id == user_type:
@@ -81,39 +87,39 @@ class TelegramCommand(models.Model):
                 return True
         return False
 
-    @api.model
-    def em_record2analytic_liquidity(self, partner, record):
+    @api.multi
+    def em_record2analytic_liquidity(self, record):
         return self._em_record2analytic(
-            partner, record,
+            record,
             TYPE_LIQUIDITY)
 
-    @api.model
-    def em_record2analytic_payable(self, partner, record):
+    @api.multi
+    def em_record2analytic_payable(self, record):
         return self._em_record2analytic(
-            partner, record,
+            record,
             TYPE_PAYABLE)
 
-    @api.model
-    def _em_record2analytic(self, partner, record, user_type_ref):
-        self.em_check_access(partner, record)
+    @api.multi
+    def _em_record2analytic(self, record, user_type_ref):
+        self.em_check_access(record)
         user_type = self.env.ref(user_type_ref)
         for line in record.line_ids:
             if line.account_id.user_type_id == user_type:
                 return line.analytic_account_id
         return False
 
-    @api.model
-    def em_add_new_record(self, partner, text, amount, currency):
+    @api.multi
+    def em_add_new_record(self, text, amount, currency):
         liquidity = self.env.ref(ACCOUNT_LIQUIDITY)
         payable = self.env.ref(ACCOUNT_PAYABLE)
-        analytic_payable = self.em_default_analytic_payable(partner)
-        analytic_liquidity = self.em_default_analytic_liquidity(partner)
+        analytic_payable = self.em_default_analytic_payable()
+        analytic_liquidity = self.em_default_analytic_liquidity()
         journal = self.env.ref(JOURNAL_PAYABLE)
 
         amount = float(amount.replace(',', '.'))
 
         common = {
-            'partner_id': partner.id,
+            'partner_id': self.id,
             'name': text or 'unknown',
         }
         # move from source (e.g. wallet)

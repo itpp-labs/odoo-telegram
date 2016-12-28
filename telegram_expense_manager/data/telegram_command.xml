@@ -42,15 +42,15 @@ partner = env.user.partner_id
 callback_data =  telegram.get('response_data') or telegram.get('unknown_response_data')
 raw_text = telegram['tmessage'].text
 if callback_data:
-    record = env['account.move'].sudo().browse(callback_data.get('record_id'))
+    record = partner.em_browse_record(callback_data.get('record_id'))
     if callback_data.get('type') == 'new_analytic_liquidity':
         # apply new analytic to previously created record
-        analytic_liquidity = command.em_create_analytic_liquidity(partner, raw_text)
-        command.em_update_analytic_liquidity(partner, record, analytic_liquidity)
+        analytic_liquidity = partner.em_create_analytic_liquidity(raw_text)
+        partner.em_update_analytic_liquidity(record, analytic_liquidity)
     elif callback_data.get('type') == 'new_analytic_payable':
         # apply new analytic to previously created record
-        analytic_payable = command.em_create_analytic_payable(partner, raw_text)
-        command.em_update_analytic_payable(partner, record, analytic_payable)
+        analytic_payable = partner.em_create_analytic_payable(raw_text)
+        partner.em_update_analytic_payable(record, analytic_payable)
     else:
         assert not callback_data, "bad callback_data"
 else:
@@ -61,10 +61,10 @@ else:
     amount = m.group(2)
     currency = m.group(3)
 
-    record = command.sudo().em_add_new_record(partner, text, amount, currency)
+    record = partner.sudo().em_add_new_record(text, amount, currency)
 
-analytic_liquidity = command.em_record2analytic_liquidity(partner, record)
-analytic_payable = command.em_record2analytic_payable(partner, record)
+analytic_liquidity = partner.em_record2analytic_liquidity(record)
+analytic_payable = partner.em_record2analytic_payable(record)
 
 if not analytic_liquidity:
     data['type'] = 'no_analytic_liquidity'
@@ -110,4 +110,25 @@ data['record'] = record
         </field>
         <field name="active" eval="False"/>
     </record>
+
+    <record model="telegram.command" id="command_record">
+        <field name="name">/record_%</field>
+        <field name="description">Check/Edit specific record</field>
+        <field name="sequence" eval="800"/>
+        <field name="universal" eval="False"/>
+        <field name="active" eval="False"/>
+        <field name="group_ids" eval="[]" />
+        <field name="response_code">
+partner = env.user.partner_id
+record_id = telegram['tmessage'].text.split('_')[1]
+record = partner.em_browse_record(callback_data.get('record_id'))
+
+        </field>
+        <field name="response_template" type="xml">
+            <t>
+<t t-set="user" t-value="data['user']"/>
+/user_<t t-esc="user.id"/> <t t-esc="user.name"/>, <i>Last login at:</i> <t t-esc="user.login_date"/></t>
+        </field>
+    </record>
+
 </odoo>
