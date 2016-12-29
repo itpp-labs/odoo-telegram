@@ -77,14 +77,22 @@ Vars that can be updated:
 * data - empty dictonary to be filled with any data for rendering
 * options - dictonary to control processing
   * options['notify_user_ids'] - list interger user ids to be notified in subscription commands (will affect only if user is subscribed). With empty list nobody receives notification. With unspecified value all subscribers receive notification.
-  * options['reply_markup']
+  * options['reply_markup'] 
+    * Values: types.InlineKeyboardMarkup | types.ReplyKeyboardMarkup | types.ReplyKeyboardRemove. 
+    * See reply_markup in https://core.telegram.org/bots/api#sendmessage
+    * Provides low-level access to reply_markup. It's used implicitly in:
+      * command.inline_keyboard_buttons, command.keyboard_buttons
+      * options['handle_reply']
   * options['charts'] (module telegram_chart is required) - list of pygal chart objects
   * options['photos'] - list of dictionaries with keys
     * data
     * type = "file"|"base64". Default is "base64".
     * filename
   * options['editMessageText'] - dictonary with identifier (message_id or inline_message_id). Allows to update existed message instead of sending new one. See https://core.telegram.org/bots/api#editmessagetext. 
-  * options['handle_response'] - dictonary {'responses': {RESPONSE: DATA}, 'unknown_response': DATA}. If user send some value from RESPONSE, then this command will be called again with response_data equal to corresponded DATA. If unknown_response is present and user send response not from 'responses', then this command is called with unknown_response_data
+  * options['handle_reply']
+    * dictonary {'replies': {REPLY: DATA}, 'custom_reply': DATA}. 
+    * If user send some value from REPLY, then this command will be called again with telegram['callback_data'] equal to corresponded DATA and and telegram['callback_data'] equal to 'reply'. 
+    * If custom_reply is present and user send response not from 'replies', then this command is called with telegram['callback_data'] and telegram['callback_data'] equal to 'custom_reply'
 * context - dictonary to save json serializable data between user requests.
 
 Vars that can be used:
@@ -100,11 +108,12 @@ Vars that can be used:
     * telegram['tsession'].get_odoo_session() - the same as request.session in odoo
   * telegram['tmessage'] - message from telegram. See https://core.telegram.org/bots/api#message
     * telegram['tmessage'].text - actual UTF-8 text of the message
-  * telegram['callback_query'] - see https://core.telegram.org/bots/api#callbackquery
-  * telegram['callback_data'] - decoded data, that was created via command.encode_callback_data and passed to types.Inlinekeyboardbutton
+  * telegram['callback_query'] - original telegram object. See https://core.telegram.org/bots/api#callbackquery
+  * telegram['callback_data'] - callback data. See telegram['callback_type']
+  * telegram['callback_type']
+    * 'reply' | 'custom_reply' - see see options['handle_reply'] and command.keyboard_buttons above
+    * 'inline' - Is used when user click on inline button see https://core.telegram.org/bots/api#inlinekeyboardbutton. About adding inline buttons see options['reply_markup'] and command.inline_keyboard_buttons above
   * telegram['event'] - dictonary with keys 'active_model', 'active_id', 'active_ids'. Only for commands triggered by base.action.rule.
-  * telegram['response_data'] - see options['handle_response'] above
-  * telegram['unknown_response_data'] - see options['handle_response'] above
   * telegram['base_url'] - url of odoo database
 
 * env - odoo Environment
