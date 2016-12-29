@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 from StringIO import StringIO
 import base64
 import datetime
@@ -274,6 +275,7 @@ Check Help Tab for the rest variables.
     @api.model
     def _get_globals_dict(self):
         return {
+            're': re,
             'datetime': datetime,
             'dateutil': dateutil,
             'time': time,
