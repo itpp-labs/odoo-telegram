@@ -50,8 +50,8 @@ if env.ref('base.public_user').id == env.user.id:
 else:
     user = env.user
 
-if telegram.get('response_data'):
-    env.user.write({'lang': telegram.get('response_data')})
+if telegram.get('callback_data'):
+    env.user.write({'lang': telegram.get('callback_data')})
     finish = True
 elif not finish:
     ask_lang = True
