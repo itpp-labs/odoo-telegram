@@ -11,6 +11,7 @@ class TelegramWebsiteSale(http.Controller):
     def telegram_cart(self, sale_order_id):
         sale_order = request.env['sale.order'].sudo().browse(sale_order_id)
         if request.env.user.partner_id != sale_order.partner_id:
+            request.session.logout()
             query = werkzeug.urls.url_encode({
                 'redirect': request.httprequest.url,
             })

@@ -80,7 +80,7 @@ data['users'] = env['res.users'].search([('share', '=', False)])
 
     <record model="telegram.command" id="user_command">
         <field name="name">/user_%</field>
-        <field name="description">Get information about specific</field>
+        <field name="description">Get information about specific user</field>
         <field name="sequence" eval="800"/>
         <field name="universal">True</field>
         <field name="active" eval="False"/>

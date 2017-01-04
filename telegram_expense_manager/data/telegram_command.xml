@@ -50,7 +50,7 @@ But my master hopes that I could be helpful for folks.
         <field name="group_ids" eval="[]"/>
         <field name="response_code">
 partner = env.user.partner_id
-callback_data =  telegram.get('response_data') or telegram.get('unknown_response_data')
+callback_data =  telegram.get('callback_data')
 raw_text = telegram['tmessage'].text
 if callback_data:
     record = partner.em_browse_record(callback_data.get('record_id'))
@@ -74,8 +74,8 @@ else:
 
     record = partner.sudo().em_add_new_record(text, amount, currency)
 
-analytic_liquidity = partner.em_record2analytic_liquidity(record)
-analytic_payable = partner.em_record2analytic_payable(record)
+analytic_liquidity = record.em_get_analytic_liquidity()
+analytic_payable = record.em_get_analytic_payable()
 
 if not analytic_liquidity:
     data['type'] = 'no_analytic_liquidity'
@@ -88,7 +88,7 @@ if not analytic_liquidity:
         {'text': _('Bank Card'), 'callback_data': callback_data},
     ]
     command.keyboard_buttons(options, buttons, row_width=1)
-    options['handle_response']['unknown_response'] = callback_data
+    options['handle_reply']['custom_reply'] = callback_data
 
 elif not analytic_payable:
 
@@ -105,7 +105,7 @@ elif not analytic_payable:
         {'text': _('Mobile Service'), 'callback_data': callback_data},
     ]
     command.keyboard_buttons(options, buttons, row_width=1)
-    options['handle_response']['unknown_response'] = callback_data
+    options['handle_reply']['custom_reply'] = callback_data
 
 
 data['analytic_liquidity'] = analytic_liquidity
@@ -138,7 +138,7 @@ EMPTY_ACTION='n'
 RECORD_ID='r'
 LINE_ID='l'
 
-callback_data = telegram.get('callback_data') or telegram.get('response_data') or telegram.get('unknown_response_data')
+callback_data = telegram.get('callback_data')
 partner = env.user.partner_id
 raw_text = telegram.get('tmessage') and telegram.get('tmessage').text
 record_id = callback_data and callback_data.get(RECORD_ID) or raw_text and '_' in raw_text and int(raw_text.split('_')[1])
@@ -194,7 +194,7 @@ if not callback_data:
             (_('Source: %s'), 'from'),
             (_('Destination: %s'), 'to'),
         ]
-        if line_data
+        if lines.get(key)
     ], row_width=1)
     data['type'] = 'show_record'
 elif callback_data.get(ACTION) == EMPTY_ACTION:
@@ -204,9 +204,9 @@ elif callback_data.get(ACTION) == EMPTY_ACTION:
 elif telegram.get('callback_data'):
     # handle click on "edit" buttons
     response_data = callback_data.copy()
-    options['handle_response'] = {
-        'responses': {},
-        'unknown_response': response_data,
+    options['handle_reply'] = {
+        'replies': {},
+        'custom_reply': response_data,
     }
 
     if callback_data.get(ACTION) == EDIT_AMOUNT:

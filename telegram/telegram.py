@@ -107,18 +107,20 @@ Check Help Tab for the rest variables.
                               .search([('id', 'in', ids)], limit=1)\
                               .with_context(active_test=True)
 
-            if tsession.handle_response:
+            if tsession.handle_reply:
                 if command:
-                    # new command is came. Ignore and remove handle_response
-                    tsession.handle_response = False
+                    # new command is came. Ignore and remove handle_reply
+                    tsession.handle_reply = False
                 else:
-                    command = tsession.handle_response_command_id
-                    handle_response = simplejson.loads(tsession.handle_response)
-                    responses = handle_response.get('responses', {})
-                    if tmessage.text in responses:
-                        locals_dict['telegram']['response_data'] = responses[tmessage.text]
+                    command = tsession.handle_reply_command_id
+                    handle_reply = simplejson.loads(tsession.handle_reply)
+                    replies = handle_reply.get('replies', {})
+                    if tmessage.text in replies:
+                        locals_dict['telegram']['callback_data'] = replies[tmessage.text]
+                        locals_dict['telegram']['callback_type'] = 'reply'
                     else:
-                        locals_dict['telegram']['unknown_response_data'] = handle_response.get('unknown_response')
+                        locals_dict['telegram']['callback_data'] = handle_reply.get('custom_reply')
+                        locals_dict['telegram']['callback_type'] = 'custom_reply'
 
             if not command:
                 not_found = {'html': _("There is no such command or you don't have access:  <i>%s</i>.  \n Use /help to see all available for you commands.") % tmessage.text}
@@ -147,17 +149,17 @@ Check Help Tab for the rest variables.
     @api.multi
     def keyboard_buttons(self, options, buttons, row_width=None):
         self.ensure_one()
-        if 'handle_response' not in options:
-            options['handle_response'] = {
-                'responses': {},
-                'unknown_response': True
+        if 'handle_reply' not in options:
+            options['handle_reply'] = {
+                'replies': {},
+                'custom_reply': True
             }
 
         row = []
         for b in buttons:
             b = b.copy()
             callback_data = b.pop('callback_data')
-            options['handle_response']['responses'][b.get('text')] = callback_data
+            options['handle_reply']['replies'][b.get('text')] = callback_data
             row.append(types.KeyboardButton(**b))
         return self._add_row_to_keyboard(options, row, row_width,
                                          types.ReplyKeyboardMarkup)
@@ -341,13 +343,13 @@ Check Help Tab for the rest variables.
         render_time = time.time() - t0
         _logger.debug('Render in %.2fs\n qcontext:\n%s \nTemplate:\n%s\n', render_time, qcontext, template)
         options = locals_dict['options']
-        handle_response = options.get('handle_response') or None
-        if handle_response:
-            handle_response = simplejson.dumps(handle_response)
+        handle_reply = options.get('handle_reply') or None
+        if handle_reply:
+            handle_reply = simplejson.dumps(handle_reply)
 
         res = {'photos': [],
                'editMessageText': options.get('editMessageText'),
-               'handle_response_dump': handle_response,
+               'handle_reply_dump': handle_reply,
                'reply_keyboard': False,
                'context_dump': simplejson.dumps(locals_dict.get('context', {})),
                'html': html}
@@ -424,15 +426,15 @@ Check Help Tab for the rest variables.
                 res = bot.send_photo(tsession.chat_ID, photo['file'])
                 photo['file_id'] = res.photo[0].file_id
 
-        handle_response_dump = rendered.get('handle_response_dump')
-        handle_response_command_id = None
-        if self.id and handle_response_dump:
-            handle_response_command_id = self.id
+        handle_reply_dump = rendered.get('handle_reply_dump')
+        handle_reply_command_id = None
+        if self.id and handle_reply_dump:
+            handle_reply_command_id = self.id
         context_dump = rendered.get('context_dump')
         tsession.write({
             'context': context_dump,
-            'handle_response_command_id': handle_response_command_id,
-            'handle_response': handle_response_dump,
+            'handle_reply_command_id': handle_reply_command_id,
+            'handle_reply': handle_reply_dump,
         })
 
     @api.multi
@@ -711,8 +713,8 @@ class TelegramSession(models.Model):
     user_id = fields.Many2one('res.users')
     context = fields.Text('Context', help='Any json serializable data. Can be used to share data between user requests.')
     reply_keyboard = fields.Boolean('Reply Keyboard', help='User is shown ReplyKeyboardMarkup without one_time_keyboard. Such keyboard has to be removed explicitly')
-    handle_response = fields.Text('Response handling')
-    handle_response_command_id = fields.Many2one('telegram.command')
+    handle_reply = fields.Text('Reply handling')
+    handle_reply_command_id = fields.Many2one('telegram.command')
 
     @api.multi
     def get_user(self):
