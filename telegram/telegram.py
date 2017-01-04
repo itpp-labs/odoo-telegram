@@ -109,7 +109,7 @@ Check Help Tab for the rest variables.
                               .with_context(active_test=True)
 
             if tsession.handle_reply:
-                if command:
+                if command and tmessage.text[0] == '/':
                     # new command is came. Ignore and remove handle_reply
                     tsession.handle_reply = False
                 else:
