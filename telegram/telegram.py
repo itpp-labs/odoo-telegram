@@ -145,6 +145,7 @@ Check Help Tab for the rest variables.
         command.execute(tsession, bot, {'telegram': {
             'callback_query': callback_query,
             'callback_data': callback_data,
+            'callback_type': 'inline',
         }})
 
     @api.multi
