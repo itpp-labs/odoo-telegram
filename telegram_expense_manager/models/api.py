@@ -38,6 +38,15 @@ class Partner(models.Model):
         return line
 
     @api.multi
+    def em_browse_analytic(self, analytic_id):
+        self.ensure_one()
+        analytic = self.env['account.analytic.account'].sudo().browse(analytic_id)
+        if analytic.partner_id != self:
+            raise AccessError(_("You don't have access to this analytic"))
+        return analytic
+
+
+    @api.multi
     def em_check_access(self, record, raise_on_error=True):
         self.ensure_one()
         if not record.partner_id or record.partner_id != self:
@@ -117,6 +126,22 @@ class AccountMove(models.Model):
     _inherit = 'account.move'
 
     @api.multi
+    def em_update_amount(self, amount):
+        self.ensure_one()
+        update_lines = []
+        for line in self.line_ids:
+            if line.is_from:
+                update_lines.append((1, line.id, {'credit': amount}))
+            elif line.is_to:
+                update_lines.append((1, line.id, {'debit': amount}))
+        self.write({'line_ids': update_lines})
+
+    @api.multi
+    def em_update_note(self, text):
+        self.narration = text
+        self.line_ids.write({'name': text})
+
+    @api.multi
     def em_update_analytic_liquidity(self, analytic_liquidity):
         return self._em_update_analytic(
             analytic_liquidity, TYPE_LIQUIDITY)
@@ -179,14 +204,32 @@ class AccountMoveLine(models.Model):
             r.is_to = r.debit or r.account_id == self.env.ref(ACCOUNT_PAYABLE)
 
     @api.multi
-    def em_all_analytics(self, partner):
-        domain = [('partner_id', '=', partner.id)]
-        tag = {
+    def _em_analytic_tag(self):
+        self.ensure_one()
+        return {
             self.env.ref(ACCOUNT_RECEIVABLE).id: self.env.ref(TAG_RECEIVABLE),
             self.env.ref(ACCOUNT_PAYABLE).id: self.env.ref(TAG_PAYABLE),
             self.env.ref(ACCOUNT_LIQUIDITY).id: self.env.ref(TAG_LIQUIDITY),
         }.get(self.account_id.id)
+
+    @api.multi
+    def em_all_analytics(self):
+        self.ensure_one()
+        partner = self.partner_id
+        assert partner, _("Record line doesn't have partner value")
+        domain = [('partner_id', '=', partner.id)]
+        tag = self._em_analytic_tag()
         if not tag:
             return []
         domain += [('tag_ids', '=', tag.id)]
         return self.env['account.analytic.account'].search(domain)
+
+    def em_create_analytic(self, name):
+        self.ensure_one()
+        partner = self.partner_id
+        assert partner, _("Record line doesn't have partner value")
+        tag = self._em_analytic_tag()
+        return partner._em_create_analytic(name, tag)
+
+    def em_update_analytic(self, analytic):
+        self.analytic_account_id = analytic

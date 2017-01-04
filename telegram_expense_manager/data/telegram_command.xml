@@ -36,7 +36,7 @@ I'm at your command!
         <field name="group_ids" eval="[]"/>
         <field name="response_template" type="xml">
             <t>
-I was created as an example of usage odoo-telegram framework.
+I was created as an example of usage odoo-telegram library.
 https://github.com/it-projects-llc/odoo-telegram
 
 But my master hopes that I could be helpful for folks.
@@ -137,6 +137,7 @@ EDIT_NOTE='en'
 EMPTY_ACTION='n'
 RECORD_ID='r'
 LINE_ID='l'
+NEW_ANALYTIC_ID='na'
 
 callback_data = telegram.get('callback_data')
 partner = env.user.partner_id
@@ -201,12 +202,12 @@ elif callback_data.get(ACTION) == EMPTY_ACTION:
     # ignore request
     pass
 
-elif telegram.get('callback_data'):
+elif telegram.get('callback_type') == 'inline':
     # handle click on "edit" buttons
-    response_data = callback_data.copy()
+    reply_data = callback_data.copy()
     options['handle_reply'] = {
         'replies': {},
-        'custom_reply': response_data,
+        'custom_reply': reply_data,
     }
 
     if callback_data.get(ACTION) == EDIT_AMOUNT:
@@ -217,10 +218,28 @@ elif telegram.get('callback_data'):
         line_id = callback_data.get(LINE_ID)
         line = partner.em_browse_line(line_id)
         data['type'] = 'edit_from' if line.is_from else 'edit_to'
-elif callback_data:
+        reply_buttons = [{
+            'text': analytic.name,
+            'callback_data': dict(reply_data.items() + [(NEW_ANALYTIC_ID, analytic.id)]),
+        } for analytic in line.em_all_analytics()]
+        command.keyboard_buttons(options, reply_buttons, row_width=1)
+else:
     # handle new value of attributes (either click on Reply Keyboard or manual typing)
-    # TODO
-    pass
+    data['type'] = 'updated'
+    if callback_data.get(ACTION) == EDIT_AMOUNT:
+        record.em_update_amount(raw_text)
+    elif callback_data.get(ACTION) == EDIT_NOTE:
+        record.em_update_note(raw_text)
+    elif callback_data.get(ACTION) == EDIT_ANALYTIC:
+        analytic = callback_data.get(NEW_ANALYTIC_ID)
+        line_id = callback_data.get(LINE_ID)
+        line = partner.em_browse_line(line_id)
+        if analytic:
+            analytic = partner.em_browse_analytic(analytic)
+        else:
+            # create new analytic
+            analytic = line.em_create_analytic(raw_text)
+        line.em_update_analytic(analytic)
         </field>
         <field name="response_template" type="xml">
 <t>
@@ -229,6 +248,7 @@ elif callback_data:
     <t t-if="data['type'] == 'edit_note'">Send new Note or click /cancel</t>
     <t t-if="data['type'] == 'edit_from'">Send new Source, choose from existing or click /cancel</t>
     <t t-if="data['type'] == 'edit_to'">Send new Destination, choose from existing or click /cancel</t>
+    <t t-if="data['type'] == 'updated'">Done! /record_<t t-esc="data['record'].id"/> is updated.</t>
 </t>
         </field>
     </record>
