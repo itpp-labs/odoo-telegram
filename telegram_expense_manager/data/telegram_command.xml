@@ -53,17 +53,7 @@ partner = env.user.partner_id
 callback_data =  telegram.get('callback_data')
 raw_text = telegram['tmessage'].text
 if callback_data:
-    record = partner.em_browse_record(callback_data.get('record_id'))
-    if callback_data.get('type') == 'new_analytic_liquidity':
-        # apply new analytic to previously created record
-        analytic_liquidity = partner.em_create_analytic_liquidity(raw_text)
-        record.em_update_analytic_liquidity(analytic_liquidity)
-    elif callback_data.get('type') == 'new_analytic_payable':
-        # apply new analytic to previously created record
-        analytic_payable = partner.em_create_analytic_payable(raw_text)
-        record.em_update_analytic_payable(analytic_payable)
-    else:
-        assert not callback_data, "bad callback_data"
+    record = partner.em_handle_callback_data(callback_data, raw_text)
 else:
     # create new record
 
@@ -79,34 +69,16 @@ analytic_payable = record.em_get_analytic_payable()
 
 if not analytic_liquidity:
     data['type'] = 'no_analytic_liquidity'
-    callback_data={
-        'type': 'new_analytic_liquidity',
-        'record_id': record.id,
-    }
-    buttons = [
-        {'text': _('Wallet'), 'callback_data': callback_data},
-        {'text': _('Bank Card'), 'callback_data': callback_data},
-    ]
-    command.keyboard_buttons(options, buttons, row_width=1)
-    options['handle_reply']['custom_reply'] = callback_data
+    partner.em_keyboard_analytics(options, command, record, command.TAG_LIQUIDITY)
 
 elif not analytic_payable:
 
     data['type'] = 'no_analytic_payable'
-    callback_data={
-        'type': 'new_analytic_payable',
-        'record_id': record.id,
-    }
-    buttons = [
-        {'text': _('Grocery'), 'callback_data': callback_data},
-        {'text': _('Cafe'), 'callback_data': callback_data},
-        {'text': _('Unitility Service'), 'callback_data': callback_data},
-        {'text': _('Car Service'), 'callback_data': callback_data},
-        {'text': _('Mobile Service'), 'callback_data': callback_data},
-    ]
-    command.keyboard_buttons(options, buttons, row_width=1)
-    options['handle_reply']['custom_reply'] = callback_data
-
+    buttons = partner.em_keyboard_analytics(options, command, record, command.TAG_PAYABLE)
+    if buttons:
+        data['subtype'] = 'choose_or_create_analytic'
+    else:
+        data['subtype'] = 'create_analytic'
 
 data['analytic_liquidity'] = analytic_liquidity
 data['analytic_payable'] = analytic_payable
@@ -115,7 +87,10 @@ data['record'] = record
         <field name="response_template" type="xml">
 <t>
     <t t-if="data.get('type') == 'no_analytic_liquidity'">Choose payment way or send name for new one</t>
-    <t t-elif="data.get('type') == 'no_analytic_payable'">Choose expense category or send name for new one</t>
+    <t t-elif="data.get('type') == 'no_analytic_payable'">
+        <t t-if="data.get('subtype') == 'choose_or_create_analytic'">Choose expense category or send name for new one</t>
+        <t t-if="data.get('subtype') == 'create_analytic'">Specify a name for expense category (e.g. Food, Cafe, etc)</t>
+    </t>
     <t t-else="">New record is added! Check or edit it here: /record_<t t-esc="data['record'].id"/></t>
 </t>
         </field>

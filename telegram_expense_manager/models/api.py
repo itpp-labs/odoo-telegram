@@ -19,6 +19,20 @@ JOURNAL_LIQUIDITY = 'telegram_expense_manager.journal_liquidity'
 JOURNAL_PAYABLE = 'telegram_expense_manager.journal_payable'
 JOURNAL_RECEIVABLE = 'telegram_expense_manager.journal_receivable'
 
+TAG2TYPE = {
+    TAG_LIQUIDITY: TYPE_LIQUIDITY,
+    TAG_PAYABLE: TYPE_PAYABLE,
+    TAG_RECEIVABLE: TYPE_RECEIVABLE,
+}
+
+
+class TelegramCommand(models.Model):
+
+    _inherit = 'telegram.command'
+
+    TAG_LIQUIDITY = TAG_LIQUIDITY
+    TAG_PAYABLE = TAG_PAYABLE
+    TAG_RECEIVABLE = TAG_RECEIVABLE
 
 class Partner(models.Model):
 
@@ -45,6 +59,34 @@ class Partner(models.Model):
             raise AccessError(_("You don't have access to this analytic"))
         return analytic
 
+    @api.multi
+    def em_keyboard_analytics(self, options, command, record, tag):
+        data = {
+            'tag': tag,
+            'record_id': record.id,
+        }
+        buttons = [
+            {'text': an.name,
+             'callback_data': dict(
+                 data.items() +
+                 [('analytic_id', an.id)]
+             )
+             } for an in self._em_all_analytics(tag)
+        ]
+        command.keyboard_buttons(options, buttons, row_width=1)
+        options['handle_reply']['custom_reply'] = data
+        return buttons
+
+    @api.multi
+    def em_handle_callback_data(self, callback_data, raw_text):
+        record = self.em_browse_record(callback_data.get('record_id'))
+        tag = callback_data.get('tag')
+        if callback_data.get('analytic_id'):
+            analytic_liquidity = self.em_browse_analytic(callback_data('analytic_id'))
+        else:
+            analytic_liquidity = self._em_create_analytic(raw_text, tag)
+        record._em_update_analytic(analytic_liquidity, TAG2TYPE[tag])
+        return record
 
     @api.multi
     def em_check_access(self, record, raise_on_error=True):
@@ -56,25 +98,57 @@ class Partner(models.Model):
         return True
 
     @api.multi
-    def em_default_analytic_payable(self):
-        return self.env['account.analytic.account']
+    def em_all_analytics_liquidity(self, tag):
+        return self._em_all_analytics(TAG_LIQUIDITY)
 
     @api.multi
-    def em_default_analytic_liquidity(self):
+    def em_all_analytics_payable(self, tag):
+        return self._em_all_analytics(TAG_PAYABLE)
+
+    @api.multi
+    def _em_all_analytics(self, tag, count=False):
+        self.ensure_one()
+        if not tag:
+            return []
+        tag = self.env.ref(tag)
+        domain = [('partner_id', '=', self.id)]
+        domain += [('tag_ids', '=', tag.id)]
+        return self.env['account.analytic.account'].search(domain, count=count)
+
+    @api.multi
+    def em_default_analytic_payable(self, text):
+        return self._em_guess_analytic(text, ACCOUNT_LIQUIDITY)
+
+    @api.multi
+    def em_default_analytic_liquidity(self, text):
+        analytic = self._em_guess_analytic(text, ACCOUNT_LIQUIDITY)
+        if analytic:
+            return analytic
+        count = self._em_all_analytics(TAG_LIQUIDITY, count=True)
+        if not count:
+            analytic = self.em_create_analytic_liquidity(_('Money for common expenses'))
+            return analytic
+        elif count == 1:
+            return self._em_all_analytics(TAG_LIQUIDITY)
+        else:
+            # More than one analytics. Let user to choose himself
+            return self.env['account.analytic.account']
+
+    def _em_guess_analytic(self, text, tag):
+        # TODO
         return self.env['account.analytic.account']
 
     @api.multi
     def em_create_analytic_liquidity(self, name):
-        return self._em_create_analytic(
-            name, self.env.ref(TAG_LIQUIDITY))
+        return self._em_create_analytic(name, TAG_LIQUIDITY)
 
     @api.multi
     def em_create_analytic_payable(self, name):
-        return self._em_create_analytic(
-            name, self.env.ref(TAG_PAYABLE))
+        return self._em_create_analytic(name, TAG_PAYABLE)
 
     @api.multi
     def _em_create_analytic(self, name, tag):
+        tag = self.env.ref(tag)
         analytic = self.env['account.analytic.account'].sudo().create({
             'name': name,
             'partner_id': self.id,
@@ -86,8 +160,9 @@ class Partner(models.Model):
     def em_add_new_record(self, text, amount, currency):
         liquidity = self.env.ref(ACCOUNT_LIQUIDITY)
         payable = self.env.ref(ACCOUNT_PAYABLE)
-        analytic_payable = self.em_default_analytic_payable()
-        analytic_liquidity = self.em_default_analytic_liquidity()
+        analytic_payable = self.em_default_analytic_payable(text)
+        analytic_liquidity = analytic_payable.liquidity_id \
+            or self.em_default_analytic_liquidity(text)
         journal = self.env.ref(JOURNAL_PAYABLE)
 
         amount = float(amount.replace(',', '.'))
@@ -207,9 +282,9 @@ class AccountMoveLine(models.Model):
     def _em_analytic_tag(self):
         self.ensure_one()
         return {
-            self.env.ref(ACCOUNT_RECEIVABLE).id: self.env.ref(TAG_RECEIVABLE),
-            self.env.ref(ACCOUNT_PAYABLE).id: self.env.ref(TAG_PAYABLE),
-            self.env.ref(ACCOUNT_LIQUIDITY).id: self.env.ref(TAG_LIQUIDITY),
+            self.env.ref(ACCOUNT_RECEIVABLE).id: TAG_RECEIVABLE,
+            self.env.ref(ACCOUNT_PAYABLE).id: TAG_PAYABLE,
+            self.env.ref(ACCOUNT_LIQUIDITY).id: TAG_LIQUIDITY,
         }.get(self.account_id.id)
 
     @api.multi
@@ -217,12 +292,7 @@ class AccountMoveLine(models.Model):
         self.ensure_one()
         partner = self.partner_id
         assert partner, _("Record line doesn't have partner value")
-        domain = [('partner_id', '=', partner.id)]
-        tag = self._em_analytic_tag()
-        if not tag:
-            return []
-        domain += [('tag_ids', '=', tag.id)]
-        return self.env['account.analytic.account'].search(domain)
+        return partner._em_all_analytics(self._em_analytic_tag())
 
     def em_create_analytic(self, name):
         self.ensure_one()
