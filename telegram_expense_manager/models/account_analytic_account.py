@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class AccountAnalyticAccount(models.Model):
@@ -12,3 +12,43 @@ class AccountAnalyticAccount(models.Model):
         string='Default liquidity',
         help='Default liquidity analytic account '
         'for expense or income accounts')
+
+    @api.multi
+    def get_user_tags(self):
+        self.ensure_one()
+        com = self.env['telegram.command']
+        exclude_tags = \
+            self.env.ref(com.TAG_LIQUIDITY) + \
+            self.env.ref(com.TAG_PAYABLE) + \
+            self.env.ref(com.TAG_RECEIVABLE)
+        return self.tag_ids - exclude_tags
+
+    @api.multi
+    def _compute_move_debit_credit_balance(self):
+        """based on https://github.com/odoo/odoo/blame/10.0/addons/analytic/models/analytic_account.py
+        account_id is replaced to analytic_account_id,
+        account.analytic.line is replaced to account.move.line
+        """
+        analytic_line_obj = self.env['account.move.line']
+        domain = [('analytic_account_id', 'in', self.mapped('id'))]
+        if self._context.get('from_date', False):
+            domain.append(('date', '>=', self._context['from_date']))
+        if self._context.get('to_date', False):
+            domain.append(('date', '<=', self._context['to_date']))
+
+        account_amounts = analytic_line_obj.search_read(domain, ['analytic_account_id', 'debit', 'credit'])
+        analytic_account_ids = set([line['analytic_account_id'][0] for line in account_amounts])
+        data_debit = {analytic_account_id: 0.0 for analytic_account_id in analytic_account_ids}
+        data_credit = {analytic_account_id: 0.0 for analytic_account_id in analytic_account_ids}
+        for account_amount in account_amounts:
+            data_debit[account_amount['analytic_account_id'][0]] += account_amount['debit']
+            data_credit[account_amount['analytic_account_id'][0]] += account_amount['credit']
+
+        for account in self:
+            account.move_debit = data_debit.get(account.id, 0.0)
+            account.move_credit = data_credit.get(account.id, 0.0)
+            account.move_balance = account.move_debit - account.move_credit
+
+    move_balance = fields.Monetary(compute='_compute_move_debit_credit_balance', string='Balance')
+    move_debit = fields.Monetary(compute='_compute_move_debit_credit_balance', string='Debit')
+    move_credit = fields.Monetary(compute='_compute_move_debit_credit_balance', string='Credit')

@@ -45,7 +45,7 @@ But my master hopes that I could be helpful for folks.
 
 
     <record model="telegram.command" id="command_expense">
-        <field name="name">%[0-9]+%</field>
+        <field name="name">% [0-9]+%</field>
         <field name="description">Add new record</field>
         <field name="sequence" eval="1000"/>
         <field name="group_ids" eval="[]"/>
@@ -317,27 +317,104 @@ else:
 partner = env.user.partner_id
 accounts = env["account.analytic.account"].sudo().search(
     [('partner_id', '=', partner.id),
-     ('tag_ids', '=', env.ref(command.TAG_LIQUIDITY).id)])
-domain = [('partner_id', '=', partner.id),
-          ('analytic_account_id', 'in', accounts.ids),
-         ]
-res = env["account.move.line"].sudo().read_group(
-    domain,
-    ["name", "balance", "analytic_account_id"],
-    ["analytic_account_id"],
-    )
-
-accounts_index = dict( [(acc.id, acc.name) for acc in accounts] )
-accounts_data = [{"name": accounts_index.get(obj['analytic_account_id'][0], 'UNDEFINED'),
-                  "id": obj['analytic_account_id'][0],
-                  "balance": obj['balance'],
-                  } for obj in res]
-accounts_data = sorted(accounts_data, key=lambda obj: obj['id'])
-data['accounts'] = accounts_data
+     ('tag_ids', '=', env.ref(command.TAG_LIQUIDITY).id)],
+     order='id ASC',
+)
+data['accounts'] = accounts
         </field>
         <field name="response_template" type="xml">
             <t t-foreach="data['accounts']" t-as="acc">
-/account_<t t-esc="acc['id']"/> <t t-esc="acc['name']"/>: <t t-esc="acc['balance']"/></t>
+/account_<t t-esc="acc.id"/> — <t t-esc="acc.move_balance"/> — <t t-esc="acc.name"/></t>
+        </field>
+    </record>
+
+    <record model="telegram.command" id="command_account">
+        <field name="name">/account\_%</field>
+        <field name="description">Report on accounts</field>
+        <field name="sequence" eval="1000"/>
+        <field name="group_ids" eval="[]"/>
+        <field name="response_code">
+<![CDATA[
+ANALYTIC_ID='a'
+LIMIT='l'
+
+LIMIT_START=5
+LIMIT_INCREMENT=10
+
+partner = env.user.partner_id
+raw_text = telegram.get('tmessage').text if telegram.get('tmessage') else None
+callback_data = telegram.get('callback_data')
+
+limit = LIMIT_START
+if callback_data:
+    limit = callback_data.get(LIMIT)
+    limit += LIMIT_INCREMENT
+    options['editMessageText'] = {'message_id': telegram['callback_query'].message.message_id}
+
+analytic_id = callback_data and callback_data.get(ANALYTIC_ID) or raw_text and '_' in raw_text and int(raw_text.split('_')[1])
+analytic = partner.em_browse_analytic(analytic_id)
+data['id'] = analytic.id
+data['name'] = analytic.name
+data['tags'] = analytic.get_user_tags()
+data['balance'] = analytic.move_balance
+data['type'] = _('Account') if env.ref(command.TAG_LIQUIDITY).id in analytic.tag_ids.ids else \
+               _('Income') if env.ref(command.TAG_RECEIVABLE).id in analytic.tag_ids.ids else \
+               _('Expense') if env.ref(command.TAG_RECEIVABLE).id in analytic.tag_ids.ids else \
+               _('UNDEFINED')
+
+
+domain = [('line_ids.analytic_account_id', '=', analytic.id)]
+res = env["account.move"].sudo().search(
+     domain,
+     order='id DESC',
+     limit=limit
+)
+total_records = env["account.move"].sudo().search(domain, count=True)
+
+if limit < total_records:
+    command.inline_keyboard_buttons(options, [{
+        'text': _('Load More'),
+        'callback_data': {LIMIT: limit, ANALYTIC_ID: analytic.id}
+    }])
+
+
+JOURNAL2TYPE = {
+    env.ref(command.JOURNAL_TRANSFER).id   : _('TRANSFER'),
+    env.ref(command.JOURNAL_PAYABLE).id    : _('EXPENSE_'),
+    env.ref(command.JOURNAL_RECEIVABLE).id : _('INCOME__'),
+}
+data['records'] = []
+for record in res:
+    # line that is opposite to current analytic
+    cor_line = None
+    for line in record.line_ids:
+        if line.analytic_account_id != analytic:
+            cor_line = line
+            break
+    if not cor_line:
+        continue
+
+    data['records'].append({
+        'id': record.id,
+        'amount': record.amount,
+        'type': JOURNAL2TYPE.get(record.journal_id.id, _('UNDEFINED')),
+        'cor_type': _('From') if cor_line.is_from else _('To'),
+        'cor_name': cor_line.analytic_account_id.name,
+        'date': record.date,
+        'note': record.narration,
+    })
+]]>
+
+        </field>
+        <field name="response_template" type="xml">
+<t>Name: <t t-esc="data['name']"/> /edit_name_<t t-esc="data['id']"/>
+Type: <t t-esc="data['type']"/>
+Tags:<t t-if="data['tags']"><t t-foreach="data['tags']" t-as="tag"> [<t t-esc="tag.name"/>]</t>. </t><t t-else=""><em> no tags. </em></t>Click /edit_tags_<t t-esc="data['id']"/> to edit.
+Current Amount: <t t-esc="data['balance']"/>
+
+Last records:<t t-foreach="data['records']" t-as="rec">
+/record_<t t-esc="rec['id']"/> <b><t t-esc="rec['type']"/>:</b> <t t-esc="rec['amount']"/> <b><t t-esc="rec['cor_type']"/>:</b> <t t-esc="rec['cor_name']"/> <b>Date:</b> <t t-esc="rec['date']"/> <b>Note:</b> <t t-esc="rec['note']"/></t>
+</t>
         </field>
     </record>
 

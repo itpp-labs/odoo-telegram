@@ -46,7 +46,7 @@ class TelegramCommand(models.Model):
     name = fields.Char('Command', help="""Command string.
 Usually starts with slash symbol, e.g. "/mycommand".
 SQL Reg Exp can be used. See https://www.postgresql.org/docs/current/static/functions-matching.html#FUNCTIONS-SIMILARTO-REGEXP
-For example /user_% handles requests like /user_1, /user_2 etc.""",
+For example /user\_% handles requests like /user_1, /user_2 etc.""",
                        required=True, index=True)
     description = fields.Char('Description', help='What command does. It will be used in /help command')
     sequence = fields.Integer(default=16)
@@ -254,6 +254,7 @@ Check Help Tab for the rest variables.
     @api.multi
     def get_response(self, locals_dict=None, tsession=None):
         self.ensure_one()
+        print 'get_response', self.name, self.response_code
         locals_dict = self._eval(self.response_code, locals_dict=locals_dict, tsession=tsession)
         return self._render(self.response_template, locals_dict, tsession)
 
@@ -405,6 +406,7 @@ Check Help Tab for the rest variables.
             if rendered.get('editMessageText'):
                 _logger.debug('editMessageText:\n%s', rendered.get('html'))
                 kwargs = rendered.get('editMessageText')
+                kwargs['parse_mode'] = 'HTML'
                 kwargs['reply_markup'] = reply_markup
                 if 'message_id' in kwargs:
                     kwargs['chat_id'] = tsession.chat_ID
