@@ -38,6 +38,7 @@ class TelegramCommand(models.Model):
     TAG_PAYABLE = TAG_PAYABLE
     TAG_RECEIVABLE = TAG_RECEIVABLE
 
+
 class Partner(models.Model):
 
     _inherit = 'res.partner'

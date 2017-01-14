@@ -306,4 +306,40 @@ else:
         </field>
     </record>
 
+
+    <record model="telegram.command" id="command_accounts">
+        <field name="name">/accounts</field>
+        <field name="description">Report on accounts</field>
+        <field name="sequence" eval="1000"/>
+        <field name="group_ids" eval="[]"/>
+        <field name="response_code">
+
+partner = env.user.partner_id
+accounts = env["account.analytic.account"].sudo().search(
+    [('partner_id', '=', partner.id),
+     ('tag_ids', '=', env.ref(command.TAG_LIQUIDITY).id)])
+domain = [('partner_id', '=', partner.id),
+          ('analytic_account_id', 'in', accounts.ids),
+         ]
+res = env["account.move.line"].sudo().read_group(
+    domain,
+    ["name", "balance", "analytic_account_id"],
+    ["analytic_account_id"],
+    )
+
+accounts_index = dict( [(acc.id, acc.name) for acc in accounts] )
+accounts_data = [{"name": accounts_index.get(obj['analytic_account_id'][0], 'UNDEFINED'),
+                  "id": obj['analytic_account_id'][0],
+                  "balance": obj['balance'],
+                  } for obj in res]
+accounts_data = sorted(accounts_data, key=lambda obj: obj['id'])
+data['accounts'] = accounts_data
+        </field>
+        <field name="response_template" type="xml">
+            <t t-foreach="data['accounts']" t-as="acc">
+/account_<t t-esc="acc['id']"/> <t t-esc="acc['name']"/>: <t t-esc="acc['balance']"/></t>
+        </field>
+    </record>
+
+
 </odoo>

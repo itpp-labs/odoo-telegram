@@ -287,6 +287,7 @@ Check Help Tab for the rest variables.
             'types': types,
             '_': _,
             'emoji': emoji,
+            'sorted': sorted,
         }
 
     @api.multi
