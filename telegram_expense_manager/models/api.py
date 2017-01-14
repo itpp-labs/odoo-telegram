@@ -15,7 +15,7 @@ ACCOUNT_LIQUIDITY = 'telegram_expense_manager.account_liquidity'
 ACCOUNT_PAYABLE = 'telegram_expense_manager.account_payable'
 ACCOUNT_RECEIVABLE = 'telegram_expense_manager.account_receivable'
 
-JOURNAL_LIQUIDITY = 'telegram_expense_manager.journal_liquidity'
+JOURNAL_TRANSFER = 'telegram_expense_manager.journal_transfer'
 JOURNAL_PAYABLE = 'telegram_expense_manager.journal_payable'
 JOURNAL_RECEIVABLE = 'telegram_expense_manager.journal_receivable'
 
@@ -64,12 +64,15 @@ class Partner(models.Model):
         return analytic
 
     @api.multi
-    def em_ask_analytic(self, options, command, record, tag):
+    def em_ask_analytic(self, options, command, record, tag, is_from=None, is_to=None):
         data = {
             'action': ASK_ANALYTIC,
             'tag': tag,
             'record_id': record.id,
         }
+        if is_from or is_to:
+            data['transfer'] = 'from' if is_from else 'to'
+
         buttons = [
             {'text': an.name,
              'callback_data': dict(
@@ -99,13 +102,14 @@ class Partner(models.Model):
         }
 
     @api.multi
-    def em_handle_callback_data(self, callback_data, raw_text):
+    def em_handle_callback_data(self, callback_data, raw_text, add_record=None):
         record = self.em_browse_record(callback_data.get('record_id')) \
             if callback_data.get('record_id') else None
+        error = None
 
         if callback_data.get('action') == ASK_AMOUNT:
             if not record:
-                record = self.em_add_income_record('', raw_text)
+                record = add_record('', raw_text)
             else:
                 record.em_update_amount(raw_text)
         elif callback_data.get('action') == ASK_NOTE:
@@ -116,8 +120,8 @@ class Partner(models.Model):
                 analytic_liquidity = self.em_browse_analytic(callback_data.get('analytic_id'))
             else:
                 analytic_liquidity = self._em_create_analytic(raw_text, tag)
-            record._em_update_analytic(analytic_liquidity, TAG2TYPE[tag])
-        return record
+            record._em_update_analytic(analytic_liquidity, TAG2TYPE[tag], callback_data.get('transfer'))
+        return record, error
 
     @api.multi
     def em_check_access(self, record, raise_on_error=True):
@@ -220,6 +224,19 @@ class Partner(models.Model):
         return self._em_add_record(text, amount, currency,
                                    JOURNAL_RECEIVABLE, from_data, to_data)
 
+    @api.multi
+    def em_add_transfer_record(self, text, amount, currency=None):
+        account_liquidity = self.env.ref(ACCOUNT_LIQUIDITY)
+
+        from_data = {
+            'account_id': account_liquidity.id,
+        }
+        to_data = {
+            'account_id': account_liquidity.id,
+        }
+        return self._em_add_record(text, amount, currency,
+                                   JOURNAL_TRANSFER, from_data, to_data)
+
     def _em_add_record(self,
                        text, amount, currency,
                        journal_ref, from_data, to_data):
@@ -287,10 +304,21 @@ class AccountMove(models.Model):
             analytic_payable, TYPE_PAYABLE)
 
     @api.multi
-    def _em_update_analytic(self, new_analytic, user_type_ref):
+    def _em_update_analytic(self, new_analytic, user_type_ref=None, transfer=None):
         user_type = self.env.ref(user_type_ref)
         for line in self.line_ids:
-            if line.account_id.user_type_id == user_type:
+            update = False
+            if transfer:
+                if line.is_from and transfer == 'from':
+                    update = True
+
+                if line.is_to and transfer == 'to':
+                    update = True
+
+            elif line.account_id.user_type_id == user_type:
+                update = True
+
+            if update:
                 line.analytic_account_id = new_analytic
                 return True
         return False
@@ -311,6 +339,20 @@ class AccountMove(models.Model):
         user_type = self.env.ref(user_type_ref)
         for line in self.line_ids:
             if line.account_id.user_type_id == user_type:
+                return line.analytic_account_id
+        return False
+
+    @api.multi
+    def em_get_analytic_from(self):
+        for line in self.line_ids:
+            if line.is_from:
+                return line.analytic_account_id
+        return False
+
+    @api.multi
+    def em_get_analytic_to(self):
+        for line in self.line_ids:
+            if line.is_to:
                 return line.analytic_account_id
         return False
 
