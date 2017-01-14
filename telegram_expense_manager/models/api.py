@@ -25,6 +25,10 @@ TAG2TYPE = {
     TAG_RECEIVABLE: TYPE_RECEIVABLE,
 }
 
+ASK_AMOUNT = 'ask_amount'
+ASK_NOTE = 'ask_note'
+ASK_ANALYTIC = 'ask_analytic'
+
 
 class TelegramCommand(models.Model):
 
@@ -60,8 +64,9 @@ class Partner(models.Model):
         return analytic
 
     @api.multi
-    def em_keyboard_analytics(self, options, command, record, tag):
+    def em_ask_analytic(self, options, command, record, tag):
         data = {
+            'action': ASK_ANALYTIC,
             'tag': tag,
             'record_id': record.id,
         }
@@ -77,15 +82,41 @@ class Partner(models.Model):
         options['handle_reply']['custom_reply'] = data
         return buttons
 
+    def em_ask_amount(self, options, command, record):
+        self._em_ask(options, command, record, ASK_AMOUNT)
+
+    def em_ask_note(self, options, command, record):
+        self._em_ask(options, command, record, ASK_NOTE)
+
+    def _em_ask(self, options, command, record, action):
+        data = {
+            'action': action,
+            'record_id': record.id if record else 0,
+        }
+        options['handle_reply'] = {
+            'replies': {},
+            'custom_reply': data,
+        }
+
     @api.multi
     def em_handle_callback_data(self, callback_data, raw_text):
-        record = self.em_browse_record(callback_data.get('record_id'))
-        tag = callback_data.get('tag')
-        if callback_data.get('analytic_id'):
-            analytic_liquidity = self.em_browse_analytic(callback_data('analytic_id'))
-        else:
-            analytic_liquidity = self._em_create_analytic(raw_text, tag)
-        record._em_update_analytic(analytic_liquidity, TAG2TYPE[tag])
+        record = self.em_browse_record(callback_data.get('record_id')) \
+            if callback_data.get('record_id') else None
+
+        if callback_data.get('action') == ASK_AMOUNT:
+            if not record:
+                record = self.em_add_income_record('', raw_text)
+            else:
+                record.em_update_amount(raw_text)
+        elif callback_data.get('action') == ASK_NOTE:
+            record.em_update_note(raw_text)
+        elif callback_data.get('action') == ASK_ANALYTIC:
+            tag = callback_data.get('tag')
+            if callback_data.get('analytic_id'):
+                analytic_liquidity = self.em_browse_analytic(callback_data.get('analytic_id'))
+            else:
+                analytic_liquidity = self._em_create_analytic(raw_text, tag)
+            record._em_update_analytic(analytic_liquidity, TAG2TYPE[tag])
         return record
 
     @api.multi
@@ -157,33 +188,61 @@ class Partner(models.Model):
         return analytic
 
     @api.multi
-    def em_add_new_record(self, text, amount, currency):
-        liquidity = self.env.ref(ACCOUNT_LIQUIDITY)
-        payable = self.env.ref(ACCOUNT_PAYABLE)
+    def em_add_expense_record(self, text, amount, currency=None):
+        account_liquidity = self.env.ref(ACCOUNT_LIQUIDITY)
+        account_payable = self.env.ref(ACCOUNT_PAYABLE)
         analytic_payable = self.em_default_analytic_payable(text)
         analytic_liquidity = analytic_payable.liquidity_id \
             or self.em_default_analytic_liquidity(text)
-        journal = self.env.ref(JOURNAL_PAYABLE)
 
-        amount = float(amount.replace(',', '.'))
+        from_data = {
+            'account_id': account_liquidity.id,
+            'analytic_account_id': analytic_liquidity.id,
+        }
+        to_data = {
+            'account_id': account_payable.id,
+            'analytic_account_id': analytic_payable.id,
+        }
+        return self._em_add_record(text, amount, currency,
+                                   JOURNAL_PAYABLE, from_data, to_data)
+
+    @api.multi
+    def em_add_income_record(self, text, amount, currency=None):
+        account_liquidity = self.env.ref(ACCOUNT_LIQUIDITY)
+        account_receivable = self.env.ref(ACCOUNT_RECEIVABLE)
+
+        from_data = {
+            'account_id': account_receivable.id,
+        }
+        to_data = {
+            'account_id': account_liquidity.id,
+        }
+        return self._em_add_record(text, amount, currency,
+                                   JOURNAL_RECEIVABLE, from_data, to_data)
+
+    def _em_add_record(self,
+                       text, amount, currency,
+                       journal_ref, from_data, to_data):
+
+        journal = self.env.ref(journal_ref)
 
         common = {
             'partner_id': self.id,
             'name': text or 'unknown',
         }
+        amount = float(amount.replace(',', '.'))
+
         # move from source (e.g. wallet)
         credit = common.copy()
+        credit.update(from_data)
         credit.update({
-            'account_id': liquidity.id,
             'credit': amount,
-            'analytic_account_id': analytic_liquidity.id,
         })
         # move to target (e.g. cashier)
         debit = common.copy()
+        debit.update(to_data)
         debit.update({
-            'account_id': payable.id,
             'debit': amount,
-            'analytic_account_id': analytic_payable.id,
         })
         record = self.env['account.move'].create({
             'narration': text,
@@ -197,7 +256,7 @@ class Partner(models.Model):
 
 
 class AccountMove(models.Model):
-
+    """Class for ``record``"""
     _inherit = 'account.move'
 
     @api.multi
@@ -209,6 +268,7 @@ class AccountMove(models.Model):
                 update_lines.append((1, line.id, {'credit': amount}))
             elif line.is_to:
                 update_lines.append((1, line.id, {'debit': amount}))
+        print 'update_lines', update_lines
         self.write({'line_ids': update_lines})
 
     @api.multi
@@ -242,6 +302,9 @@ class AccountMove(models.Model):
     @api.multi
     def em_get_analytic_payable(self):
         return self._em_get_analytic(TYPE_PAYABLE)
+
+    def em_get_analytic_receivable(self):
+        return self._em_get_analytic(TYPE_RECEIVABLE)
 
     @api.multi
     def _em_get_analytic(self, user_type_ref):

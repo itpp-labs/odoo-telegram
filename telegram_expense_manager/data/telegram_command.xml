@@ -43,7 +43,8 @@ But my master hopes that I could be helpful for folks.
         </t></field>
     </record>
 
-    <record model="telegram.command" id="command_add_record">
+
+    <record model="telegram.command" id="command_expense">
         <field name="name">%[0-9]+%</field>
         <field name="description">Add new record</field>
         <field name="sequence" eval="1000"/>
@@ -62,19 +63,19 @@ else:
     amount = m.group(2)
     currency = m.group(3)
 
-    record = partner.sudo().em_add_new_record(text, amount, currency)
+    record = partner.sudo().em_add_expense_record(text, amount, currency)
 
 analytic_liquidity = record.em_get_analytic_liquidity()
 analytic_payable = record.em_get_analytic_payable()
 
 if not analytic_liquidity:
     data['type'] = 'no_analytic_liquidity'
-    partner.em_keyboard_analytics(options, command, record, command.TAG_LIQUIDITY)
+    partner.em_ask_analytic(options, command, record, command.TAG_LIQUIDITY)
 
 elif not analytic_payable:
 
     data['type'] = 'no_analytic_payable'
-    buttons = partner.em_keyboard_analytics(options, command, record, command.TAG_PAYABLE)
+    buttons = partner.em_ask_analytic(options, command, record, command.TAG_PAYABLE)
     if buttons:
         data['subtype'] = 'choose_or_create_analytic'
     else:
@@ -92,6 +93,57 @@ data['record'] = record
         <t t-if="data.get('subtype') == 'create_analytic'">Specify a name for expense category (e.g. Food, Cafe, etc)</t>
     </t>
     <t t-else="">New record is added! Check or edit it here: /record_<t t-esc="data['record'].id"/></t>
+</t>
+        </field>
+        <field name="active" eval="False"/>
+    </record>
+
+    <record model="telegram.command" id="command_income">
+        <field name="name">/income</field>
+        <field name="description">Add new income record</field>
+        <field name="sequence" eval="1000"/>
+        <field name="group_ids" eval="[]"/>
+        <field name="response_code">
+
+partner = env.user.partner_id
+callback_data =  telegram.get('callback_data')
+raw_text = telegram['tmessage'].text
+
+record = None
+if not callback_data:
+    # initial /income request
+    partner.em_ask_amount(options, command, None)
+    data['type'] = 'ask_amount'
+else:
+    record = partner.em_handle_callback_data(callback_data, raw_text)
+
+    analytic_liquidity = record.em_get_analytic_liquidity()
+    analytic_receivable = record.em_get_analytic_receivable()
+
+    if not analytic_receivable:
+        data['type'] = 'no_analytic_receivable'
+        buttons = partner.em_ask_analytic(options, command, record, command.TAG_RECEIVABLE)
+        data['analytic_receivable_count'] = len(buttons)
+    elif not analytic_liquidity:
+        if analytic_receivable.liquidity_id:
+            data['type'] = 'done'
+            record.em_update_analytic_liquidity(analytic_receivable.liquidity_id)
+        else:
+            data['type'] = 'no_analytic_liquidity'
+            partner.em_ask_analytic(options, command, record, command.TAG_LIQUIDITY)
+    else:
+        data['type'] = 'done'
+data['record'] = record
+        </field>
+        <field name="response_template" type="xml">
+<t>
+    <t t-if="data.get('type') == 'ask_amount'">Send amount of money</t>
+    <t t-elif="data.get('type') == 'no_analytic_liquidity'">Choose payment way or send name for new one</t>
+    <t t-elif="data.get('type') == 'no_analytic_receivable'">
+        <t t-if="data.get('analytic_receivable_count')">Choose income category or send name for new one</t>
+        <t t-else="">Specify a name for income category (e.g. Salary, Advance Payment, etc)</t>
+    </t>
+    <t t-else="">New Income record is added! Check or edit it here: /record_<t t-esc="data['record'].id"/></t>
 </t>
         </field>
         <field name="active" eval="False"/>
@@ -179,42 +231,23 @@ elif callback_data.get(ACTION) == EMPTY_ACTION:
 
 elif telegram.get('callback_type') == 'inline':
     # handle click on "edit" buttons
-    reply_data = callback_data.copy()
-    options['handle_reply'] = {
-        'replies': {},
-        'custom_reply': reply_data,
-    }
-
     if callback_data.get(ACTION) == EDIT_AMOUNT:
         data['type'] = 'edit_amount'
+        partner.em_ask_amount(options, command, record)
     elif callback_data.get(ACTION) == EDIT_NOTE:
         data['type'] = 'edit_note'
+        partner.em_ask_note(options, command, record)
     elif callback_data.get(ACTION) == EDIT_ANALYTIC:
         line_id = callback_data.get(LINE_ID)
         line = partner.em_browse_line(line_id)
+        tag = line._em_analytic_tag()
         data['type'] = 'edit_from' if line.is_from else 'edit_to'
-        reply_buttons = [{
-            'text': analytic.name,
-            'callback_data': dict(reply_data.items() + [(NEW_ANALYTIC_ID, analytic.id)]),
-        } for analytic in line.em_all_analytics()]
-        command.keyboard_buttons(options, reply_buttons, row_width=1)
+        partner.em_ask_analytic(options, command, record, tag)
 else:
     # handle new value of attributes (either click on Reply Keyboard or manual typing)
     data['type'] = 'updated'
-    if callback_data.get(ACTION) == EDIT_AMOUNT:
-        record.em_update_amount(raw_text)
-    elif callback_data.get(ACTION) == EDIT_NOTE:
-        record.em_update_note(raw_text)
-    elif callback_data.get(ACTION) == EDIT_ANALYTIC:
-        analytic = callback_data.get(NEW_ANALYTIC_ID)
-        line_id = callback_data.get(LINE_ID)
-        line = partner.em_browse_line(line_id)
-        if analytic:
-            analytic = partner.em_browse_analytic(analytic)
-        else:
-            # create new analytic
-            analytic = line.em_create_analytic(raw_text)
-        line.em_update_analytic(analytic)
+    record = partner.em_handle_callback_data(callback_data, raw_text)
+    data['record'] = record
         </field>
         <field name="response_template" type="xml">
 <t>
