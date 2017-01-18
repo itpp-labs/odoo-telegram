@@ -2,7 +2,7 @@
 <openerp>
     <data noupdate="1">
         <!-- Default template user for new users signing in -->
-        <record id="default_template_user" model="res.users">
+        <record id="default_template_user" model="res.users" context="{'no_reset_password': True}">
             <field name="name">Template Telegram User</field>
             <field name="login">telegram_template</field>
             <field name="active" eval="False"/>

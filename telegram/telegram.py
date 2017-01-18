@@ -7,14 +7,6 @@ import dateutil
 import time
 import logging
 import simplejson
-from telebot.apihelper import ApiException, _convert_markup
-from telebot import types
-try:
-    from telebot.types import ReplyKeyboardRemove
-except:
-    from telebot.types import ReplyKeyboardHide as ReplyKeyboardRemove
-
-import emoji
 from lxml import etree
 from openerp import tools
 from openerp import api, models, fields
@@ -29,6 +21,22 @@ xml_translate = True
 # 9.0+
 # from openerp.tools.translate import xml_translate
 _logger = logging.getLogger(__name__)
+
+try:
+    from telebot.apihelper import ApiException, _convert_markup
+    from telebot import types
+    try:
+        from telebot.types import ReplyKeyboardRemove
+    except:
+        from telebot.types import ReplyKeyboardHide as ReplyKeyboardRemove
+except (ImportError, IOError) as err:
+    _logger.debug(err)
+
+try:
+    import emoji
+except (ImportError, IOError) as err:
+    _logger.debug(err)
+
 
 CALLBACK_DATA_MAX_SIZE = 64
 # see https://core.telegram.org/bots/api#inlinekeyboardbutton
