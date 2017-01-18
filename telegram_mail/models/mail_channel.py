@@ -8,7 +8,7 @@ class Channel(models.Model):
 
     telegram_subscribed = fields.Boolean(
         'Notify to Telegram', compute='_compute_subscribed',
-        inverse='_set_subscribed',
+        inverse='_inverse_subscribed',
         help='Personal setting to get copies of messages via telegram bot. '
         'Use command /mail_channels '
         'to switch on/off notifications globally')
@@ -18,7 +18,7 @@ class Channel(models.Model):
         'channel_id', 'partner_id', string='Telegram Subscribers')
 
     @api.multi
-    def _set_subscribed(self):
+    def _inverse_subscribed(self):
         cur_partner = self.env.user.partner_id
         for r in self:
             if r.telegram_subscribed:

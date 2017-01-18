@@ -12,13 +12,17 @@ import time
 import openerp
 from openerp.service.server import Worker
 from openerp.service.server import PreforkServer
-from telebot import TeleBot
+
 from openerp import SUPERUSER_ID
 import threading
 import logging
-from telebot import util
 
 _logger = logging.getLogger(__name__)
+
+try:
+    from telebot import TeleBot, util
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 
 def telegram_worker():
