@@ -8,6 +8,7 @@
     "application": False,
 
     "author": "IT-Projects LLC, Ivan Yelizariev",
+    "support": "apps@it-projects.info",
     "website": "https://it-projects.info",
     "license": "LGPL-3",
     "price": 40.00,
