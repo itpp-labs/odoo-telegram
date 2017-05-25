@@ -10,12 +10,12 @@
                     <sheet>
                         <group>
                             <group>
-                                <field name="partner_id"/>
-                                <field name="periodicity_type"/>
-                                <field name="periodicity_amount"/>
+                                <field name="user_id"/>
+                                <field name="name"/>
                                 <field name="amount"/>
                                 <field name="currency_id"/>
                                 <field name="notify"/>
+                                <field name="active"/>
                             </group>
                             <group string="From">
                                 <field name="from_tag_id"/>
@@ -24,6 +24,12 @@
                             <group string="To">
                                 <field name="to_tag_id"/>
                                 <field name="to_analytic_id"/>
+                            </group>
+                            <group string="When">
+                                <field name="date"/>
+                                <field name="periodicity_type"/>
+                                <field name="periodicity_amount"/>
+                                <field name="next_date"/>
                             </group>
                         </group>
                     </sheet>
@@ -36,7 +42,7 @@
             <field name="model">account.schedule</field>
             <field name="arch" type="xml">
                 <tree string="Schedule">
-                    <field name="partner_id"/>
+                    <field name="user_id"/>
                     <field name="periodicity_type"/>
                     <field name="periodicity_amount"/>
                     <field name="amount"/>

@@ -26,6 +26,7 @@
         "data/telegram_command.xml",
         "data/account.xml",
         "data/analytic.xml",
+        "data/cron.xml",
         "views/schedule.xml",
     ],
     "qweb": [

@@ -267,6 +267,7 @@ Check Help Tab for the rest variables.
     @api.multi
     def eval_notification(self, event, tsession):
         self.ensure_one()
+        # TODO: tsession can be multi recordset
         return self._eval(self.notification_code,
                           locals_dict={'telegram': {'event': event}},
                           tsession=tsession)
@@ -603,21 +604,27 @@ Check Help Tab for the rest variables.
                 response = command.get_response()
                 bot.cache.set_value(command, response)
             else:
-                res = self.env['telegram.session'].search([('user_id.groups_ids', 'in', command.group_ids)])
+                res = self.env['telegram.session'].search([('user_id.groups_ids', 'in', command.group_ids.ids)])
                 for tsession in res:
                     response = command.get_response(tsession=tsession)
                     bot.cache.set_value(command, response, tsession)
 
     @api.multi
-    def send_notifications(self, event=None, tsession=None):
+    def send_notifications(self, event=None, tsession=None, record=None):
         """Pass command to telegram process,
         because current process doesn't have access to bot"""
         if not len(self.ids):
             return
+        if not event and record and len(record.ids):
+            event = {
+                'active_model': record._name,
+                'active_id': record.ids[0],
+                'active_ids': record.ids,
+            }
         message = {
             'action': 'send_notifications',
             'event': event,
-            'tsession_id': tsession and tsession.id,
+            'tsession_ids': tsession and tsession.ids,
             'command_ids': self.ids,
         }
         self.env['telegram.bus'].sendone(message)
@@ -625,8 +632,8 @@ Check Help Tab for the rest variables.
     def _send_notifications(self, bus_message, bot):
         _logger.debug('send_notifications(). bus_message=%s', bus_message)
         tsession = None
-        if bus_message.get('tsession_id'):
-            tsession = self.env['telegram.session'].browse(bus_message.get('tsession_id'))
+        if bus_message.get('tsession_ids'):
+            tsession = self.env['telegram.session'].browse(bus_message.get('tsession_ids'))
         for command in self.env['telegram.command'].browse(bus_message['command_ids']):
             locals_dict = command.eval_notification(bus_message.get('event'), tsession)
 
@@ -638,7 +645,7 @@ Check Help Tab for the rest variables.
                 notify_sessions = self.env['telegram.session'].search([('user_id', 'in', list(notify_user_ids))])
 
             else:
-                notify_sessions = [tsession]
+                notify_sessions = tsession
 
             if not notify_sessions:
                 continue

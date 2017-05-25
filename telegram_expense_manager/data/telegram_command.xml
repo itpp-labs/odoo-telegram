@@ -189,7 +189,7 @@ data['record'] = record
     <t t-if="data.get('type') == 'ask_amount'">Send amount of money</t>
     <t t-elif="data.get('type') == 'no_analytic_from'">Choose Source</t>
     <t t-elif="data.get('type') == 'no_analytic_to'">Choose Destination</t>
-    <t t-else="">Money are transfered /record_<t t-esc="data['record'].id"/>! To check current amounts in all account use command /accounts. To schedule automatic transfers use /schedule</t>
+    <t t-else="">Money are transfered /record_<t t-esc="data['record'].id"/>! To check current amounts in all account use command /account_all. To schedule automatic transfers use /schedule</t>
 </t>
         </field>
     </record>
@@ -308,7 +308,7 @@ else:
 
 
     <record model="telegram.command" id="command_accounts">
-        <field name="name">/accounts</field>
+        <field name="name">/account_all</field>
         <field name="description">Report on accounts</field>
         <field name="sequence" eval="1000"/>
         <field name="group_ids" eval="[]"/>
@@ -418,5 +418,261 @@ Last records:<t t-foreach="data['records']" t-as="rec">
         </field>
     </record>
 
+<!-- Schedule -->
 
+    <record model="telegram.command" id="command_schedule_new">
+        <field name="name">/schedule</field>
+        <field name="description">Add new schedule</field>
+        <field name="sequence" eval="1000"/>
+        <field name="group_ids" eval="[]"/>
+        <field name="response_code">
+partner = env.user.partner_id
+callback_data =  telegram.get('callback_data')
+raw_text = telegram['tmessage'].text
+
+schedule = None
+if not callback_data:
+    # initial /schedule request
+    partner.em_ask_amount(options, command, None)
+    data['type'] = 'ask_amount'
+else:
+    schedule, error = partner.em_handle_callback_data_schedule(callback_data, raw_text)
+    if not error:
+        if not schedule.name:
+            data['type'] = 'no_note'
+            partner.em_ask_note(options, command, schedule)
+        elif not schedule.from_tag_id:
+            data['type'] = 'no_tag_from'
+            partner.em_ask_analytic_tag(options, command, schedule, is_from=True)
+        elif not schedule.from_analytic_id:
+            data['type'] = 'no_analytic_from'
+            partner.em_ask_analytic(options, command, schedule, tag_id=schedule.from_tag_id.id, is_from=True)
+
+        elif not schedule.to_tag_id:
+            data['type'] = 'no_tag_to'
+            partner.em_ask_analytic_tag(options, command, schedule, is_to=True)
+        elif not schedule.to_analytic_id:
+            data['type'] = 'no_analytic_to'
+            partner.em_ask_analytic(options, command, schedule, tag_id=schedule.to_tag_id.id, is_to=True)
+
+        elif not schedule.periodicity_type:
+            data['type'] = 'no_periodicity_type'
+            partner.em_ask_periodicity_type(options, command, schedule)
+        elif not schedule.periodicity_amount:
+            data['type'] = 'no_periodicity_amount'
+            partner.em_ask_periodicity_amount(options, command, schedule)
+
+        elif not schedule.notify:
+            data['type'] = 'no_notify'
+            partner.em_ask_notify_on_transfer(options, command, schedule)
+        else:
+            data['type'] = 'done'
+
+data['record'] = schedule
+        </field>
+        <field name="response_template" type="xml">
+<t>
+    <t t-if="data.get('type') == 'ask_amount'">Send amount of money</t>
+    <t t-elif="data.get('type') == 'no_note'">Specify transaction name (e.g. Salary or Appartament renting)</t>
+    <t t-elif="data.get('type') == 'no_tag_from'">Choose Source Type</t>
+    <t t-elif="data.get('type') == 'no_analytic_from'">Choose Source</t>
+    <t t-elif="data.get('type') == 'no_tag_to'">Choose Destination Type</t>
+    <t t-elif="data.get('type') == 'no_analytic_to'">Choose Destination</t>
+    <t t-elif="data.get('type') == 'no_periodicity_type'">Choose Periodicity Type</t>
+    <t t-elif="data.get('type') == 'no_periodicity_amount'">Choose Periodicity frequency</t>
+    <t t-else="">New automatic schedule is created: /schedule_<t t-esc="data['record'].id"/>!</t>
+</t>
+        </field>
+    </record>
+
+    <record model="telegram.command" id="command_schedule">
+        <field name="name">/schedule_%</field>
+        <field name="description">Check/Edit specific schedule</field>
+        <field name="sequence" eval="800"/>
+        <field name="universal" eval="False"/>
+        <field name="active" eval="False"/>
+        <field name="group_ids" eval="[]" />
+        <field name="response_code">
+ACTION='a'
+EDIT_AMOUNT='am'
+EDIT_NOTE='ent'
+EDIT_FROM='fr'
+EDIT_TO='to'
+EDIT_PERIODICITY_TYPE='pt'
+EDIT_PERIODICITY_AMOUNT='pa'
+EDIT_NOTIFICATION='en'
+EMPTY_ACTION='n'
+RECORD_ID='r'
+NEW_ANALYTIC_ID='na'
+ANALYTIC_ID='aid'
+
+callback_data = telegram.get('callback_data')
+partner = env.user.partner_id
+raw_text = telegram.get('tmessage') and telegram.get('tmessage').text
+record_id = callback_data and callback_data.get(RECORD_ID) or raw_text and '_' in raw_text and int(raw_text.split('_')[1])
+record = partner.em_browse_schedule(record_id) if record_id else None
+data['record'] = record
+
+def edit_button(action, text, record, analytic_id=None):
+    ACTION='a'
+    RECORD_ID='r'
+    ANALYTIC_ID='aid'
+    icon = emoji.emojize(':pencil:', use_aliases=True)
+    button = {
+           'text': '%s %s' % (icon, text),
+           'callback_data': {
+               ACTION: action,
+               RECORD_ID: record.id,
+           }}
+    return button
+
+def text_button(text, record):
+    ACTION='a'
+    RECORD_ID='r'
+    icon = emoji.emojize(':pencil:', use_aliases=True)
+    button = {
+           'text': text,
+           'callback_data': {
+               ACTION: EMPTY_ACTION,
+               RECORD_ID: record.id,
+           }}
+    return button
+
+if not callback_data:
+    # handle initial /schedule_1234 request
+    command.inline_keyboard_buttons(options, [
+        edit_button(
+            EDIT_AMOUNT,
+            _('Amount: %s') % record.amount,
+            record),
+        edit_button(
+            EDIT_NOTE,
+            _('Note: %s') % record.name,
+            record),
+        edit_button(
+            EDIT_FROM,
+            _('From: %s') % record.from_analytic_id.name,
+            record),
+        edit_button(
+            EDIT_TO,
+            _('To: %s') % record.to_analytic_id.name,
+            record),
+        edit_button(
+            EDIT_PERIODICITY_TYPE,
+            _('Periodicity type: %s') % record.periodicity_type,
+            record),
+        edit_button(
+            EDIT_PERIODICITY_AMOUNT,
+            _('Periodicity amount: %s') % record.periodicity_amount,
+            record),
+        edit_button(
+            EDIT_NOTIFICATION,
+            _('Notify: %s') % record.notify,
+            record),
+    ], row_width=1)
+    data['type'] = 'show_record'
+elif callback_data.get(ACTION) == EMPTY_ACTION:
+    # ignore request
+    pass
+
+elif telegram.get('callback_type') == 'inline':
+    # handle click on "edit" buttons
+    if callback_data.get(ACTION) == EDIT_AMOUNT:
+        data['type'] = 'edit_amount'
+        partner.em_ask_amount(options, command, record)
+    elif callback_data.get(ACTION) == EDIT_NOTE:
+        data['type'] = 'edit_note'
+        partner.em_ask_note(options, command, record)
+
+    elif callback_data.get(ACTION) == EDIT_FROM:
+        data['type'] = 'edit_from'
+        partner.em_ask_analytic(options, command, record, tag_id=record.from_tag_id.id, is_from=True)
+    elif callback_data.get(ACTION) == EDIT_TO:
+        data['type'] = 'edit_to'
+        partner.em_ask_analytic(options, command, record, tag_id=record.to_tag_id.id, is_to=True)
+
+    elif callback_data.get(ACTION) == EDIT_PERIODICITY_TYPE:
+        data['type'] = 'edit_periodicity_type'
+        partner.em_ask_periodicity_type(options, command, record)
+    elif callback_data.get(ACTION) == EDIT_PERIODICITY_AMOUNT:
+        data['type'] = 'edit_periodicity_amount'
+        partner.em_ask_periodicity_amount(options, command, record)
+    elif callback_data.get(ACTION) == EDIT_NOTIFICATION:
+        data['type'] = 'edit_periodicity_amount'
+        partner.em_ask_notify_on_transfer(options, command, record)
+else:
+    # handle new value of attributes (either click on Reply Keyboard or manual typing)
+    data['type'] = 'updated'
+    record, error = partner.em_handle_callback_data_schedule(callback_data, raw_text)
+    data['record'] = record
+        </field>
+        <field name="response_template" type="xml">
+<t>
+    <t t-if="data['type'] == 'show_record'">Record #<t t-esc="data['record'].id"/>. You can delete it by sending /delete_schedule_<t t-esc="data['record'].id"/>.</t>
+    <t t-if="data['type'] == 'edit_note'">Send new Note or click /cancel</t>
+    <t t-if="data['type'] == 'edit_amount'">Send new Amount or click /cancel</t>
+    <t t-if="data['type'] == 'edit_from'">Send new Source or choose from existing or click /cancel</t>
+    <t t-if="data['type'] == 'edit_to'">Send new Destination or choose from existing or click /cancel</t>
+    <t t-if="data['type'] == 'edit_periodicity_type'">Send new new periodicity type or click /cancel</t>
+    <t t-if="data['type'] == 'edit_periodicity_amount'">Send new new periodicity value or click /cancel</t>
+    <t t-if="data['type'] == 'updated'">Done! /schedule_<t t-esc="data['record'].id"/> is updated.</t>
+</t>
+        </field>
+        <field name="notification_code">
+record = env[telegram['event']['active_model']].browse(telegram['event']['active_id'])
+schedule = record.schedule_id
+data['record'] = record
+data['schedule'] = schedule
+data['amount'] = record.amount
+lines = record.em_lines()
+data['from'] = lines['from']['analytic']
+data['to'] = lines['to']['analytic']
+        </field>
+        <field name="notification_template" type="xml">
+            <t>New /record_<t t-esc="data['record'].id"/> is created by /schedule_<t t-esc="data['schedule'].id"/>
+From <t t-esc="data['from']"/> To <t t-esc="data['to']"/> Amount <t t-esc="data['amount']"/>.</t>
+
+        </field>
+
+    </record>
+
+    <!-- delete commands -->
+
+    <record model="telegram.command" id="command_delete">
+        <field name="name">/delete_%</field>
+        <field name="description">Delete record</field>
+        <field name="sequence" eval="800"/>
+        <field name="universal" eval="False"/>
+        <field name="active" eval="False"/>
+        <field name="group_ids" eval="[]" />
+        <field name="response_code">
+RECORD_ID='r'
+callback_data = telegram.get('callback_data')
+record_id = callback_data and callback_data.get(RECORD_ID) or raw_text and '_' in raw_text and int(raw_text.split('_')[1])
+
+if not callback_data:
+    data['type'] = 'confirm'
+    command.keyboard_buttons(options, [
+    {
+    'text': 'Delete record',
+    'callback_data': {'delete': True, RECORD_ID: record_id}
+    },
+    {
+    'text': 'Cancel',
+    'callback_data': {'delete': False}
+    },
+    )
+elif callback_data.get('delete'):
+    data['type'] = 'deleted'
+    record = partner.em_browse_analytic(record_id)
+    record.unlink()
+
+        </field>
+        <field name="response_template" type="xml">
+<t>
+    <t t-if="data['type'] == 'confirm'">Are you sure want remove this record?</t>
+    <t t-if="data['type'] == 'deleted'">The record is deleted</t>
+</t>
+        </field>
+    </record>
 </odoo>
