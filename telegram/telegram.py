@@ -254,7 +254,6 @@ Check Help Tab for the rest variables.
     @api.multi
     def get_response(self, locals_dict=None, tsession=None):
         self.ensure_one()
-        print 'get_response', self.name, self.response_code
         locals_dict = self._eval(self.response_code, locals_dict=locals_dict, tsession=tsession)
         return self._render(self.response_template, locals_dict, tsession)
 
@@ -358,6 +357,9 @@ Check Help Tab for the rest variables.
                'context_dump': simplejson.dumps(locals_dict.get('context', {})),
                'html': html}
         reply_markup = options.get('reply_markup')
+        if reply_markup and not len(reply_markup.keyboard):
+            # remove reply_markup if it doesn't have buttons
+            reply_markup = None
         if reply_markup:
             res['markup'] = _convert_markup(reply_markup)
             if isinstance(reply_markup, types.ReplyKeyboardMarkup) \
@@ -391,7 +393,6 @@ Check Help Tab for the rest variables.
         """Send processed / rendered data"""
         _logger.debug('_send rendered %s', rendered)
         reply_markup = rendered.get('markup', None)
-
         if not reply_markup and tsession.reply_keyboard:
             # remove old keyboard
             reply_markup = ReplyKeyboardRemove()
