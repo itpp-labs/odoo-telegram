@@ -8,14 +8,6 @@ import dateutil
 import time
 import logging
 import simplejson
-from telebot.apihelper import ApiException, _convert_markup
-from telebot import types
-try:
-    from telebot.types import ReplyKeyboardRemove
-except:
-    from telebot.types import ReplyKeyboardHide as ReplyKeyboardRemove
-
-import emoji
 from lxml import etree
 from odoo import tools
 from odoo import api, models, fields
@@ -28,6 +20,22 @@ import odoo
 from openerp.tools.translate import xml_translate
 
 _logger = logging.getLogger(__name__)
+
+try:
+    from telebot.apihelper import ApiException, _convert_markup
+    from telebot import types
+    try:
+        from telebot.types import ReplyKeyboardRemove
+    except:
+        from telebot.types import ReplyKeyboardHide as ReplyKeyboardRemove
+except (ImportError, IOError) as err:
+    _logger.debug(err)
+
+try:
+    import emoji
+except (ImportError, IOError) as err:
+    _logger.debug(err)
+
 
 CALLBACK_DATA_MAX_SIZE = 64
 # see https://core.telegram.org/bots/api#inlinekeyboardbutton
@@ -108,7 +116,7 @@ Check Help Tab for the rest variables.
                               .with_context(active_test=True)
 
             if tsession.handle_reply:
-                if command:
+                if command and tmessage.text[0] == '/':
                     # new command is came. Ignore and remove handle_reply
                     tsession.handle_reply = False
                 else:
@@ -144,11 +152,20 @@ Check Help Tab for the rest variables.
         command.execute(tsession, bot, {'telegram': {
             'callback_query': callback_query,
             'callback_data': callback_data,
+            'callback_type': 'inline',
         }})
 
     @api.multi
-    def keyboard_buttons(self, options, buttons, row_width=None):
+    def keyboard_buttons(self, options, buttons, row_width=None, one_time_keyboard=None, resize_keyboard=None):
+
         self.ensure_one()
+
+        if 'reply_markup' not in options:
+            options['reply_markup'] = types.ReplyKeyboardMarkup(
+                resize_keyboard=resize_keyboard,
+                one_time_keyboard=one_time_keyboard,
+            )
+
         if 'handle_reply' not in options:
             options['handle_reply'] = {
                 'replies': {},
@@ -161,12 +178,15 @@ Check Help Tab for the rest variables.
             callback_data = b.pop('callback_data')
             options['handle_reply']['replies'][b.get('text')] = callback_data
             row.append(types.KeyboardButton(**b))
-        return self._add_row_to_keyboard(options, row, row_width,
-                                         types.ReplyKeyboardMarkup)
+        return self._add_row_to_keyboard(options, row, row_width)
 
     @api.multi
     def inline_keyboard_buttons(self, options, buttons, row_width=None):
         self.ensure_one()
+
+        if 'reply_markup' not in options:
+            options['reply_markup'] = types.InlineKeyboardMarkup()
+
         row = []
         for b in buttons:
             b = b.copy()
@@ -174,16 +194,11 @@ Check Help Tab for the rest variables.
             b['callback_data'] = self._encode_callback_data(callback_data)
             row.append(types.InlineKeyboardButton(**b))
 
-        return self._add_row_to_keyboard(options, row, row_width,
-                                         types.InlineKeyboardMarkup)
+        return self._add_row_to_keyboard(options, row, row_width)
 
-    def _add_row_to_keyboard(self, options, row, row_width, KeyboardClass):
+    def _add_row_to_keyboard(self, options, row, row_width):
         """Adds set of buttons.
            Splits buttons to several rows, if row_width is specified"""
-
-        if 'reply_markup' not in options:
-            options['reply_markup'] = KeyboardClass()
-
         if row_width:
             options['reply_markup'].row_width = row_width
             options['reply_markup'].add(*row)
@@ -356,9 +371,11 @@ Check Help Tab for the rest variables.
         reply_markup = options.get('reply_markup')
         if reply_markup:
             res['markup'] = _convert_markup(reply_markup)
-            if isinstance(reply_markup, types.ReplyKeyboardMarkup) \
-               and not reply_markup.one_time_keyboard:
-                res['reply_keyboard'] = res['markup']
+            if isinstance(reply_markup, types.ReplyKeyboardMarkup):
+                res['reply_keyboard'] = True
+            elif isinstance(reply_markup, types.InlineKeyboardMarkup):
+                res['inline_keyboard'] = True
+        res['keep_reply_keyboard'] = options.get('keep_reply_keyboard')
 
         for photo in options.get('photos', []):
             if photo.get('type') == 'file':
@@ -388,16 +405,30 @@ Check Help Tab for the rest variables.
         _logger.debug('_send rendered %s', rendered)
         reply_markup = rendered.get('markup', None)
 
-        if not reply_markup and tsession.reply_keyboard:
-            # remove old keyboard
-            reply_markup = ReplyKeyboardRemove()
-            tsession.reply_keyboard = False
-        elif rendered.get('reply_keyboard'):
-            # mark that user has reply keyboard
+        if tsession.reply_keyboard:
+            # when client already have reply keyboard
+            if rendered.get('keep_reply_keyboard'):
+                # system is asked to don't remove existed reply keyboard
+                pass
+            elif rendered.get('inline_keyboard'):
+                # send a separate message to remove reply keyboard,
+                # because original message contains another markup
+                _logger.debug('Send a separate message to remove previous reply keyboard')
+                # we send a dot, because telegram doesn't allow to send empty message
+                bot.send_message(tsession.chat_ID, '<em>.</em>', parse_mode='HTML', reply_markup=ReplyKeyboardRemove())
+                tsession.reply_keyboard = False
+            elif not reply_markup:
+                # tell to telegram remove keyboard
+                reply_markup = ReplyKeyboardRemove()
+                tsession.reply_keyboard = False
+            else:
+                # no need to extra action here,
+                # because reply_markup removes or replaces Keyboard
+                pass
+
+        if rendered.get('reply_keyboard'):
+            # mark that user has new reply keyboard
             tsession.reply_keyboard = True
-        elif reply_markup and tsession.reply_keyboard:
-            # reply keyboard is replaced by inline keyboard.
-            tsession.reply_keyboard = False
 
         if rendered.get('html') or reply_markup:
             if rendered.get('editMessageText'):
@@ -599,7 +630,7 @@ Check Help Tab for the rest variables.
                 response = command.get_response()
                 bot.cache.set_value(command, response)
             else:
-                res = self.env['telegram.session'].search([('user_id.groups_ids', 'in', command.group_ids)])
+                res = self.env['telegram.session'].search([('user_id.groups_ids', 'in', command.group_ids.ids)])
                 for tsession in res:
                     response = command.get_response(tsession=tsession)
                     bot.cache.set_value(command, response, tsession)
@@ -712,7 +743,7 @@ class TelegramSession(models.Model):
     logged_in = fields.Boolean()
     user_id = fields.Many2one('res.users')
     context = fields.Text('Context', help='Any json serializable data. Can be used to share data between user requests.')
-    reply_keyboard = fields.Boolean('Reply Keyboard', help='User is shown ReplyKeyboardMarkup without one_time_keyboard. Such keyboard has to be removed explicitly')
+    reply_keyboard = fields.Boolean('Reply Keyboard', help='User is shown ReplyKeyboardMarkup. Such keyboard has to be removed explicitly')
     handle_reply = fields.Text('Reply handling')
     handle_reply_command_id = fields.Many2one('telegram.command')
 
