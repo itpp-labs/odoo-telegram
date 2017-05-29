@@ -12,13 +12,17 @@ import time
 import odoo
 from odoo.service.server import Worker
 from odoo.service.server import PreforkServer
-from telebot import TeleBot
+
 from odoo import SUPERUSER_ID
 import threading
 import logging
-from telebot import util
 
 _logger = logging.getLogger(__name__)
+
+try:
+    from telebot import TeleBot, util
+except (ImportError, IOError) as err:
+    _logger.debug(err)
 
 
 def telegram_worker():

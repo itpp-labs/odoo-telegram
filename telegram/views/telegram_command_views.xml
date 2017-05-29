@@ -83,6 +83,9 @@ Vars that can be updated:
     * Provides low-level access to reply_markup. It's used implicitly in:
       * command.inline_keyboard_buttons, command.keyboard_buttons
       * options['handle_reply']
+  * options['keep_reply_keyboard']
+    * Set value to True to keep reply keyboard from previous repsonse. Otherwise it will be removed
+    * Makes sense only when options['reply_markup'] is not set to new value of types.ReplyKeyboardMarkup
   * options['charts'] (module telegram_chart is required) - list of pygal chart objects
   * options['photos'] - list of dictionaries with keys
     * data
@@ -97,12 +100,17 @@ Vars that can be updated:
 
 Vars that can be used:
 * command - telegram.command record
-  * command.inline_keyboard_buttons(options, buttons, row_width=None) adds set of inline button to response. See https://core.telegram.org/bots/api#inlinekeyboardbutton . Argument buttons is a list of dictonary
-    * text=TEXT
-    * callback_data=ANY_DATA
-  * command.keyboard_buttons(options, buttons, row_width=None) adds set of reply button to response. See https://core.telegram.org/bots/api#keyboardbutton. Argument buttons is a list of dictonary
-    * text=TEXT
-    * callback_data=ANY_DATA
+  * command.inline_keyboard_buttons(options, buttons, row_width=None)
+    * adds set of inline buttons to response. See https://core.telegram.org/bots/api#inlinekeyboardbutton. 
+    * Argument buttons is a list of dictonary
+      * text=TEXT
+      * callback_data=ANY_DATA
+  * command.keyboard_buttons(options, buttons, row_width=None, one_time_keyboard=None, resize_keyboard=None) 
+    * adds set of reply buttons to response. See https://core.telegram.org/bots/api#keyboardbutton
+    * one_time_keyboard and resize_keyboard make sense only for first call of the function. Also, they can be updated later via options['reply_markup'].
+    * Argument buttons is a list of dictonary
+      * text=TEXT
+      * callback_data=ANY_DATA
 * telegram - dictonary with some input data
   * telegram['tsession'] - telegram.session record. 
     * telegram['tsession'].get_odoo_session() - the same as request.session in odoo
