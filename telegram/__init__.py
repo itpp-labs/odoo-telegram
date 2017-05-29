@@ -22,6 +22,9 @@ _logger = logging.getLogger(__name__)
 try:
     from telebot import TeleBot, util
 except (ImportError, IOError) as err:
+    # cannot import TeleBot, so create dummy class 
+    class TeleBot(object):
+        pass
     _logger.debug(err)
 
 
