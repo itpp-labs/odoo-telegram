@@ -58,6 +58,7 @@ PERIODICITY_OPTIONS = {
     },
 }
 
+
 class TelegramCommand(models.Model):
 
     _inherit = 'telegram.command'
@@ -444,7 +445,7 @@ class Partner(models.Model):
         amount = schedule.amount
 
         record = self._em_add_record(text, amount, currency,
-                                   journal, from_data, to_data)
+                                     journal, from_data, to_data)
         record.schedule_id = schedule
         return record
 

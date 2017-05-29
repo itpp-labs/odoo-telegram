@@ -29,6 +29,7 @@
         "data/analytic.xml",
         "data/cron.xml",
         "views/schedule.xml",
+        "views/account_account.xml",
     ],
     "qweb": [
     ],

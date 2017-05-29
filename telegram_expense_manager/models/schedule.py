@@ -7,6 +7,7 @@ from odoo import models, fields, api
 
 _logger = logging.getLogger(__name__)
 
+
 class Schedule(models.Model):
 
     _name = "account.schedule"
@@ -35,13 +36,11 @@ class Schedule(models.Model):
     from_tag_id = fields.Many2one(
         'account.analytic.tag',
         string='Type',
-        #required=True,
         domain=lambda self: [('id', 'in',
                               [
                                   self.env.ref(self.env['telegram.command'].TAG_RECEIVABLE).id,
                                   self.env.ref(self.env['telegram.command'].TAG_LIQUIDITY).id,
-                              ]
-        )]
+                              ])]
     )
 
     from_analytic_id = fields.Many2one(
@@ -56,13 +55,11 @@ class Schedule(models.Model):
     to_tag_id = fields.Many2one(
         'account.analytic.tag',
         string='Type',
-        #required=True,
         domain=lambda self: [('id', 'in',
                               [
                                   self.env.ref(self.env['telegram.command'].TAG_LIQUIDITY).id,
                                   self.env.ref(self.env['telegram.command'].TAG_PAYABLE).id,
-                              ]
-        )]
+                              ])]
     )
 
     to_analytic_id = fields.Many2one(
@@ -85,10 +82,11 @@ class Schedule(models.Model):
                            default=fields.Datetime.now,
                            help="""Start point to compute next date.
                            Equal to creation date, manually set value or last action date""")
-    next_date = fields.Datetime('Next Action',
-                                help="Date of next activation",
-                                compute="_compute_next_date",
-                                store=True,
+    next_date = fields.Datetime(
+        'Next Action',
+        help="Date of next activation",
+        compute="_compute_next_date",
+        store=True,
     )
 
     currency_id = fields.Many2one(
@@ -102,7 +100,6 @@ class Schedule(models.Model):
         ('instantly', "Notify instantly"),
         # TODO: we can add daily summary notification
     ], string='Notify on transfer', help='Notify user in telegram about created transfer')
-
 
     @api.depends('date', 'periodicity_type', 'periodicity_amount')
     def _compute_next_date(self):
