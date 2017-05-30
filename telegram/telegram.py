@@ -54,7 +54,7 @@ class TelegramCommand(models.Model):
     name = fields.Char('Command', help="""Command string.
 Usually starts with slash symbol, e.g. "/mycommand".
 SQL Reg Exp can be used. See https://www.postgresql.org/docs/current/static/functions-matching.html#FUNCTIONS-SIMILARTO-REGEXP
-For example /user\_% handles requests like /user_1, /user_2 etc.""",
+For example /user\\_% handles requests like /user_1, /user_2 etc.""",
                        required=True, index=True)
     description = fields.Char('Description', help='What command does. It will be used in /help command')
     sequence = fields.Integer(default=16)
