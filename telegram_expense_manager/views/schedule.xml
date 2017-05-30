@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="account_schedule_view_form" model="ir.ui.view">
+            <field name="name">account.schedule.form</field>
+            <field name="model">account.schedule</field>
+            <field name="arch" type="xml">
+                <form string="Schedule">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="user_id"/>
+                                <field name="name"/>
+                                <field name="amount"/>
+                                <field name="currency_id"/>
+                                <field name="notify"/>
+                                <field name="active"/>
+                            </group>
+                            <group string="From">
+                                <field name="from_tag_id"/>
+                                <field name="from_analytic_id"/>
+                            </group>
+                            <group string="To">
+                                <field name="to_tag_id"/>
+                                <field name="to_analytic_id"/>
+                            </group>
+                            <group string="When">
+                                <field name="date"/>
+                                <field name="periodicity_type"/>
+                                <field name="periodicity_amount"/>
+                                <field name="next_date"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="account_schedule_view_tree" model="ir.ui.view">
+            <field name="name">account.schedule.tree</field>
+            <field name="model">account.schedule</field>
+            <field name="arch" type="xml">
+                <tree string="Schedule">
+                    <field name="user_id"/>
+                    <field name="periodicity_type"/>
+                    <field name="periodicity_amount"/>
+                    <field name="amount"/>
+                    <field name="currency_id"/>
+                    <field name="from_tag_id"/>
+                    <field name="from_analytic_id"/>
+                    <field name="to_tag_id"/>
+                    <field name="to_analytic_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="account_schedule_action" model="ir.actions.act_window">
+            <field name="name">Schedules</field>
+            <field name="res_model">account.schedule</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem 
+            action="account_schedule_action" 
+            id="account_schedule_menu" 
+            parent="account.menu_finance_entries" 
+            groups="account.group_account_manager"
+            sequence="1000"
+            />
+
+    </data>
+</odoo>

@@ -117,11 +117,13 @@ Vars that can be used:
   * telegram['tmessage'] - message from telegram. See https://core.telegram.org/bots/api#message
     * telegram['tmessage'].text - actual UTF-8 text of the message
   * telegram['callback_query'] - original telegram object. See https://core.telegram.org/bots/api#callbackquery
+    * telegram['callback_query'].message.message_id - message id where inline button is clicked. Can be used in options['editMessageText']
+
   * telegram['callback_data'] - callback data. See telegram['callback_type']
   * telegram['callback_type']
     * 'reply' | 'custom_reply' - see see options['handle_reply'] and command.keyboard_buttons above
     * 'inline' - Is used when user click on inline button see https://core.telegram.org/bots/api#inlinekeyboardbutton. About adding inline buttons see options['reply_markup'] and command.inline_keyboard_buttons above
-  * telegram['event'] - dictonary with keys 'active_model', 'active_id', 'active_ids'. Only for commands triggered by base.action.rule.
+  * telegram['event'] - dictonary with keys 'active_model', 'active_id', 'active_ids'. Only for notifications
   * telegram['base_url'] - url of odoo database
 
 * env - odoo Environment

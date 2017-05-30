@@ -54,7 +54,7 @@ class TelegramCommand(models.Model):
     name = fields.Char('Command', help="""Command string.
 Usually starts with slash symbol, e.g. "/mycommand".
 SQL Reg Exp can be used. See https://www.postgresql.org/docs/current/static/functions-matching.html#FUNCTIONS-SIMILARTO-REGEXP
-For example /user_% handles requests like /user_1, /user_2 etc.""",
+For example /user\\_% handles requests like /user_1, /user_2 etc.""",
                        required=True, index=True)
     description = fields.Char('Description', help='What command does. It will be used in /help command')
     sequence = fields.Integer(default=16)
@@ -280,6 +280,7 @@ Check Help Tab for the rest variables.
     @api.multi
     def eval_notification(self, event, tsession):
         self.ensure_one()
+        # TODO: tsession can be multi recordset
         return self._eval(self.notification_code,
                           locals_dict={'telegram': {'event': event}},
                           tsession=tsession)
@@ -301,6 +302,7 @@ Check Help Tab for the rest variables.
             'types': types,
             '_': _,
             'emoji': emoji,
+            'sorted': sorted,
         }
 
     @api.multi
@@ -369,6 +371,9 @@ Check Help Tab for the rest variables.
                'context_dump': simplejson.dumps(locals_dict.get('context', {})),
                'html': html}
         reply_markup = options.get('reply_markup')
+        if reply_markup and not len(reply_markup.keyboard):
+            # remove reply_markup if it doesn't have buttons
+            reply_markup = None
         if reply_markup:
             res['markup'] = _convert_markup(reply_markup)
             if isinstance(reply_markup, types.ReplyKeyboardMarkup):
@@ -434,6 +439,7 @@ Check Help Tab for the rest variables.
             if rendered.get('editMessageText'):
                 _logger.debug('editMessageText:\n%s', rendered.get('html'))
                 kwargs = rendered.get('editMessageText')
+                kwargs['parse_mode'] = 'HTML'
                 kwargs['reply_markup'] = reply_markup
                 if 'message_id' in kwargs:
                     kwargs['chat_id'] = tsession.chat_ID
@@ -636,15 +642,21 @@ Check Help Tab for the rest variables.
                     bot.cache.set_value(command, response, tsession)
 
     @api.multi
-    def send_notifications(self, event=None, tsession=None):
+    def send_notifications(self, event=None, tsession=None, record=None):
         """Pass command to telegram process,
         because current process doesn't have access to bot"""
         if not len(self.ids):
             return
+        if not event and record and len(record.ids):
+            event = {
+                'active_model': record._name,
+                'active_id': record.ids[0],
+                'active_ids': record.ids,
+            }
         message = {
             'action': 'send_notifications',
             'event': event,
-            'tsession_id': tsession and tsession.id,
+            'tsession_ids': tsession and tsession.ids,
             'command_ids': self.ids,
         }
         self.env['telegram.bus'].sendone(message)
@@ -652,8 +664,8 @@ Check Help Tab for the rest variables.
     def _send_notifications(self, bus_message, bot):
         _logger.debug('send_notifications(). bus_message=%s', bus_message)
         tsession = None
-        if bus_message.get('tsession_id'):
-            tsession = self.env['telegram.session'].browse(bus_message.get('tsession_id'))
+        if bus_message.get('tsession_ids'):
+            tsession = self.env['telegram.session'].browse(bus_message.get('tsession_ids'))
         for command in self.env['telegram.command'].browse(bus_message['command_ids']):
             locals_dict = command.eval_notification(bus_message.get('event'), tsession)
 
@@ -665,7 +677,7 @@ Check Help Tab for the rest variables.
                 notify_sessions = self.env['telegram.session'].search([('user_id', 'in', list(notify_user_ids))])
 
             else:
-                notify_sessions = [tsession]
+                notify_sessions = tsession
 
             if not notify_sessions:
                 continue
