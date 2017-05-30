@@ -6,6 +6,8 @@ Description and Documentation: https://apps.odoo.com/apps/modules/10.0/telegram
 
 ## Getting started
 
+Create your bot via [BotFather](https://telegram.me/botfather). It gives you access token that you will use later.
+
 Install odoo with telegram modules and dependencies via set of [docker](https://docs.docker.com/engine/installation/) containers:
 
     docker network create odoo-telegram
@@ -39,7 +41,11 @@ Open http://localhost/ (you may need to wait few minutes on first open) and logi
 
 Then install some telegram modules (use search box and don't forget to remove *Apps* filter).
 
-Follow [documentation of main module](https://apps.odoo.com/apps/modules/10.0/telegram/) (skip installation part) or documentation of other installed telegram modules.
+Open *Technical / Parameters / System Parameters* menu. Put access token to *telegram.token* parameter. 
+
+Now you can send /help command to your bot!
+
+For futher usage see [documentation of main module](https://apps.odoo.com/apps/modules/10.0/telegram/) (skip installation part) or documentation of other installed telegram modules. 
 
 ## Donation
 
