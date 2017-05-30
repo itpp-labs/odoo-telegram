@@ -35,18 +35,6 @@ The module apply monkey patch for ``PreforkServer`` in order to run new process 
       * Executes ``registry['telegram.command'].telegram_listener()``.
       * Has threads number equal to ``telegram.num_telegram_threads`` parameter.
 
-Docker installation
--------------------
-You can use a `docker <https://github.com/it-projects-llc/install-odoo/blob/master/dockers/telegram/Dockerfile>`__ to easily run Telegram Bot::
-
-    docker run \
-    -p 8069:8069 \
-    -p 8072:8072 \
-    --name telegram \
-    --link db-telegram:db \
-    -t itprojectsllc/install-odoo:10.0-telegram
-
-
 Further information
 -------------------
 
