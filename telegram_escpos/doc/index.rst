@@ -21,4 +21,4 @@ Installation
 Usage
 =====
 
-* Send /print command to your bot
+* Send ``/print Hello World!`` to your bot
