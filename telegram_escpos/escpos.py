@@ -89,7 +89,6 @@ def encode_char(char, cur_encoding):
         # if the encoding changed, remember it and prefix the character with
         # the esc-pos encoding change sequence
         cur_encoding = encoding
-        print 'encoding', encoding
         encoded = encodings[encoding] + encoded
 
     return encoded, cur_encoding
@@ -104,7 +103,7 @@ def encode_str(txt):
     return buffer
 
 
-""" ESC/POS Commands (Constants) """
+# """ ESC/POS Commands (Constants) """
 
 # Feed control sequences
 CTL_LF = '\x0a'             # Print and line feed
@@ -204,8 +203,7 @@ TXT_ENC_KATAKANA_MAP = {
     '\xef\xbd\xa3': '\xa3',  # ｣
     '\xef\xbd\xa4': '\xa4',  # ､
     '\xef\xbd\xa5': '\xa5',  # ･
-
-  '\xef\xbd\xa6': '\xa6',  # ｦ
+    '\xef\xbd\xa6': '\xa6',  # ｦ
     '\xef\xbd\xa7': '\xa7',  # ｧ
     '\xef\xbd\xa8': '\xa8',  # ｨ
     '\xef\xbd\xa9': '\xa9',  # ｩ

@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
-from ..escpos import encode_str
-
-
-from escpos.printer import Network
-
+import logging
 
 from openerp import api
 from openerp import models
+
+from ..escpos import encode_str
+
+_logger = logging.getLogger(__name__)
+
+try:
+    from escpos.printer import Network
+except ImportError as err:
+    _logger.debug(err)
 
 
 class TelegramCommand(models.Model):

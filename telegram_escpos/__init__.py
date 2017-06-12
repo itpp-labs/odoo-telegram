@@ -1,2 +1,2 @@
-from . import api
+from . import escpos
 from . import models
