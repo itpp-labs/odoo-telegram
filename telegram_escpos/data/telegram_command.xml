@@ -4,7 +4,7 @@
 
     <record model="telegram.command" id="command_print">
         <field name="name">/print ?%</field>
-        <field name="description_name">/print &lt;Some Text&gt;</field>
+        <field name="description_name">/print &amp;lt;Some Text&amp;gt;</field>
         <field name="description">Print text</field>
         <field name="sequence" eval="500"/>
         <field name="response_code">

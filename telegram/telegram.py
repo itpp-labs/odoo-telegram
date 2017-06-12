@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import re
 from StringIO import StringIO
 import base64
 import datetime
@@ -101,11 +101,16 @@ Check Help Tab for the rest variables.
             locals_dict = {'telegram': {'tmessage': tmessage}}
             tsession = self.env['telegram.session'].get_session(tmessage.chat.id)
             cr = self.env.cr
+            search_command = tmessage.text
+            # remove bot name, e.g.
+            # "/command@bot_name text" -> /command text
+            m = re.match('(/[^ @]*)([^ ]*)(.*)', search_command).groups()
+            search_command = m[0] + m[2]
             cr.execute(
                 'SELECT id '
                 'FROM telegram_command '
                 'WHERE %s SIMILAR TO name ',
-                (tmessage.text, ))
+                (search_command, ))
             ids = [x[0] for x in cr.fetchall()]
             command = None
             if ids:
