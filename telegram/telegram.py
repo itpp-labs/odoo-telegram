@@ -57,6 +57,7 @@ Usually starts with slash symbol, e.g. "/mycommand".
 SQL Reg Exp can be used. See https://www.postgresql.org/docs/current/static/functions-matching.html#FUNCTIONS-SIMILARTO-REGEXP
 For example /user_% handles requests like /user_1, /user_2 etc.""",
                        required=True, index=True)
+    description_name = fields.Char('User-friendly Name', help='Name to be used in /help command. Unlike Command field, this shall not contain technical information')
     description = fields.Char('Description', help='What command does. It will be used in /help command')
     sequence = fields.Integer(default=16)
     type = fields.Selection([('normal', 'Normal'), ('cacheable', 'Normal (with caching)'), ('subscription', 'Subscription')], help='''

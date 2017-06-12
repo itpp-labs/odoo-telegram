@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import copy
 
 try:
@@ -16,7 +17,7 @@ def encode_char(char, cur_encoding):
     Encodes a single utf-8 character into a sequence of
     esc-pos code page change instructions and character declarations
     """
-    char_utf8 = char.encode('utf-8')
+    # char_utf8 = char.encode('utf-8')
     encoded = ''
     encoding = cur_encoding  # we reuse the last encoding to prevent code page switches at every character
     encodings = {
@@ -98,7 +99,8 @@ def encode_str(txt):
     cur_encoding = 'ascii'
     buffer = ''
     for c in txt:
-        buffer, cur_encoding = encode_char(c, cur_encoding)
+        encoded, cur_encoding = encode_char(c, cur_encoding)
+        buffer += encoded
     return buffer
 
 

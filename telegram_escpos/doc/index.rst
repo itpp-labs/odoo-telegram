@@ -16,7 +16,7 @@ Installation
 * `Enable technical features <https://odoo-development.readthedocs.io/en/latest/odoo/usage/technical-features.html>`__
 * Open ``Technical / Parameters / System Parameters`` menu.
 
-  * Enter value for ``telegram_escpos.host`` and ``telegram_escpos.port``
+  * Set values for ``telegram_escpos.host`` and ``telegram_escpos.port``
 
 Usage
 =====
