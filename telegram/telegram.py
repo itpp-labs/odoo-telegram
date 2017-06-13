@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import re
 from StringIO import StringIO
 import base64
 import datetime
@@ -57,6 +57,7 @@ Usually starts with slash symbol, e.g. "/mycommand".
 SQL Reg Exp can be used. See https://www.postgresql.org/docs/current/static/functions-matching.html#FUNCTIONS-SIMILARTO-REGEXP
 For example /user_% handles requests like /user_1, /user_2 etc.""",
                        required=True, index=True)
+    description_name = fields.Char('User-friendly Name', help='Name to be used in /help command. Unlike Command field, this shall not contain technical information')
     description = fields.Char('Description', help='What command does. It will be used in /help command')
     sequence = fields.Integer(default=16)
     type = fields.Selection([('normal', 'Normal'), ('cacheable', 'Normal (with caching)'), ('subscription', 'Subscription')], help='''
@@ -100,11 +101,16 @@ Check Help Tab for the rest variables.
             locals_dict = {'telegram': {'tmessage': tmessage}}
             tsession = self.env['telegram.session'].get_session(tmessage.chat.id)
             cr = self.env.cr
+            search_command = tmessage.text
+            # remove bot name, e.g.
+            # "/command@bot_name text" -> /command text
+            m = re.match('(/[^ @]*)([^ ]*)(.*)', search_command).groups()
+            search_command = m[0] + m[2]
             cr.execute(
                 'SELECT id '
                 'FROM telegram_command '
                 'WHERE %s SIMILAR TO name ',
-                (tmessage.text, ))
+                (search_command, ))
             ids = [x[0] for x in cr.fetchall()]
             command = None
             if ids:
