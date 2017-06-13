@@ -65,7 +65,7 @@ def encode_char(char, cur_encoding):
                 #          return encode_str(kata.decode('utf-8'))
                 #  else:
                 #       kata = char_utf8
-                #  
+                #
                 #  if kata in TXT_ENC_KATAKANA_MAP:
                 #      encoded = TXT_ENC_KATAKANA_MAP[kata]
                 #      break
