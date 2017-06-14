@@ -372,6 +372,7 @@ Check Help Tab for the rest variables.
                'editMessageText': options.get('editMessageText'),
                'handle_reply_dump': handle_reply,
                'reply_keyboard': False,
+               'send_invoice': options.get('sendInvoice'),
                'context_dump': simplejson.dumps(locals_dict.get('context', {})),
                'html': html}
         reply_markup = options.get('reply_markup')
@@ -463,6 +464,10 @@ Check Help Tab for the rest variables.
                 res = bot.send_photo(tsession.chat_ID, photo['file'])
                 photo['file_id'] = res.photo[0].file_id
 
+        if rendered.get('sendInvoice'):
+            kwargs = rendered.get('sendInvoice')
+            kwargs['chat_id'] = tsession.chat_ID
+            bot.send_invoice(**kwargs)
         handle_reply_dump = rendered.get('handle_reply_dump')
         handle_reply_command_id = None
         if self.id and handle_reply_dump:

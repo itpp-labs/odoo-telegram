@@ -101,6 +101,8 @@ Vars that can be updated:
     * dictonary {'replies': {REPLY: DATA}, 'custom_reply': DATA}. 
     * If user send some value from REPLY, then this command will be called again with telegram['callback_data'] equal to corresponded DATA and and telegram['callback_data'] equal to 'reply'. 
     * If custom_reply is present and user send response not from 'replies', then this command is called with telegram['callback_data'] and telegram['callback_data'] equal to 'custom_reply'
+  * options['sendInvoice'] - kwargs for bot.send_invoice method. See https://core.telegram.org/bots/api#sendinvoice
+
 * context - dictonary to save json serializable data between user requests.
 
 Vars that can be used:

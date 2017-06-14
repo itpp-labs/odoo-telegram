@@ -16,7 +16,7 @@
     # "currency": "EUR",
 
     "depends": [
-        "telegram",
+        "telegram_portal",
     ],
     "external_dependencies": {"python": [], "bin": []},
     "data": [
