@@ -9,10 +9,10 @@ To use this module you need:
 * network escpos printer
 * idea what to print
 
-Installation
-============
+Configuration
+=============
 
-* Install `Telegram Bot <https://www.odoo.com/apps/modules/10.0/telegram/>`__ module
+* Configure `Telegram Bot <https://www.odoo.com/apps/modules/10.0/telegram/>`__ module
 * `Enable technical features <https://odoo-development.readthedocs.io/en/latest/odoo/usage/technical-features.html>`__
 * Open ``Technical / Parameters / System Parameters`` menu.
 
