@@ -255,7 +255,8 @@ class Partner(models.Model):
 
         if callback_data.get('action') == ASK_AMOUNT:
             if not record:
-                record = self.env['account.schedule'].create({'user_id': self.env.user.id})
+                user_id = self.env.user.id
+                record = self.env['account.schedule'].sudo().create({'user_id': user_id})
             record.amount = raw_text
         elif callback_data.get('action') == ASK_NOTE:
             record.name = raw_text
