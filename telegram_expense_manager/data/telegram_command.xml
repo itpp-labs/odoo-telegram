@@ -59,7 +59,7 @@ if callback_data:
 else:
     # create new record
 
-    m = re.match(r'(.*?) ([0-9.,]*) ?(.*)', telegram['tmessage'].text)
+    m = re.match(r'(.*) ([0-9.,]*) ?(.*)', telegram['tmessage'].text)
     text = m.group(1)
     amount = m.group(2)
     currency = m.group(3)
