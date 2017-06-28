@@ -436,7 +436,7 @@ if not callback_data:
     partner.em_ask_amount(options, command, None)
     data['type'] = 'ask_amount'
 else:
-    schedule, error = partner.em_handle_callback_data_schedule(callback_data, raw_text)
+    schedule, error = partner.sudo(env.user).em_handle_callback_data_schedule(callback_data, raw_text)
     if not error:
         if not schedule.name:
             data['type'] = 'no_note'
