@@ -9,6 +9,7 @@
             <tree string="Telegram Command">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
+                <field name="description_name"/>
                 <field name="type"/>
                 <field name="active"/>
                 <field name="description"/>
@@ -27,6 +28,10 @@
                         <h1>
                             <field name="name"/>
                         </h1>
+                              <label for="description_name" class="oe_edit_only"/>
+                              <h2>
+                                    <field name="description_name"/>
+                              </h2>
                               <label for="description" class="oe_edit_only"/>
                               <h2>
                                     <field name="description"/>
