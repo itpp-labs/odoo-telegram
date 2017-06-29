@@ -679,7 +679,9 @@ From <t t-esc="data['from']"/> To <t t-esc="data['to']"/> Amount <t t-esc="data[
         <field name="response_code">
 RECORD_ID='r'
 callback_data = telegram.get('callback_data')
+raw_text = telegram['tmessage'].text
 record_id = callback_data and callback_data.get(RECORD_ID) or raw_text and '_' in raw_text and int(raw_text.split('_')[1])
+partner = env.user.partner_id
 
 if not callback_data:
     data['type'] = 'confirm'
@@ -692,17 +694,62 @@ if not callback_data:
     'text': 'Cancel',
     'callback_data': {'delete': False}
     },
-    )
+    ])
 elif callback_data.get('delete'):
     data['type'] = 'deleted'
-    record = partner.em_browse_analytic(record_id)
+    record = partner.em_browse_record(record_id)
     record.unlink()
-
+else:
+    data['type'] = 'canceled'
         </field>
         <field name="response_template" type="xml">
 <t>
     <t t-if="data['type'] == 'confirm'">Are you sure want remove this record?</t>
     <t t-if="data['type'] == 'deleted'">The record is deleted</t>
+    <t t-if="data['type'] == 'canceled'">Canceled</t>
+</t>
+        </field>
+    </record>
+
+    <record model="telegram.command" id="command_delete_schedule">
+        <field name="name">/delete_schedule\_[0-9]+</field>
+        <field name="description">Delete Schedule</field>
+        <field name="sequence" eval="410"/>
+        <field name="universal" eval="False"/>
+        <field name="active" eval="False"/>
+        <field name="group_ids" eval="[]" />
+        <field name="response_code">
+RECORD_ID='r'
+callback_data = telegram.get('callback_data')
+raw_text = telegram['tmessage'].text
+record_id = callback_data and callback_data.get(RECORD_ID) or raw_text and '_' in raw_text and int(raw_text.split('_')[-1])
+partner = env.user.partner_id
+
+if not callback_data:
+    data['type'] = 'confirm'
+    command.keyboard_buttons(options, [
+    {
+    'text': 'Delete Schedule',
+    'callback_data': {'delete': True, RECORD_ID: record_id}
+    },
+    {
+    'text': 'Cancel',
+    'callback_data': {'delete': False}
+    },
+    ])
+elif callback_data.get('delete'):
+    data['type'] = 'deleted'
+    record = partner.em_browse_schedule(record_id)
+    record.unlink()
+else:
+    data['type'] = 'canceled'
+
+        </field>
+        <field name="response_template" type="xml">
+<t>
+    <t t-if="data['type'] == 'confirm'">Are you sure want remove this Schedule?</t>
+    <t t-if="data['type'] == 'deleted'">The Schedule is deleted</t>
+    <t t-if="data['type'] == 'canceled'">Canceled</t>
 </t>
         </field>
     </record>
