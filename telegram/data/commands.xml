@@ -21,7 +21,7 @@
         <field name="response_code">data = {'all_commands':''}
 all_commands = env['telegram.command'].search([])
 for command in all_commands:
-    data['all_commands'] += str(command.description_name or command.name) + ' - ' + str(command.description)+ '\n'
+    data['all_commands'] += str(command.description_name or command.name) + ' — ' + str(command.description)+ '\n'
         </field>
         <field name="response_template" type="xml">
             <t><t t-raw="data['all_commands']"/></t>
