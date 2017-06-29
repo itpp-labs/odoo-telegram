@@ -15,6 +15,7 @@
 
     "depends": [
         "telegram",
+        "mail",
     ],
     "external_dependencies": {},
     "data": [
