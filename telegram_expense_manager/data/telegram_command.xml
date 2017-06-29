@@ -195,7 +195,7 @@ data['record'] = record
     </record>
 
     <record model="telegram.command" id="command_record">
-        <field name="name">/record_%</field>
+        <field name="name">/record_[0-9]+</field>
         <field name="description">Check/Edit specific record</field>
         <field name="sequence" eval="800"/>
         <field name="universal" eval="False"/>
@@ -321,15 +321,41 @@ accounts = env["account.analytic.account"].sudo().search(
      order='id ASC',
 )
 data['accounts'] = accounts
+data['total'] = sum((acc.move_balance for acc in accounts))
         </field>
         <field name="response_template" type="xml">
-            <t t-foreach="data['accounts']" t-as="acc">
+            <t><t t-foreach="data['accounts']" t-as="acc">
 /account_<t t-esc="acc.id"/> — <t t-esc="acc.move_balance"/> — <t t-esc="acc.name"/></t>
+<b>Total</b>: <t t-esc="data['total']"/></t>
+        </field>
+    </record>
+
+    <record model="telegram.command" id="command_schedules">
+        <field name="name">/schedule_all</field>
+        <field name="description">List of schedules</field>
+        <field name="sequence" eval="1000"/>
+        <field name="group_ids" eval="[]"/>
+        <field name="response_code">
+
+user = env.user
+schedules = env["account.schedule"].sudo().search(
+    [('user_id', '=', user.id)],
+     order='id ASC',
+)
+data['schedules'] = schedules
+        </field>
+        <field name="response_template" type="xml">
+            <t><t t-foreach="data['schedules']" t-as="s">
+/schedule_<t t-esc="s.id"/> — <t t-esc="s.name"/>: <t t-esc="s.amount"/> every <t t-esc="s.periodicity_amount"/> <t t-esc="s.periodicity_type"/>. Next on: <t t-esc="s.next_date"/></t>
+<t t-if="len(data['schedules']) == 0">
+You don't have automatic transfers yet. Use /schedule to create one.
+</t>
+</t>
         </field>
     </record>
 
     <record model="telegram.command" id="command_account">
-        <field name="name">/account\_%</field>
+        <field name="name">/account\_[0-9]+</field>
         <field name="description">Report on accounts</field>
         <field name="sequence" eval="1000"/>
         <field name="group_ids" eval="[]"/>
@@ -486,7 +512,7 @@ data['record'] = schedule
     </record>
 
     <record model="telegram.command" id="command_schedule">
-        <field name="name">/schedule_%</field>
+        <field name="name">/schedule_[0-9]+</field>
         <field name="description">Check/Edit specific schedule</field>
         <field name="sequence" eval="800"/>
         <field name="universal" eval="False"/>
@@ -639,7 +665,7 @@ From <t t-esc="data['from']"/> To <t t-esc="data['to']"/> Amount <t t-esc="data[
     <!-- delete commands -->
 
     <record model="telegram.command" id="command_delete">
-        <field name="name">/delete_%</field>
+        <field name="name">/delete\_[0-9]+</field>
         <field name="description">Delete record</field>
         <field name="sequence" eval="800"/>
         <field name="universal" eval="False"/>
