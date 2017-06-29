@@ -3,15 +3,16 @@
     <record model="telegram.command" id="command_cancel">
         <field name="name">/cancel</field>
         <field name="description">Cancel current command</field>
-        <field name="sequence" eval="1000"/>
+        <field name="sequence" eval="900"/>
         <field name="group_ids" eval="[]"/>
-        <field name="active" eval="False"/>
+        <field name="active" eval="True"/>
         <field name="response_template" type="xml">
             <t>Canceled</t>
 </field>
     </record>
 
     <record model="telegram.command" id="telegram.command_start">
+        <field name="active" eval="False"/>
         <field name="response_template" type="xml">
 <t>
 <t t-if="data['type'] == 'choose_language'">
@@ -32,7 +33,7 @@ I'm at your command!
     <record model="telegram.command" id="command_about">
         <field name="name">/about</field>
         <field name="description">About me</field>
-        <field name="sequence" eval="1000"/>
+        <field name="sequence" eval="910"/>
         <field name="group_ids" eval="[]"/>
         <field name="response_template" type="xml">
             <t>
@@ -46,8 +47,9 @@ But my master hopes that I could be helpful for folks.
 
     <record model="telegram.command" id="command_expense">
         <field name="name">% [0-9]+%</field>
-        <field name="description">Add new record</field>
-        <field name="sequence" eval="1000"/>
+        <field name="description_name">&lt;em&gt;Some Expense Description AMOUNT&lt;/em&gt;</field>
+        <field name="description">Add new Expense record, e.g. "Coffee 100"</field>
+        <field name="sequence" eval="100"/>
         <field name="group_ids" eval="[]"/>
         <field name="response_code">
 partner = env.user.partner_id
@@ -97,13 +99,13 @@ if not error:
     <t t-else="">New record is added! Check or edit it here: /record_<t t-esc="data['record'].id"/></t>
 </t>
         </field>
-        <field name="active" eval="False"/>
+        <field name="active" eval="True"/>
     </record>
 
     <record model="telegram.command" id="command_income">
         <field name="name">/income</field>
         <field name="description">Add new income record</field>
-        <field name="sequence" eval="1000"/>
+        <field name="sequence" eval="110"/>
         <field name="group_ids" eval="[]"/>
         <field name="response_code">
 
@@ -154,7 +156,7 @@ data['record'] = record
     <record model="telegram.command" id="command_transfer">
         <field name="name">/transfer</field>
         <field name="description">Add new transfer record</field>
-        <field name="sequence" eval="1000"/>
+        <field name="sequence" eval="120"/>
         <field name="group_ids" eval="[]"/>
         <field name="response_code">
 
@@ -196,8 +198,9 @@ data['record'] = record
 
     <record model="telegram.command" id="command_record">
         <field name="name">/record_[0-9]+</field>
+        <field name="description_name">/record_&lt;em&gt;ID&lt;/em&gt;</field>
         <field name="description">Check/Edit specific record</field>
-        <field name="sequence" eval="800"/>
+        <field name="sequence" eval="200"/>
         <field name="universal" eval="False"/>
         <field name="active" eval="False"/>
         <field name="group_ids" eval="[]" />
@@ -310,7 +313,7 @@ else:
     <record model="telegram.command" id="command_accounts">
         <field name="name">/account_all</field>
         <field name="description">Report on accounts</field>
-        <field name="sequence" eval="1000"/>
+        <field name="sequence" eval="300"/>
         <field name="group_ids" eval="[]"/>
         <field name="response_code">
 
@@ -333,7 +336,7 @@ data['total'] = sum((acc.move_balance for acc in accounts))
     <record model="telegram.command" id="command_schedules">
         <field name="name">/schedule_all</field>
         <field name="description">List of schedules</field>
-        <field name="sequence" eval="1000"/>
+        <field name="sequence" eval="310"/>
         <field name="group_ids" eval="[]"/>
         <field name="response_code">
 
@@ -356,8 +359,9 @@ You don't have automatic transfers yet. Use /schedule to create one.
 
     <record model="telegram.command" id="command_account">
         <field name="name">/account\_[0-9]+</field>
+        <field name="description_name">/account_&lt;em&gt;ID&lt;/em&gt;</field>
         <field name="description">Report on accounts</field>
-        <field name="sequence" eval="1000"/>
+        <field name="sequence" eval="210"/>
         <field name="group_ids" eval="[]"/>
         <field name="response_code">
 <![CDATA[
@@ -449,7 +453,7 @@ Last records:<t t-foreach="data['records']" t-as="rec">
     <record model="telegram.command" id="command_schedule_new">
         <field name="name">/schedule</field>
         <field name="description">Add new schedule</field>
-        <field name="sequence" eval="1000"/>
+        <field name="sequence" eval="130"/>
         <field name="group_ids" eval="[]"/>
         <field name="response_code">
 partner = env.user.partner_id
@@ -513,10 +517,11 @@ data['record'] = schedule
 
     <record model="telegram.command" id="command_schedule">
         <field name="name">/schedule_[0-9]+</field>
+        <field name="description_name">/schedule_&lt;em&gt;ID&lt;/em&gt;</field>
         <field name="description">Check/Edit specific schedule</field>
-        <field name="sequence" eval="800"/>
+        <field name="sequence" eval="220"/>
         <field name="universal" eval="False"/>
-        <field name="active" eval="False"/>
+        <field name="active" eval="True"/>
         <field name="group_ids" eval="[]" />
         <field name="response_code">
 ACTION='a'
@@ -667,7 +672,7 @@ From <t t-esc="data['from']"/> To <t t-esc="data['to']"/> Amount <t t-esc="data[
     <record model="telegram.command" id="command_delete">
         <field name="name">/delete\_[0-9]+</field>
         <field name="description">Delete record</field>
-        <field name="sequence" eval="800"/>
+        <field name="sequence" eval="400"/>
         <field name="universal" eval="False"/>
         <field name="active" eval="False"/>
         <field name="group_ids" eval="[]" />
