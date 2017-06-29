@@ -106,7 +106,7 @@ Check Help Tab for the rest variables.
             if m:
                 # remove bot name, e.g.
                 # "/command@bot_name text" -> /command text
-                search_command = m.group(0) + m.group(2)
+                search_command = m.group(1) + m.group(3)
             cr.execute(
                 'SELECT id '
                 'FROM telegram_command '
