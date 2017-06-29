@@ -102,10 +102,11 @@ Check Help Tab for the rest variables.
             tsession = self.env['telegram.session'].get_session(tmessage.chat.id)
             cr = self.env.cr
             search_command = tmessage.text
-            # remove bot name, e.g.
-            # "/command@bot_name text" -> /command text
-            m = re.match('(/[^ @]*)([^ ]*)(.*)', search_command).groups()
-            search_command = m[0] + m[2]
+            m = re.match('(/[^ @]*)([^ ]*)(.*)', search_command)
+            if m:
+                # remove bot name, e.g.
+                # "/command@bot_name text" -> /command text
+                search_command = m.group(0) + m.group(2)
             cr.execute(
                 'SELECT id '
                 'FROM telegram_command '
