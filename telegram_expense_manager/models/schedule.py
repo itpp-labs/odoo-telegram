@@ -106,6 +106,7 @@ class Schedule(models.Model):
         for r in self:
             if not r.periodicity_type or not r.periodicity_amount:
                 r.next_date = None
+                continue
             start = r.date
             if not start:
                 start = fields.Datetime.now()
@@ -120,7 +121,7 @@ class Schedule(models.Model):
 
     @api.model
     def action_scheduled_transfers(self):
-        self.search([('next_date', '<=', fields.Datetime.now())]).action_transfer_now()
+        self.search([('next_date', '!=', False), ('next_date', '<=', fields.Datetime.now())]).action_transfer_now()
 
     @api.multi
     def action_transfer_now(self):
