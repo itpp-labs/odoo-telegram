@@ -35,8 +35,7 @@ if env.ref('base.public_user').id == env.user.id:
         name = ''
         #if tuser.username:
         #    name = '@' + tuser.username
-        name += ' ' + tuser.first_name
-        name += ' ' + tuser.last_name
+        name = '{} {}'.format(tuser.first_name, tuser.last_name)
         name = name.strip()
 
         user = template_user.sudo().copy({
