@@ -553,6 +553,20 @@ Check Help Tab for the rest variables.
         return res
 
     @api.model
+    def process_read_group(self, data, xfield, vfield, gfield, accumulate=None):
+        """Prepare data from read_group for using in charts
+        :param data: result of read_group method
+        :param xfield: name of field for x axis
+        :param vfield: name of value field
+        :param gfield: name of field for grouping
+        :param dict accumulate: if not None then yfield values are considered as increment rather than value.
+                Format for accumulate:
+                {GFIELD_VALUE: INITIAL_VALUE}
+        :return: TODO
+        """
+        pass
+
+    @api.model
     def get_action_domain(self, action):
         used_filters = []
         eval_vars = {'uid': self.env.uid}
