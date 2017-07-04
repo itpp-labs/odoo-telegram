@@ -221,11 +221,11 @@ record_id = callback_data and callback_data.get(RECORD_ID) or raw_text and '_' i
 record = partner.em_browse_record(record_id) if record_id else None
 data['record'] = record
 
-def edit_button(action, text, record, line_id=None):
+def edit_button(action, text, record, line_id=None, icon=None):
     ACTION='a'
     RECORD_ID='r'
     LINE_ID='l'
-    icon = emoji.emojize(':pencil:', use_aliases=True)
+    icon = emoji.emojize(icon or ':pencil:', use_aliases=True)
     button = {
            'text': '%s %s' % (icon, text),
            'callback_data': {
@@ -254,24 +254,29 @@ if not callback_data:
     command.inline_keyboard_buttons(options, [
         edit_button(
             EDIT_AMOUNT,
-            _('Amount: %s') % record.amount,
-            record),
+            record.amount,
+            record,
+            icon=':dollar:'),
         edit_button(
             EDIT_NOTE,
-            _('Note: %s') % record.narration,
+            record.narration,
             record),
-    ] + [
+    ])
+    command.inline_keyboard_buttons(options, [
         edit_button(
             EDIT_ANALYTIC,
-            label % lines[key]['analytic'],
+            lines[key]['analytic'],
             record,
-            lines[key]['id'])
-        for label, key in [
-            (_('Source: %s'), 'from'),
-            (_('Destination: %s'), 'to'),
+            lines[key]['id'],
+            icon,
+            )
+        for key, icon in [
+            ('from', ':arrow_heading_up:'),
+            ('to', ':arrow_heading_down:'),
         ]
         if lines.get(key)
-    ], row_width=1)
+    ])
+    data['lines'] = lines
     data['type'] = 'show_record'
 elif callback_data.get(ACTION) == EMPTY_ACTION:
     # ignore request
@@ -299,7 +304,12 @@ else:
         </field>
         <field name="response_template" type="xml">
 <t>
-    <t t-if="data['type'] == 'show_record'">Record #<t t-esc="data['record'].id"/>. You can delete it by sending /delete_<t t-esc="data['record'].id"/>.</t>
+    <t t-if="data['type'] == 'show_record'"><em>Record #<t t-esc="data['record'].id"/></em>:
+<b><t t-esc="data['record'].amount"/></b> - <t t-esc="data['record'].narration"/>
+<em>From:</em> <b><t t-esc="data['lines']['from']['analytic']"/></b>
+<em>To:</em> <b><t t-esc="data['lines']['to']['analytic']"/></b>
+
+Click buttons below to edit. To delete use command /delete_<t t-esc="data['record'].id"/>.</t>
     <t t-if="data['type'] == 'edit_amount'">Send new Amount or click /cancel</t>
     <t t-if="data['type'] == 'edit_note'">Send new Note or click /cancel</t>
     <t t-if="data['type'] == 'edit_from'">Send new Source, choose from existing or click /cancel</t>
@@ -544,11 +554,11 @@ record_id = callback_data and callback_data.get(RECORD_ID) or raw_text and '_' i
 record = partner.em_browse_schedule(record_id) if record_id else None
 data['record'] = record
 
-def edit_button(action, text, record, analytic_id=None):
+def edit_button(action, text, record, analytic_id=None, icon=None):
     ACTION='a'
     RECORD_ID='r'
     ANALYTIC_ID='aid'
-    icon = emoji.emojize(':pencil:', use_aliases=True)
+    icon = emoji.emojize(icon or ':pencil:', use_aliases=True)
     button = {
            'text': '%s %s' % (icon, text),
            'callback_data': {
@@ -574,33 +584,53 @@ if not callback_data:
     command.inline_keyboard_buttons(options, [
         edit_button(
             EDIT_AMOUNT,
-            _('Amount: %s') % record.amount,
-            record),
+            str(record.amount),
+            record,
+            icon=':dollar:',
+            ),
         edit_button(
             EDIT_NOTE,
-            _('Note: %s') % record.name,
-            record),
+            record.name,
+            record,
+            icon=':pencil:',
+            ),
+    ])
+    command.inline_keyboard_buttons(options, [
         edit_button(
             EDIT_FROM,
-            _('From: %s') % record.from_analytic_id.name,
-            record),
+            record.from_analytic_id.name,
+            record,
+            icon=':arrow_heading_up:',
+            ),
         edit_button(
             EDIT_TO,
-            _('To: %s') % record.to_analytic_id.name,
-            record),
-        edit_button(
-            EDIT_PERIODICITY_TYPE,
-            _('Periodicity type: %s') % record.periodicity_type,
-            record),
+            record.to_analytic_id.name,
+            record,
+            icon=':arrow_heading_down:',
+            ),
+    ])
+    command.inline_keyboard_buttons(options, [
         edit_button(
             EDIT_PERIODICITY_AMOUNT,
-            _('Periodicity amount: %s') % record.periodicity_amount,
-            record),
+            _('Every %s') % record.periodicity_amount,
+            record,
+            icon=':repeat_one:',
+            ),
+        edit_button(
+            EDIT_PERIODICITY_TYPE,
+            record.periodicity_type,
+            record,
+            icon=':repeat:',
+            ),
+    ])
+    command.inline_keyboard_buttons(options, [
         edit_button(
             EDIT_NOTIFICATION,
-            _('Notify: %s') % record.notify,
-            record),
-    ], row_width=1)
+            (record.notify=='instantly' and _('Notify on transfer') or _("Don't notify")),
+            record,
+            icon=record.notify=='instantly' and ':bell:' or ':no_bell:',
+            ),
+    ])
     data['type'] = 'show_record'
 elif callback_data.get(ACTION) == EMPTY_ACTION:
     # ignore request
@@ -644,8 +674,8 @@ else:
     <t t-if="data['type'] == 'edit_amount'">Send new Amount or click /cancel</t>
     <t t-if="data['type'] == 'edit_from'">Send new Source or choose from existing or click /cancel</t>
     <t t-if="data['type'] == 'edit_to'">Send new Destination or choose from existing or click /cancel</t>
-    <t t-if="data['type'] == 'edit_periodicity_type'">Send new new periodicity type or click /cancel</t>
-    <t t-if="data['type'] == 'edit_periodicity_amount'">Send new new periodicity value or click /cancel</t>
+    <t t-if="data['type'] == 'edit_periodicity_type'">Send new new schedule type or click /cancel</t>
+    <t t-if="data['type'] == 'edit_periodicity_amount'">Send new new schedule value or click /cancel</t>
     <t t-if="data['type'] == 'updated'">Done! /schedule_<t t-esc="data['record'].id"/> is updated.</t>
 </t>
         </field>
