@@ -569,8 +569,13 @@ Check Help Tab for the rest variables.
         # processed = {g_name: {'values': [value]}}
         processed = dict([(g_name, {'values': []}) for g_name in gnames])
         for g_name, g_info in processed.items():
+            cur_value = accumulate[g_name] if accumulate else 0
             for x_name in xnames:
-                g_info['values'].append(matrix[x_name].get(g_name, 0))
+                value = matrix[x_name].get(g_name, 0)
+                if accumulate:
+                    value += cur_value
+                    cur_value = value
+                g_info['values'].append(value)
         return xnames, processed
 
     @api.model

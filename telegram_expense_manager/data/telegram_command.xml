@@ -799,7 +799,7 @@ INCREASE_LIMIT='i'
 
 REPORT_TYPE='r'
 RDAILY='d'
-RWEEKLY='d'
+RWEEKLY='w'
 RMONTHLY='m'
 
 # history
@@ -829,6 +829,12 @@ if callback_data:
         flimit += FLIMIT_INCREMENT
     options['editMessageText'] = {'message_id': telegram['callback_query'].message.message_id}
 
+report_type_suffix = {
+RDAILY: 'day',
+RWEEKLY: 'week',
+RMONTHLY: 'month',
+}[report_type]
+
 analytic_id = callback_data and callback_data.get(ANALYTIC_ID) or raw_text and '_' in raw_text and int(raw_text.split('_')[1])
 
 if not analytic_id:
@@ -838,67 +844,44 @@ if not analytic_id:
          ('tag_ids', '=', env.ref(command.TAG_LIQUIDITY).id)],
          order='id ASC',
     )
-    schedule = env['account.schedule'].search([
+    schedule = env['account.schedule'].sudo().search([
         ('partner_id', '=', partner.id)
     ])
 
 else:
     accounts = partner.em_browse_analytic(analytic_id)  # implicit meaning here is checking access rights
-    data['analytic'] = analytic
-    schedules = env['account.schedule'].search([
+    schedules = env['account.schedule'].sudo().search([
      ('partner_id', '=', partner.id),
      '|', 
      ('from_analytic_id', '=', analytic_id), 
      ('to_analytic_id', '=', analytic_id)
     ])
 
-data = env['account.move.line'].read_group(
+data['accounts'] = accounts
+
+date_and_suffix = 'date:%s' % report_type_suffix
+read_group_data = env['account.move.line'].sudo().read_group(
     domain=[('analytic_account_id','in', accounts.ids)],
     fields=['analytic_account_id','balance','date'],
-    groupby=['analytic_account_id','date:week'],
+    groupby=['analytic_account_id',date_and_suffix],
     lazy=False,
+    orderby=date_and_suffix
+
 )
-
-command.process_read_group(data, 'date:week', 'balance', 'analytic_account_id', accumulate=TODO)
-STOPHERE
-
-data_lines = {}  # dict((id,[]) for id in accounts.ids)
-
-for d in data:
-    a_id = d['analytic_account_id'] and d['analytic_account_id'][0]
-    if not a_id:
-        continue
-    if a_id not in data_lines:
-    data_lines[a_id] = {
-        'current': 0,  # TODO: use previous history
-        'title': d['analytic_account_id'][1]
-        'dates': []
-    }
-    current = data_lines[a_id]['current']
-    current += d['debit'] - d['credit']
-    data_lines[a_id]['dates'].append({
-        'date': d['date'],
-        'debit': d['debit'],
-        'credit': d['credit'],
-        'value': current, # value at the end of date
-    })
+# TODO: fill data with empty value, otherwise it skips days without values. _read_group_fill_results doesn't work 
+# read_group_data = env['account.move.line'].sudo()._read_group_fill_results([('analytic_account_id','in', accounts.ids)], 'date', [], [date_and_suffix], '__count', read_group_data, read_group_order='analytic_account_id,%s' % date_and_suffix)
 
 
-chart = pygal.Line(x_label_rotation=20)
-chart.x_labels = [
+accumulate = dict(((a, 0) for a in accounts.name_get())) # TODO
+x_labels, processed = command.process_read_group(read_group_data, date_and_suffix, 'balance', 'analytic_account_id', accumulate=accumulate)
 
-for a_id, a in data_lines.items():
-    chart.add(a['title'] or 'Undefined', d['values'])
+chart = pygal.Line(x_label_rotation=20, x_labels = x_labels)
+
+
+for a, a_info in processed.items():
+    chart.add(a and a[1] or 'Undefined', a_info['values'])
 
 options['charts'].append(chart)
-#
-#domain = [('line_ids.analytic_account_id', '=', analytic.id)]
-#res = env["account.move"].sudo().search(
-#     domain,
-#     order='id DESC',
-#     limit=limit
-#)
-#total_records = env["account.move"].sudo().search(domain, count=True)
 
 common = {
  HLIMIT: hlimit, 
@@ -907,28 +890,31 @@ common = {
  REPORT_TYPE: report_type,
 }
 
-command.inline_keyboard_buttons(options, [
-    {
-    'text': _('Load More History'),
-    'callback_data': dict([(INCREASE_LIMIT, HLIMIT)] + common.items()),
-    },
-    {
-    'text': _('Load More Forecast'),
-    'callback_data': dict([(INCREASE_LIMIT, FLIMIT)] + common.items()),
-    },
-    ])
+#TODO: we show all data at this moment
+#command.inline_keyboard_buttons(options, [
+#    {
+#    'text': _('Load More History'),
+#    'callback_data': dict([(INCREASE_LIMIT, HLIMIT)] + common.items()),
+#    },
+#    {
+#    'text': _('Load More Forecast'),
+#    'callback_data': dict([(INCREASE_LIMIT, FLIMIT)] + common.items()),
+#    },
+#    ])
 
 ]]>
 
         </field>
         <field name="response_template" type="xml">
-<t>Name: <t t-esc="data['name']"/> /edit_name_<t t-esc="data['id']"/>
-Type: <t t-esc="data['type']"/>
-Tags:<t t-if="data['tags']"><t t-foreach="data['tags']" t-as="tag"> [<t t-esc="tag.name"/>]</t>. </t><t t-else=""><em> no tags. </em></t>Click /edit_tags_<t t-esc="data['id']"/> to edit.
-Current Amount: <t t-esc="data['balance']"/>
-
+<t>
+<t t-foreach="data['accounts']" t-as="acc">
+Name: <t t-esc="acc.name"/> /edit_name_<t t-esc="acc.id"/>
+Current Amount: <t t-esc="acc.balance"/>
+</t>
+<!--
 Last records:<t t-foreach="data['records']" t-as="rec">
 /record_<t t-esc="rec['id']"/> <b><t t-esc="rec['type']"/>:</b> <t t-esc="rec['amount']"/> <b><t t-esc="rec['cor_type']"/>:</b> <t t-esc="rec['cor_name']"/> <b>Date:</b> <t t-esc="rec['date']"/> <b>Note:</b> <t t-esc="rec['note']"/></t>
+-->
 </t>
         </field>
     </record>

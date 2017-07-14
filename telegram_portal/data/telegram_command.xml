@@ -30,6 +30,7 @@ if env.ref('base.public_user').id == env.user.id:
     user = env['res.users'].sudo().with_context(active_test=False).search([('login', '=', login)])
 
     if user:
+        telegram['tsession'].write({'user_id': user.id})
         finish = True
     else:
         name = ''
