@@ -518,32 +518,18 @@ Check Help Tab for the rest variables.
             lazy=False,
         )
 
+        # e.g. amount of money
         measure_field = graph_config.get('measure')
-        xlabels = []
+
         # e.g. Stage in CRM Pipeline
         xlabel_field = graph_config['row'][0]
 
-        dlabels = []
         # e.g. Month in CRM Pipeline
         dlabel_field = graph_config['row'][1]
-        for r in res:
-            for a, f in [(xlabels, xlabel_field), (dlabels, dlabel_field)]:
-                # a - array
-                # f - field name
-                # v = value
-                v = r[f]
-                if v not in a:
-                    a.append(v)
 
-        # res_index = {x_value: {d_value}}
-        res_index = dict([(x_value, {}) for x_value in xlabels])
-        for r in res:
-            res_index[r[xlabel_field]][r[dlabel_field]] = r[measure_field]
-        # data_lines = {d_value: {'values': {x_value}}}
-        data_lines = dict([(d_value, {'values': []}) for d_value in dlabels])
-        for d_value, data in data_lines.items():
-            for x_value in xlabels:
-                data['values'].append(res_index[x_value].get(d_value, 0))
+        xlabels, data_lines = self.process_read_group(res, xlabel_field, measure_field, dlabel_field)
+        xlabels = [x and x[1] for x in xlabels]
+
         res = {
             'filters': filters,
             'x_labels': list(xlabels),
@@ -553,18 +539,39 @@ Check Help Tab for the rest variables.
         return res
 
     @api.model
-    def process_read_group(self, data, xfield, vfield, gfield, accumulate=None):
+    def process_read_group(self, data, x_field, v_field, g_field, accumulate=None):
         """Prepare data from read_group for using in charts
         :param data: result of read_group method
-        :param xfield: name of field for x axis
-        :param vfield: name of value field
-        :param gfield: name of field for grouping
-        :param dict accumulate: if not None then yfield values are considered as increment rather than value.
+        :param x_field: name of field for x axis. E.g. Date, Stage etc.
+        :param v_field: name of value field. E.g. Amount of Money, Count of Tasks etc.
+        :param g_field: name of field for grouping. E.g. Month, Analytic Account, Partner, etc.
+        :param dict accumulate: if not None then y_field values are considered as increment rather than value.
                 Format for accumulate:
-                {GFIELD_VALUE: INITIAL_VALUE}
-        :return: TODO
+                {G_FIELD_VALUE: INITIAL_VALUE}
+        :return: ([x_name], {g_name: {"values": [value]}})
         """
-        pass
+
+        xnames = []
+        gnames = []
+
+        for d in data:
+            for a, f in [(xnames, x_field), (gnames, g_field)]:
+                # a - array
+                # f - field name
+                name = d[f]
+                if name not in a:
+                    a.append(name)
+
+        # matrix = {x_name: {g_name: value}}
+        matrix = dict([(x_name, {}) for x_name in xnames])
+        for d in data:
+            matrix[d[x_field]][d[g_field]] = d[v_field]
+        # processed = {g_name: {'values': [value]}}
+        processed = dict([(g_name, {'values': []}) for g_name in gnames])
+        for g_name, g_info in processed.items():
+            for x_name in xnames:
+                g_info['values'].append(matrix[x_name].get(g_name, 0))
+        return xnames, processed
 
     @api.model
     def get_action_domain(self, action):
