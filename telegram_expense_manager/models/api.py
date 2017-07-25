@@ -2,6 +2,7 @@
 from odoo import models, api, fields
 from odoo.exceptions import AccessError
 from odoo.tools.translate import _
+from odoo.tools.safe_eval import safe_eval
 
 TYPE_LIQUIDITY = 'account.data_account_type_liquidity'
 TYPE_PAYABLE = 'account.data_account_type_payable'
@@ -362,6 +363,7 @@ class Partner(models.Model):
 
     @api.multi
     def em_add_expense_record(self, text, amount, currency=None):
+        amount = safe_eval(amount)
         account_liquidity = self.env.ref(ACCOUNT_LIQUIDITY)
         account_payable = self.env.ref(ACCOUNT_PAYABLE)
         analytic_payable = self.em_default_analytic_payable(text)

@@ -46,7 +46,7 @@ But my master hopes that I could be helpful for folks.
 
 
     <record model="telegram.command" id="command_expense">
-        <field name="name">% [0-9]+%</field>
+        <field name="name">%[ +\-\/][0-9]+%</field>
         <field name="description_name">&lt;em&gt;Some Expense Description AMOUNT&lt;/em&gt;</field>
         <field name="description">Add new Expense record, e.g. "Coffee 100"</field>
         <field name="sequence" eval="100"/>
@@ -61,7 +61,7 @@ if callback_data:
 else:
     # create new record
 
-    m = re.match(r'(.*) ([0-9.,]*) ?(.*)', telegram['tmessage'].text)
+    m = re.match(r'(.*?) ([0-9][ +\-\/0-9.,]*) ?([^0-9]*)', raw_text)
     text = m.group(1)
     amount = m.group(2)
     currency = m.group(3)
