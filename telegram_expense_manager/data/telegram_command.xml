@@ -680,18 +680,20 @@ else:
 </t>
         </field>
         <field name="notification_code">
-record = env[telegram['event']['active_model']].browse(telegram['event']['active_id'])
-schedule = record.schedule_id
-data['record'] = record
-data['schedule'] = schedule
-data['amount'] = record.amount
-lines = record.em_lines()
-data['from'] = lines['from']['analytic']
-data['to'] = lines['to']['analytic']
+partner = env.user.partner_id
+if telegram['event']['active_model'] == 'account.move':
+    record = partner.em_browse_record(telegram['event']['active_id'])
+    schedule = record.schedule_id
+    data['record'] = record
+    data['schedule'] = schedule
+    data['amount'] = record.amount
+    lines = record.em_lines()
+    data['from'] = lines['from']['analytic']
+    data['to'] = lines['to']['analytic']
         </field>
         <field name="notification_template" type="xml">
-            <t>New /record_<t t-esc="data['record'].id"/> is created by /schedule_<t t-esc="data['schedule'].id"/>
-From <t t-esc="data['from']"/> To <t t-esc="data['to']"/> Amount <t t-esc="data['amount']"/>.</t>
+            <t>New /record_<t t-esc="data['record'].id"/> is created by /schedule_<t t-esc="data['schedule'].id"/>.
+From <em><t t-esc="data['from']"/></em> To <em><t t-esc="data['to']"/></em>. Amount: <b><t t-esc="data['amount']"/></b>.</t>
 
         </field>
 
