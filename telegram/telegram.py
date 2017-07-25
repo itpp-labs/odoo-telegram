@@ -375,7 +375,7 @@ Check Help Tab for the rest variables.
                'handle_reply_dump': handle_reply,
                'reply_keyboard': False,
                'context_dump': simplejson.dumps(locals_dict.get('context', {})),
-               'html': html}
+               'html': html.decode('utf-8')}
         reply_markup = options.get('reply_markup')
         if reply_markup and not len(reply_markup.keyboard):
             # remove reply_markup if it doesn't have buttons
