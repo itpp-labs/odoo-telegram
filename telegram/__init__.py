@@ -97,7 +97,13 @@ class BotPollingThread(threading.Thread):
 
     def run(self):
         _logger.info("BotPollingThread started.")
-        self.bot.polling()
+        while True:
+            try:
+                self.bot.polling()
+            except Exception as e:
+                sleep = 15
+                _logger.error("Error on polling. Retry in %s secs\n%s", sleep, e)
+                time.sleep(sleep)
 
 
 class OdooTelegramThread(threading.Thread):
