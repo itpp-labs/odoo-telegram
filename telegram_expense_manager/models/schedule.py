@@ -128,13 +128,13 @@ class Schedule(models.Model):
         for schedule in self:
             # create record
             # see em_add_record_from_schedule in api.py file
-            record = self.env.user.partner_id.em_add_record_from_schedule(schedule=schedule)
+            record = schedule.user_id.partner_id.em_add_record_from_schedule(schedule=schedule)
             _logger.debug("Scheduled by %s transfer is created: %s", schedule, record)
             # notify
             if schedule.notify == 'instantly':
                 command = self.env.ref('telegram_expense_manager.command_schedule')
                 tsession = self.env['telegram.session'].sudo().search([('user_id', '=', schedule.user_id.id)])
-                command.send_notifications(tsession=tsession, record=record)
+                command.sudo().send_notifications(tsession=tsession, record=record.sudo())
 
             # update date
             schedule.date = fields.Datetime.now()
