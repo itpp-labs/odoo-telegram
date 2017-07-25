@@ -2,6 +2,7 @@
 from odoo import models, api, fields
 from odoo.exceptions import AccessError
 from odoo.tools.translate import _
+from odoo.tools.safe_eval import safe_eval
 
 TYPE_LIQUIDITY = 'account.data_account_type_liquidity'
 TYPE_PAYABLE = 'account.data_account_type_payable'
@@ -315,7 +316,7 @@ class Partner(models.Model):
 
     @api.multi
     def em_default_analytic_payable(self, text):
-        return self._em_guess_analytic(text, ACCOUNT_LIQUIDITY)
+        return self._em_guess_analytic(text, ACCOUNT_PAYABLE)
 
     @api.multi
     def em_default_analytic_liquidity(self, text):
@@ -324,7 +325,7 @@ class Partner(models.Model):
             return analytic
         count = self._em_all_analytics(TAG_LIQUIDITY, count=True)
         if not count:
-            analytic = self.em_create_analytic_liquidity(_('Money for common expenses'))
+            analytic = self.em_create_analytic_liquidity(_('General account'))
             return analytic
         elif count == 1:
             return self._em_all_analytics(TAG_LIQUIDITY)
@@ -332,9 +333,15 @@ class Partner(models.Model):
             # More than one analytics. Let user to choose himself
             return self.env['account.analytic.account']
 
-    def _em_guess_analytic(self, text, tag):
-        # TODO
-        return self.env['account.analytic.account']
+    def _em_guess_analytic(self, text, account_ref):
+        account = self.env.ref(account_ref)
+        line = self.env['account.move.line'].search([
+            ('name', '=', text),
+            ('account_id', '=', account.id)
+        ], order='id DESC', limit=1)
+        if not line:
+            return self.env['account.analytic.account']
+        return line.analytic_account_id
 
     @api.multi
     def em_create_analytic_liquidity(self, name):
@@ -356,6 +363,7 @@ class Partner(models.Model):
 
     @api.multi
     def em_add_expense_record(self, text, amount, currency=None):
+        amount = safe_eval(amount)
         account_liquidity = self.env.ref(ACCOUNT_LIQUIDITY)
         account_payable = self.env.ref(ACCOUNT_PAYABLE)
         analytic_payable = self.em_default_analytic_payable(text)
