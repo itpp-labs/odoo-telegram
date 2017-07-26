@@ -338,7 +338,7 @@ class Partner(models.Model):
         account = self.env.ref(account_ref)
         line = self.env['account.move.line'].search([
             ('partner_id', '=', self.id),
-            ('name', '=', text),
+            ('name', '=ilike', text),
             ('account_id', '=', account.id)
         ], order='id DESC', limit=1)
         if not line:
