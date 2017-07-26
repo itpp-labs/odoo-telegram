@@ -96,7 +96,10 @@ if not error:
         <t t-if="data.get('subtype') == 'choose_or_create_analytic'">Choose expense category or send name for new one</t>
         <t t-if="data.get('subtype') == 'create_analytic'">Specify a name for expense category (e.g. Food, Cafe, etc)</t>
     </t>
-    <t t-else="">New record is added! Check or edit it here: /record_<t t-esc="data['record'].id"/></t>
+    <t t-else="">New record is added! Check or edit it here: /record_<t t-esc="data['record'].id"/>
+New Balance:
+<b t-esc="data['analytic_liquidity'].move_balance"/> — <t t-esc="data['analytic_liquidity'].name"/>
+    </t>
 </t>
         </field>
         <field name="active" eval="True"/>
