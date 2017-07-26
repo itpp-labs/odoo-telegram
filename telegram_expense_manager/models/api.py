@@ -333,9 +333,11 @@ class Partner(models.Model):
             # More than one analytics. Let user to choose himself
             return self.env['account.analytic.account']
 
+    @api.multi
     def _em_guess_analytic(self, text, account_ref):
         account = self.env.ref(account_ref)
         line = self.env['account.move.line'].search([
+            ('partner_id', '=', self.id),
             ('name', '=', text),
             ('account_id', '=', account.id)
         ], order='id DESC', limit=1)
