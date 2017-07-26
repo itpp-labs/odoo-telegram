@@ -590,6 +590,8 @@ class AccountMove(models.Model):
         for line in self.line_ids:
             key = 'from' if line.is_from else 'to'
             res[key] = {
+                'analytic_id': line.analytic_account_id.id,
+                # TODO: rename to analytic_name or put here analytic record instead of just name
                 'analytic': line.analytic_account_id.name,
                 'id': line.id,
             }

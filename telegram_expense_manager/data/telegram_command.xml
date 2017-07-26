@@ -141,6 +141,7 @@ else:
                 partner.em_ask_analytic(options, command, record, command.TAG_LIQUIDITY)
         else:
             data['type'] = 'done'
+            data['analytic_liquidity'] = analytic_liquidity
 data['record'] = record
         </field>
         <field name="response_template" type="xml">
@@ -151,7 +152,10 @@ data['record'] = record
         <t t-if="data.get('analytic_receivable_count')">Choose income category or send name for new one</t>
         <t t-else="">Specify a name for income category (e.g. Salary, Advance Payment, etc)</t>
     </t>
-    <t t-else="">New Income record is added! Check or edit it here: /record_<t t-esc="data['record'].id"/></t>
+    <t t-else="">New Income record is added! Check or edit it here: /record_<t t-esc="data['record'].id"/>
+New Balance:
+<b t-esc="data['analytic_liquidity'].move_balance"/> — <t t-esc="data['analytic_liquidity'].name"/>
+    </t>
 </t>
         </field>
     </record>
@@ -693,10 +697,15 @@ if telegram['event']['active_model'] == 'account.move':
     lines = record.em_lines()
     data['from'] = lines['from']['analytic']
     data['to'] = lines['to']['analytic']
+    data['from_balance'] = partner.em_browse_analytic(lines['from']['analytic_id']).move_balance
+    data['to_balance'] = partner.em_browse_analytic(lines['to']['analytic_id']).move_balance
         </field>
         <field name="notification_template" type="xml">
             <t>New /record_<t t-esc="data['record'].id"/> is created by /schedule_<t t-esc="data['schedule'].id"/>.
-From <em><t t-esc="data['from']"/></em> To <em><t t-esc="data['to']"/></em>. Amount: <b><t t-esc="data['amount']"/></b>.</t>
+Amount: <b><t t-esc="data['amount']"/></b>.
+New Balances:
+<b t-esc="data['from_balance']"/> — <em><t t-esc="data['from']"/></em> (From)
+<b t-esc="data['to_balance']"/> — <em><t t-esc="data['to']"/></em> (To) </t>
 
         </field>
 
