@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
-from StringIO import StringIO
+import io
 import base64
 import datetime
 import dateutil
@@ -393,7 +393,7 @@ Check Help Tab for the rest variables.
                 f = photo['data']
             else:
                 # type is 'base64' by default
-                f = StringIO(base64.b64decode(photo['data']))
+                f = io.StringIO(base64.b64decode(photo['data']))
                 f.name = photo.get('filename', 'item.png')
             res['photos'].append({'file': f})
 
