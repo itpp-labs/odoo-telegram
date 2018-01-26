@@ -469,6 +469,7 @@ class Partner(models.Model):
         common = {
             'partner_id': self.id,
             'name': text or 'unknown',
+            'currency_id': currency and self.env['res.currency'].search([('name', '=', 'currency')], limit=1).id,
         }
         if isinstance(amount, basestring):
             amount = float(amount.replace(',', '.'))
