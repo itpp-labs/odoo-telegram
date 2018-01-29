@@ -62,20 +62,30 @@ class AccountAnalyticAccount(models.Model):
 
     @api.multi
     def get_currency_balance(self, currency=None):
+        balance = 0.0
         AccountMoveLine = self.env['account.move.line']
         domain = [('analytic_account_id', 'in', self.mapped('id'))]
+
         if self._context.get('from_date', False):
             domain.append(('date', '>=', self._context['from_date']))
         if self._context.get('to_date', False):
             domain.append(('date', '<=', self._context['to_date']))
-        if currency:
+
+        base_currency = self.env.user.partner_id.company_id.currency_id
+        if currency and currency != base_currency:
             domain.append(('currency_id', '=', currency.id))
-        else:
+            balance = sum(AccountMoveLine.search(domain).mapped('balance'))
+        elif currency and currency == base_currency:
+            base_currency_sum = 0.0
             domain.append(('currency_id', '=', False))
+            line_ids = AccountMoveLine.search(domain)
+            balance += sum(line_ids.mapped('balance'))
+        else:
+            domain.append(('currency_id', '!=', False))
+            all_currencies_line_ids = AccountMoveLine.search(domain)
+            currency_ids = all_currencies_line_ids.mapped('currency_id')
+            for currency_id in currency_ids:
+                balance += sum(all_currencies_line_ids.filtered(lambda r: r.currency_id == currency_id).mapped('balance')) * currency_id.rate
+            balance += self.get_currency_balance(currency=base_currency)
 
-        account_amounts = AccountMoveLine.search_read(domain, ['analytic_account_id', 'balance'])
-        move_balance = 0.0
-        for account_amount in account_amounts:
-            move_balance += account_amount['balance']
-
-        return move_balance
+        return round(balance, 1)

@@ -341,13 +341,14 @@ accounts = env["account.analytic.account"].sudo().search(
      order='id ASC',
 )
 data['accounts'] = accounts
+data['base_currency'] = partner.company_id.currency_id
 data['currency_ids'] = env["account.move.line"].sudo().search([('analytic_account_id', 'in', accounts.ids)]).mapped('currency_id').sorted(key=lambda r: r.id)
 data['total'] = sum((acc.move_balance for acc in accounts))
         </field>
         <field name="response_template" type="xml">
             <t><t t-foreach="data['accounts']" t-as="acc">
-/account_<t t-esc="acc.id"/> — <t t-esc="acc.get_currency_balance()"/> <t t-foreach="acc.currency_ids" t-as="currency"> <t t-esc="acc.get_currency_balance(currency)"/> <t t-esc="currency.name"/></t>— <t t-esc="acc.name"/></t>
-<b>Total</b>: <t t-esc="data['accounts'].get_currency_balance()"/> <t t-foreach="data['currency_ids']" t-as="currency_all"> <t t-esc="data['accounts'].get_currency_balance(currency_all)"/> <t t-esc="currency_all.name"/></t></t>
+/account_<t t-esc="acc.id"/> — <t t-esc="acc.get_currency_balance()"/> (<t t-esc="acc.get_currency_balance(data['base_currency'])"/> <t t-esc="data['base_currency'].name"/><t t-foreach="acc.currency_ids" t-as="currency"> <t t-esc="acc.get_currency_balance(currency)"/> <t t-esc="currency.name"/></t>) — <t t-esc="acc.name"/></t>
+<b>Total</b>: <t t-esc="data['accounts'].get_currency_balance()"/> (<t t-esc="data['accounts'].get_currency_balance(data['base_currency'])"/> <t t-esc="data['base_currency'].name"/> <t t-foreach="data['currency_ids']" t-as="currency_all"> <t t-esc="data['accounts'].get_currency_balance(currency_all)"/> <t t-esc="currency_all.name"/></t>)</t>
         </field>
     </record>
 
