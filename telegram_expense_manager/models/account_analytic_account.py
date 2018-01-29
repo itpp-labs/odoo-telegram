@@ -62,7 +62,6 @@ class AccountAnalyticAccount(models.Model):
 
     @api.multi
     def get_currency_balance(self, currency=None):
-        self.ensure_one()
         AccountMoveLine = self.env['account.move.line']
         domain = [('analytic_account_id', 'in', self.mapped('id'))]
         if self._context.get('from_date', False):
