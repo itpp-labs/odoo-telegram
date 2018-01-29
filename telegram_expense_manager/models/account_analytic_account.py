@@ -52,3 +52,31 @@ class AccountAnalyticAccount(models.Model):
     move_balance = fields.Monetary(compute='_compute_move_debit_credit_balance', string='Balance')
     move_debit = fields.Monetary(compute='_compute_move_debit_credit_balance', string='Debit')
     move_credit = fields.Monetary(compute='_compute_move_debit_credit_balance', string='Credit')
+    currency_ids = fields.Many2many("res.currency", "analytic_account_currency_rel")
+
+    @api.multi
+    def _attach_new_currency(self, currency):
+        for record in self:
+            if currency not in record.currency_ids:
+                record.currency_ids = [(4, currency.id)]
+
+    @api.multi
+    def get_currency_balance(self, currency=None):
+        self.ensure_one()
+        AccountMoveLine = self.env['account.move.line']
+        domain = [('analytic_account_id', 'in', self.mapped('id'))]
+        if self._context.get('from_date', False):
+            domain.append(('date', '>=', self._context['from_date']))
+        if self._context.get('to_date', False):
+            domain.append(('date', '<=', self._context['to_date']))
+        if currency:
+            domain.append(('currency_id', '=', currency.id))
+        else:
+            domain.append(('currency_id', '=', False))
+
+        account_amounts = AccountMoveLine.search_read(domain, ['analytic_account_id', 'balance'])
+        move_balance = 0.0
+        for account_amount in account_amounts:
+            move_balance += account_amount['balance']
+
+        return move_balance

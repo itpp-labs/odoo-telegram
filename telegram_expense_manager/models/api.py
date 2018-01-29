@@ -466,10 +466,16 @@ class Partner(models.Model):
 
         journal = self.env.ref(journal_ref)
 
+        currency_id = currency and self.env['res.currency'].search([('name', '=', currency)], limit=1)
+
+        if currency_id:
+            analytic_account_ids = self.env['account.analytic.account'].browse([from_data['analytic_account_id'], to_data['analytic_account_id']])
+            analytic_account_ids._attach_new_currency(currency_id)
+
         common = {
             'partner_id': self.id,
             'name': text or 'unknown',
-            'currency_id': currency and self.env['res.currency'].search([('name', '=', currency)], limit=1).id,
+            'currency_id': currency_id and currency_id.id or None,
         }
         if isinstance(amount, basestring):
             amount = float(amount.replace(',', '.'))

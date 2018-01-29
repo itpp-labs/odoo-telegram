@@ -345,7 +345,7 @@ data['total'] = sum((acc.move_balance for acc in accounts))
         </field>
         <field name="response_template" type="xml">
             <t><t t-foreach="data['accounts']" t-as="acc">
-/account_<t t-esc="acc.id"/> — <t t-esc="acc.move_balance"/> — <t t-esc="acc.name"/></t>
+/account_<t t-esc="acc.id"/> — <t t-esc="acc.get_currency_balance()"/> <t t-foreach="acc.currency_ids" t-as="currency"> <t t-esc="acc.get_currency_balance(currency)"/> <t t-esc="currency.name"/></t>— <t t-esc="acc.name"/></t>
 <b>Total</b>: <t t-esc="data['total']"/></t>
         </field>
     </record>
