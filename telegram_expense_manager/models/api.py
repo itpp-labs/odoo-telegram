@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 from odoo import models, api, fields
 from odoo.exceptions import AccessError
 from odoo.tools.translate import _
@@ -233,10 +235,13 @@ class Partner(models.Model):
         error = None
 
         if callback_data.get('action') == ASK_AMOUNT:
+            m = re.match(r'([0-9][ +\-\/0-9.,]*) ?([^0-9]*)', raw_text)
+            amount = m.group(1)
+            currency = m.group(2)
             if not record:
-                record = add_record('', raw_text)
+                record = add_record('', amount, currency=currency)
             else:
-                record.em_update_amount(raw_text)
+                record.em_update_amount(amount, currency=currency)
         elif callback_data.get('action') == ASK_NOTE:
             record.em_update_note(raw_text)
         elif callback_data.get('action') == ASK_ANALYTIC:
@@ -469,7 +474,8 @@ class Partner(models.Model):
         currency_id = currency and self.env['res.currency'].search([('name', '=', currency)], limit=1)
 
         if currency_id:
-            analytic_account_ids = self.env['account.analytic.account'].browse([from_data['analytic_account_id'], to_data['analytic_account_id']])
+            analytic_account_lst = [from_data.get('analytic_account_id'), to_data.get('analytic_account_id')]
+            analytic_account_ids = self.env['account.analytic.account'].browse(analytic_account_lst)
             analytic_account_ids._attach_new_currency(currency_id)
 
         common = {
