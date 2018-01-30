@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_currency_form_inherit_expense_manager" model="ir.ui.view">
+    <field name="name">res.currency.form.inherit.expense_manager</field>
+    <field name="model">res.currency</field>
+    <field name="inherit_id" ref="base.view_currency_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//sheet" position="inside">
+        <notebook>
+          <page string="Aliases">
+            <field name="alias_ids">
+              <tree string="Currency Aliases" editable="bottom">
+                <field name="name"/>
+              </tree>
+            </field>
+          </page>
+        </notebook>
+      </xpath>
+    </field>
+  </record>
+</odoo>

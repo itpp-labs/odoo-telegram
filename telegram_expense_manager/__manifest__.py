@@ -30,6 +30,7 @@
         "data/cron.xml",
         "views/schedule.xml",
         "views/account_account.xml",
+        "views/res_currency_view.xml",
         "security/ir.model.access.csv",
     ],
     "qweb": [
