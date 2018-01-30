@@ -33,6 +33,7 @@
         "views/res_currency_view.xml",
         "views/res_partner_view.xml",
         "security/ir.model.access.csv",
+        "security/base_security.xml",
     ],
     "qweb": [
     ],
