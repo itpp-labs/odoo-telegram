@@ -85,7 +85,8 @@ class AccountAnalyticAccount(models.Model):
             all_currencies_line_ids = AccountMoveLine.search(domain)
             currency_ids = all_currencies_line_ids.mapped('currency_id')
             for currency_id in currency_ids:
-                balance += sum(all_currencies_line_ids.filtered(lambda r: r.currency_id == currency_id).mapped('balance')) * currency_id.rate
+                rate = self.env['res.currency']._get_conversion_rate(base_currency, currency_id)
+                balance += sum(all_currencies_line_ids.filtered(lambda r: r.currency_id == currency_id).mapped('balance')) * rate
             balance += self.get_currency_balance(currency=base_currency)
 
         return round(balance, 1)
