@@ -471,7 +471,8 @@ class Partner(models.Model):
 
         journal = self.env.ref(journal_ref)
 
-        currency_id = currency and self.env['res.currency'].search([('name', '=', currency)], limit=1)
+        currency_alias = currency and self.env['res.currency.alias'].sudo().search([('name', '=', currency)], limit=1)
+        currency_id = currency_alias and currency_alias.currency_id
 
         if currency_id:
             analytic_account_lst = [from_data.get('analytic_account_id'), to_data.get('analytic_account_id')]
