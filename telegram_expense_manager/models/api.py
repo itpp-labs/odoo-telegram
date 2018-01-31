@@ -470,12 +470,12 @@ class Partner(models.Model):
                        journal_ref, from_data, to_data):
 
         journal = self.env.ref(journal_ref)
+        base_currency_id = self.em_currency_id
 
-        currency_id = currency and self.env['res.currency'].search([('name', '=', currency)], limit=1)
-        currency_alias = currency and self.env['res.currency.alias'].sudo().search([('name', '=', currency)], limit=1)
-        currency_id = currency_id or currency_alias and currency_alias.currency_id
+        currency_id = currency and (self.env['res.currency'].search([('name', '=', currency)], limit=1) \
+                or self.env['res.currency.alias'].sudo().search([('name', '=', currency)], limit=1))
 
-        if currency_id:
+        if currency_id and currency_id != base_currency_id:
             analytic_account_lst = [from_data.get('analytic_account_id'), to_data.get('analytic_account_id')]
             analytic_account_ids = self.env['account.analytic.account'].browse(analytic_account_lst)
             analytic_account_ids._attach_new_currency(currency_id)
