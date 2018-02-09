@@ -483,7 +483,7 @@ class Partner(models.Model):
         common = {
             'partner_id': self.id,
             'name': text or 'unknown',
-            'currency_id': currency_id and currency_id.id or None,
+            'currency_id': currency_id and currency_id != base_currency_id and currency_id.id or None,
         }
         if isinstance(amount, basestring):
             amount = float(amount.replace(',', '.'))
