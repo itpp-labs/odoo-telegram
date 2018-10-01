@@ -668,7 +668,7 @@ Check Help Tab for the rest variables.
                 response = command.get_response()
                 bot.cache.set_value(command, response)
             else:
-                res = self.env['telegram.session'].search([('user_id.groups_ids', 'in', command.group_ids.ids)])
+                res = self.env['telegram.session'].search([('user_id.groups_id', 'in', command.group_ids.ids)])
                 for tsession in res:
                     response = command.get_response(tsession=tsession)
                     bot.cache.set_value(command, response, tsession)
