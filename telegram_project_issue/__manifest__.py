@@ -16,7 +16,7 @@
 
     "depends": [
         "telegram",
-        "project_issue",
+        "project",
     ],
     "external_dependencies": {"python": [], "bin": []},
     "data": [

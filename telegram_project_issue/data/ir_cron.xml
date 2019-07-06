@@ -9,7 +9,7 @@
         <field name="interval_number">1</field>
         <field name="interval_type">hours</field>
         <field name="numbercall">-1</field>
-        <field eval="'telegram.command'" name="model" />
+        <field ref="telegram.model_telegram_command" name="model_id" />
         <field eval="'action_handle_subscriptions'" name="function" />
         <field eval="'(\'telegram_project_issue.command_new_issues\',)'" name="args" />
     </record>

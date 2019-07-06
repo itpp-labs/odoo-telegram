@@ -340,6 +340,7 @@ Check Help Tab for the rest variables.
     @api.multi
     def _eval(self, code, locals_dict=None, tsession=None):
         """Prepare data for rendering"""
+        #import pdb; pdb.set_trace()
         _logger.debug("_eval locals_dict: %s" % locals_dict)
         t0 = time.time()
         locals_dict = self._update_locals_dict(locals_dict, tsession)
