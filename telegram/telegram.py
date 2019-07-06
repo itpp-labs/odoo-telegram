@@ -101,6 +101,7 @@ Check Help Tab for the rest variables.
             cr = self.env.cr
             search_command = tmessage.text
             m = re.match('(/[^ @]*)([^ ]*)(.*)', search_command)
+
             if m:
                 # remove bot name, e.g.
                 # "/command@bot_name text" -> /command text
@@ -287,6 +288,7 @@ Check Help Tab for the rest variables.
     def eval_notification(self, event, tsession):
         self.ensure_one()
         # TODO: tsession can be multi recordset
+        #import pdb; pdb.set_trace()
         return self._eval(self.notification_code,
                           locals_dict={'telegram': {'event': event}},
                           tsession=tsession)
@@ -318,7 +320,7 @@ Check Help Tab for the rest variables.
         context = {}
         if tsession and tsession.context:
             context = simplejson.loads(tsession.context)
-        base_url = self.env['ir.config_parameter'].get_param('web.base.url', '')
+        base_url = self.sudo().env['ir.config_parameter'].get_param('web.base.url', '')
         locals_dict.update({
             'data': {},
             'options': {
@@ -338,6 +340,7 @@ Check Help Tab for the rest variables.
     @api.multi
     def _eval(self, code, locals_dict=None, tsession=None):
         """Prepare data for rendering"""
+        #import pdb; pdb.set_trace()
         _logger.debug("_eval locals_dict: %s" % locals_dict)
         t0 = time.time()
         locals_dict = self._update_locals_dict(locals_dict, tsession)
