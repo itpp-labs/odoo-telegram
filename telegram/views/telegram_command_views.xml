@@ -51,21 +51,21 @@
                     </group>
 
                     <notebook>
-                        <page String="Response">
+                        <page string="Response">
                             <group>
                                 <field name="response_code"/>
                                 <field name="response_template"/>
                                 <field name="post_response_code"/>
                             </group>
                         </page>
-                        <page String="Notification">
+                        <page string="Notification">
                             <p>Notification can be used in subscriptions or for delayed response</p>
                             <group>
                                 <field name="notification_code"/>
                                 <field name="notification_template"/>
                             </group>
                         </page>
-                        <page String="Subscribers" attrs="{'invisible': [('type', '!=', 'subscription')]}">
+                        <page string="Subscribers" attrs="{'invisible': [('type', '!=', 'subscription')]}">
                             <field name="user_ids"/>
                         </page>
                         <page string="Help">
