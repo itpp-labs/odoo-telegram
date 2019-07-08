@@ -17,7 +17,7 @@
 <![CDATA[
 limit_date = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
 limit_date_str = datetime.datetime.strftime(limit_date, tools.DEFAULT_SERVER_DATETIME_FORMAT)
-data['new_issues'] = env['project.issue'].search([
+data['new_issues'] = env['project.task'].search([
 ('create_date', '>', limit_date_str)
 ])
 ]]>

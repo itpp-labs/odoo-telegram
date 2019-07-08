@@ -276,6 +276,7 @@ Check Help Tab for the rest variables.
     def get_response(self, locals_dict=None, tsession=None):
         self.ensure_one()
         locals_dict = self._eval(self.response_code, locals_dict=locals_dict, tsession=tsession)
+
         return self._render(self.response_template, locals_dict, tsession)
 
     @api.multi
@@ -288,7 +289,6 @@ Check Help Tab for the rest variables.
     def eval_notification(self, event, tsession):
         self.ensure_one()
         # TODO: tsession can be multi recordset
-        #import pdb; pdb.set_trace()
         return self._eval(self.notification_code,
                           locals_dict={'telegram': {'event': event}},
                           tsession=tsession)
@@ -340,7 +340,6 @@ Check Help Tab for the rest variables.
     @api.multi
     def _eval(self, code, locals_dict=None, tsession=None):
         """Prepare data for rendering"""
-        #import pdb; pdb.set_trace()
         _logger.debug("_eval locals_dict: %s" % locals_dict)
         t0 = time.time()
         locals_dict = self._update_locals_dict(locals_dict, tsession)
@@ -396,7 +395,9 @@ Check Help Tab for the rest variables.
                 f = photo['data']
             else:
                 # type is 'base64' by default
-                f = io.StringIO(base64.b64decode(photo['data']))
+                #f = io.StringIO(base64.b64decode(photo['data']))
+                f = io.BytesIO(base64.b64decode(photo['data']))
+
                 f.name = photo.get('filename', 'item.png')
             res['photos'].append({'file': f})
 
@@ -652,7 +653,7 @@ Check Help Tab for the rest variables.
         context = self._context
         if id_or_xml_id:
             # called by ir.cron
-            if not isinstance(id_or_xml_id, (int, long)):
+            if not isinstance(id_or_xml_id, (int)):
                 subscription_commands = self.env.ref(id_or_xml_id)
             else:
                 subscription_commands = self.env['telegram.command'].browse(id_or_xml_id)
