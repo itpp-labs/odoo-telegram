@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 <data noupdate="1">
-
+<!--
     <record id="ir_cron_schedule" model="ir.cron">
         <field name="name">Apply scheduled transfers</field>
         <field eval="True" name="active" />
@@ -9,10 +9,10 @@
         <field name="interval_number">1</field>
         <field name="interval_type">hours</field>
         <field name="numbercall">-1</field>
-        <field eval="'account.schedule'" name="model" />
-        <field eval="'action_scheduled_transfers'" name="function" />
-        <field eval="'()'" name="args" />
+        <field ref="account_schedule" name="model_id" />
+        <field name="state">code</field>
+        <field name="code">model.action_scheduled_transfers()</field>
     </record>
-
+!-->
 </data>
 </openerp>

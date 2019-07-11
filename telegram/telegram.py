@@ -93,6 +93,17 @@ Check Help Tab for the rest variables.
         ('command_name_uniq', 'unique (name)', 'Command name must be unique!'),
     ]
 
+    @api.multi
+    def copy(self, default=None):
+        if default is None:
+            default = {}
+        if not default.get('name'):
+            default['name'] = _("%s (copy)") % (self.name)
+        telegram_command = super(TelegramCommand, self).copy(default)
+        return telegram_command
+
+
+
     @api.model
     def telegram_listener_message(self, messages, bot):
         for tmessage in messages:  # messages from telegram server
