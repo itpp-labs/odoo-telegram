@@ -1,52 +1,24 @@
-# Telegram Bot for odoo
+[![help@itpp.dev](https://itpp.dev/images/infinity-readme.png)](mailto:help@itpp.dev)
+# [10.0] Telegram.org and Odoo.com integration. WARNING: this project is abandoned in favor of new Integration project:
 
-Set of modules to run a [telegram](https://telegram.org/) [bot](https://telegram.org/blog/bot-revolution) on [odoo](https://www.odoo.com/) server.
+<br/>:heavy_check_mark: [telegram](https://apps.odoo.com/apps/modules/10.0/telegram/)
+<br/>:heavy_check_mark: [telegram_chart](https://apps.odoo.com/apps/modules/10.0/telegram_chart/)
+<br/>:heavy_check_mark: [telegram_crm](https://apps.odoo.com/apps/modules/10.0/telegram_crm/)
+<br/>:heavy_check_mark: [telegram_escpos](https://apps.odoo.com/apps/modules/10.0/telegram_escpos/)
+<br/>:heavy_check_mark: [telegram_expense_manager](https://apps.odoo.com/apps/modules/10.0/telegram_expense_manager/)
+<br/>:heavy_check_mark: [telegram_mail](https://apps.odoo.com/apps/modules/10.0/telegram_mail/)
+<br/>:heavy_check_mark: [telegram_portal](https://apps.odoo.com/apps/modules/10.0/telegram_portal/)
+<br/>:heavy_check_mark: [telegram_project_issue](https://apps.odoo.com/apps/modules/10.0/telegram_project_issue/)
+<br/>:heavy_check_mark: [telegram_shop](https://apps.odoo.com/apps/modules/10.0/telegram_shop/)
 
-Description and Documentation: https://apps.odoo.com/apps/modules/10.0/telegram
+Other Addons
+============
 
-## Getting started
-
-Create your bot via [BotFather](https://telegram.me/botfather). It gives you access token that you will use later.
-
-Install odoo with telegram modules and dependencies via set of [docker](https://docs.docker.com/engine/installation/) containers:
-
-    docker network create odoo-telegram
-
-    docker run \
-    -d \
-    -e POSTGRES_USER=odoo \
-    -e POSTGRES_PASSWORD=odoo \
-    --network=odoo-telegram \
-    --name db-telegram  \
-    postgres:9.5
-
-    docker run \
-    -d \
-    --name odoo \
-    --network=odoo-telegram \
-    -e ODOO_MASTER_PASS=admin \
-    -e DB_PORT_5432_TCP_ADDR=db-telegram \
-    -t itprojectsllc/install-odoo:10.0-telegram -- -d telegram
-
-    # before executing this stop nginx or apache if you have one
-    docker run  \
-    -d \
-    -p 80:80 \
-    --name telegram-nginx \
-    --network=odoo-telegram \
-    -t itprojectsllc/docker-odoo-nginx
-
-
-Open http://localhost/ (you may need to wait few minutes on first open) and login with login *admin* and password *admin*.
-
-Then install some telegram modules (use search box and don't forget to remove *Apps* filter).
-
-Open *Technical / Parameters / System Parameters* menu. Put access token to *telegram.token* parameter. 
-
-Now you can send /help command to your bot!
-
-For futher usage see [documentation of main module](https://apps.odoo.com/apps/modules/10.0/telegram/) (skip installation part) or documentation of other installed telegram modules. 
-
-## Donation
-
-Feel free to support our development by purchasing [one](https://apps.odoo.com/apps/modules/10.0/telegram) or [two](https://apps.odoo.com/apps/modules/10.0/telegram_chart/) modules.
+| Repository | Versions |
+|------------|----------|
+| [itpp-labs/**pos-addons**](https://github.com/itpp-labs/pos-addons) | [[14.0]](https://github.com/itpp-labs/pos-addons/tree/14.0#readme) [[13.0]](https://github.com/itpp-labs/pos-addons/tree/13.0#readme) [[12.0]](https://github.com/itpp-labs/pos-addons/tree/12.0#readme) [[11.0]](https://github.com/itpp-labs/pos-addons/tree/11.0#readme) [[10.0]](https://github.com/itpp-labs/pos-addons/tree/10.0#readme) [[9.0]](https://github.com/itpp-labs/pos-addons/tree/9.0#readme) [[8.0]](https://github.com/itpp-labs/pos-addons/tree/8.0#readme) [[7.0]](https://github.com/itpp-labs/pos-addons/tree/7.0#readme) |
+| [itpp-labs/**mail-addons**](https://github.com/itpp-labs/mail-addons) | [[14.0]](https://github.com/itpp-labs/mail-addons/tree/14.0#readme) [[13.0]](https://github.com/itpp-labs/mail-addons/tree/13.0#readme) [[12.0]](https://github.com/itpp-labs/mail-addons/tree/12.0#readme) [[11.0]](https://github.com/itpp-labs/mail-addons/tree/11.0#readme) [[10.0]](https://github.com/itpp-labs/mail-addons/tree/10.0#readme) [[9.0]](https://github.com/itpp-labs/mail-addons/tree/9.0#readme) [[8.0]](https://github.com/itpp-labs/mail-addons/tree/8.0#readme) |
+| [itpp-labs/**misc-addons**](https://github.com/itpp-labs/misc-addons) | [[14.0]](https://github.com/itpp-labs/misc-addons/tree/14.0#readme) [[13.0]](https://github.com/itpp-labs/misc-addons/tree/13.0#readme) [[12.0]](https://github.com/itpp-labs/misc-addons/tree/12.0#readme) [[11.0]](https://github.com/itpp-labs/misc-addons/tree/11.0#readme) [[10.0]](https://github.com/itpp-labs/misc-addons/tree/10.0#readme) [[9.0]](https://github.com/itpp-labs/misc-addons/tree/9.0#readme) [[8.0]](https://github.com/itpp-labs/misc-addons/tree/8.0#readme) [[7.0]](https://github.com/itpp-labs/misc-addons/tree/7.0#readme) |
+| [itpp-labs/**sync-addons**](https://github.com/itpp-labs/sync-addons) | [[14.0]](https://github.com/itpp-labs/sync-addons/tree/14.0#readme) [[13.0]](https://github.com/itpp-labs/sync-addons/tree/13.0#readme) [[12.0]](https://github.com/itpp-labs/sync-addons/tree/12.0#readme) [[11.0]](https://github.com/itpp-labs/sync-addons/tree/11.0#readme) [[10.0]](https://github.com/itpp-labs/sync-addons/tree/10.0#readme) [[9.0]](https://github.com/itpp-labs/sync-addons/tree/9.0#readme) [[8.0]](https://github.com/itpp-labs/sync-addons/tree/8.0#readme) |
+| [itpp-labs/**access-addons**](https://github.com/itpp-labs/access-addons) | [[14.0]](https://github.com/itpp-labs/access-addons/tree/14.0#readme) [[13.0]](https://github.com/itpp-labs/access-addons/tree/13.0#readme) [[12.0]](https://github.com/itpp-labs/access-addons/tree/12.0#readme) [[11.0]](https://github.com/itpp-labs/access-addons/tree/11.0#readme) [[10.0]](https://github.com/itpp-labs/access-addons/tree/10.0#readme) [[9.0]](https://github.com/itpp-labs/access-addons/tree/9.0#readme) [[8.0]](https://github.com/itpp-labs/access-addons/tree/8.0#readme) |
+| [itpp-labs/**website-addons**](https://github.com/itpp-labs/website-addons) | [[14.0]](https://github.com/itpp-labs/website-addons/tree/14.0#readme) [[13.0]](https://github.com/itpp-labs/website-addons/tree/13.0#readme) [[12.0]](https://github.com/itpp-labs/website-addons/tree/12.0#readme) [[11.0]](https://github.com/itpp-labs/website-addons/tree/11.0#readme) [[10.0]](https://github.com/itpp-labs/website-addons/tree/10.0#readme) [[9.0]](https://github.com/itpp-labs/website-addons/tree/9.0#readme) [[8.0]](https://github.com/itpp-labs/website-addons/tree/8.0#readme) |
