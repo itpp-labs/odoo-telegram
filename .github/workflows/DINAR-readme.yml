@@ -32,7 +32,7 @@ jobs:
         with:
           path: REPO
           # token is required to bypass pushing without checks/reviews
-          token: ${{ secrets.DINAR_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout DINAR
         uses: actions/checkout@v2
         with:
