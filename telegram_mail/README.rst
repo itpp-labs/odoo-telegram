@@ -1,3 +1,7 @@
+.. image:: https://itpp.dev/images/infinity-readme.png
+   :alt: Tested and maintained by IT Projects Labs
+   :target: https://itpp.dev
+
 ===============
  Telegram mail
 ===============
@@ -12,22 +16,19 @@ Adds commands:
 
 Command ``/mail_channels`` has more sense in in 9.0+ versions, but we add it to 8.0 too in order to simplify development workflow.
 
-Credits
-=======
+Questions?
+==========
+
+To get an assistance on this module contact us by email :arrow_right: help@itpp.dev
 
 Contributors
-------------
+============
 * Ivan Yelizariev <yelizariev@it-projects.info>
-
 
 Further information
 ===================
-Demo: http://runbot.it-projects.info/demo/telegram/8.0
 
-HTML Description: https://apps.odoo.com/apps/modules/8.0/telegram_mail
+Odoo Apps Store: https://apps.odoo.com/apps/modules/8.0/telegram_mail
 
-Usage instructions: `<doc/index.rst>`__
 
-Changelog: `<doc/changelog.rst>`__
-
-Tested on Odoo 8.0 17a130428516d9dd8105f90e8c9a65a0b4e8901b
+Tested on `Odoo 8.0 <https://github.com/odoo/odoo/commit/17a130428516d9dd8105f90e8c9a65a0b4e8901b>`_
