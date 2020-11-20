@@ -1,29 +1,26 @@
+.. image:: https://itpp.dev/images/infinity-readme.png
+   :alt: Tested and maintained by IT Projects Labs
+   :target: https://itpp.dev
+
 =============
  Module Name
 =============
 
 Bot commands for Project Issue application.
 
-Credits
-=======
+Questions?
+==========
+
+To get an assistance on this module contact us by email :arrow_right: help@itpp.dev
 
 Contributors
-------------
+============
 * Ivan Yelizariev <yelizariev@it-projects.info>
-
-Sponsors
---------
-* `IT-Projects LLC <https://it-projects.info>`__
 
 Further information
 ===================
 
-Demo: http://runbot.it-projects.info/demo/telegram/9.0
+Odoo Apps Store: https://apps.odoo.com/apps/modules/9.0/telegram_project_issue/
 
-HTML Description: https://apps.odoo.com/apps/modules/9.0/telegram_project_issue/
 
-Usage instructions: `<doc/index.rst>`__
-
-Changelog: `<doc/changelog.rst>`__
-
-Tested on Odoo 9.0 fd9eb2e4819031c6758c021f4c335b591367632d
+Tested on `Odoo 9.0 <https://github.com/odoo/odoo/commit/fd9eb2e4819031c6758c021f4c335b591367632d>`_
