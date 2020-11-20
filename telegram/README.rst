@@ -1,7 +1,10 @@
+.. image:: https://itpp.dev/images/infinity-readme.png
+   :alt: Tested and maintained by IT Projects Labs
+   :target: https://itpp.dev
+
 ==============
  Telegram bot
 ==============
-
 
 The module apply monkey patch for ``PreforkServer`` in order to run new process ``WorkerTelegram``, which run threads as following:
 
@@ -46,14 +49,10 @@ You can use a `docker <https://github.com/it-projects-llc/install-odoo/blob/mast
     --link db-telegram:db \
     -t itprojectsllc/install-odoo:10.0-telegram
 
-
 Further information
 -------------------
 
-HTML Description: https://apps.odoo.com/apps/modules/9.0/telegram
+Odoo Apps Store: https://apps.odoo.com/apps/modules/9.0/telegram
 
-Usage instructions: `<doc/index.rst>`__
 
-Changelog: `<doc/changelog.rst>`__
-
-Tested on Odoo 8.0 7b93e1dc7b4a370c312b64afda7a6045bdb81f38
+Tested on `Odoo 8.0 <https://github.com/odoo/odoo/commit/7b93e1dc7b4a370c312b64afda7a6045bdb81f38>`_
