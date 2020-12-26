@@ -1,7 +1,7 @@
 [![help@itpp.dev](https://itpp.dev/images/infinity-readme.png)](mailto:help@itpp.dev)
-# [9.0] Telegram.org and Odoo.com integration. WARNING: this project is abandoned in favor of new Integration project:
+# [9.0] Telegram.org and Odoo.com integration
 
-<br/>:heavy_check_mark: [telegram](https://apps.odoo.com/apps/modules/9.0/telegram/)
+:heavy_check_mark: [telegram](https://apps.odoo.com/apps/modules/9.0/telegram/)
 <br/>:heavy_check_mark: [telegram_chart](https://apps.odoo.com/apps/modules/9.0/telegram_chart/)
 <br/>:heavy_check_mark: [telegram_crm](https://apps.odoo.com/apps/modules/9.0/telegram_crm/)
 <br/>:heavy_check_mark: [telegram_escpos](https://apps.odoo.com/apps/modules/9.0/telegram_escpos/)
