@@ -1,5 +1,5 @@
 [![help@itpp.dev](https://itpp.dev/images/infinity-readme.png)](mailto:help@itpp.dev)
-# [8.0] Telegram.org and Odoo.com integration. WARNING: this project is abandoned in favor of new Integration project:
+# [8.0] Telegram.org and Odoo.com integration
 
 :heavy_check_mark: [telegram](https://apps.odoo.com/apps/modules/8.0/telegram/)
 <br/>:heavy_check_mark: [telegram_chart](https://apps.odoo.com/apps/modules/8.0/telegram_chart/)
