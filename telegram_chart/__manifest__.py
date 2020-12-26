@@ -10,8 +10,6 @@
     "support": "apps@it-projects.info",
     "website": "https://it-projects.info",
     "license": "LGPL-3",
-    "price": 200.00,
-    "currency": "EUR",
 
     "depends": [
         "telegram",
