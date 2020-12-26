@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+    <record model="telegram.command" id="telegram.help_command">
+        <field name="active" eval="False"/>
+    </record>
+
+    <record model="telegram.command" id="telegram.command_start">
+        <field name="name">/start%|\U0001f37a</field>
+        <field name="description">Start here</field>
+        <field name="sequence" eval="900"/>
+        <field name="response_code">
+if telegram['tmessage'].text.startswith("/start"):
+    data['type'] = 'start'
+    # add reply buttons
+    buttons = [{'text': u'\U0001f37a', 'callback_data':  1}]
+    command.keyboard_buttons(options, buttons, row_width=1)
+else:
+    data['type'] = 'invoice'
+    options['keep_reply_keyboard'] = True
+    options['sendInvoice'] = {
+        'title': 'Beer for a good person',
+        'description': 'Support the person, if you like what he does',
+        'payload': 'beer',
+        'provider_token': env.get_param('telegram_buy_me_a_beer.payment_provider_token'),
+        'start_parameter': 'beer',
+        'currency': 'USD',
+        'prices': [types.LabeledPrice('Beer', 500)],
+        'photo_url': env.get_param('web.base.url') + '/telegram_buy_me_a_beer/static/beer.jpg',
+    }
+        </field>
+        <field name="response_template" type="xml"><t><t t-if="data['type']=='start'">
+Hi!
+Feel free to send <a href="https://github.com/it-projects-llc/odoo-telegram">me</a> a beer by pressing the \U0001f37a button.
+</t></t></field>
+        <field name="group_ids" eval="[]"/>
+    </record>
+
+</data>
+</openerp>
