@@ -10,8 +10,6 @@
     "author": "IT-Projects LLC, Ivan Yelizariev",
     "website": "https://twitter.com/yelizariev",
     "license": "LGPL-3",
-    # "price": 9.00,
-    # "currency": "EUR",
 
     "depends": [
         "telegram",
