@@ -8,7 +8,7 @@
     "application": False,
 
     "author": "IT-Projects LLC, Ivan Yelizariev",
-    "website": "https://it-projects.info",
+    "website": "https://twitter.com/OdooFree",
     "license": "LGPL-3",
 
     "depends": [
