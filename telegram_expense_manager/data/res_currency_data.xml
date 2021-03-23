@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="1">
+    <record id="base.RUB" model="res.currency">
+      <field name="active" eval="True"/>
+    </record>
+    <record id="rub_alias_1" model="res.currency.alias">
+      <field name="name">руб</field>
+      <field name="currency_id" eval="ref('base.RUB')"/>
+    </record>
+    <record id="rub_alias_2" model="res.currency.alias">
+      <field name="name">руб.</field>
+      <field name="currency_id" eval="ref('base.RUB')"/>
+    </record>
+    <record id="rub_alias_3" model="res.currency.alias">
+      <field name="name">р.</field>
+      <field name="currency_id" eval="ref('base.RUB')"/>
+    </record>
+    <record id="rub_alias_4" model="res.currency.alias">
+      <field name="name">рубль</field>
+      <field name="currency_id" eval="ref('base.RUB')"/>
+    </record>
+    <record id="rub_alias_5" model="res.currency.alias">
+      <field name="name">рубля</field>
+      <field name="currency_id" eval="ref('base.RUB')"/>
+    </record>
+    <record id="rub_alias_6" model="res.currency.alias">
+      <field name="name">рублей</field>
+      <field name="currency_id" eval="ref('base.RUB')"/>
+    </record>
+    <record id="usd_alias_1" model="res.currency.alias">
+      <field name="name">доллар</field>
+      <field name="currency_id" eval="ref('base.USD')"/>
+    </record>
+    <record id="usd_alias_2" model="res.currency.alias">
+      <field name="name">долларов</field>
+      <field name="currency_id" eval="ref('base.USD')"/>
+    </record>
+    <record id="eur_alias_1" model="res.currency.alias">
+      <field name="name">евро</field>
+      <field name="currency_id" eval="ref('base.EUR')"/>
+    </record>
+  </data>
+</odoo>

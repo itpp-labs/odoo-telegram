@@ -26,9 +26,13 @@
         "data/account.xml",
         "data/analytic.xml",
         "data/cron.xml",
+        "data/res_currency_data.xml",
         "views/schedule.xml",
         "views/account_account.xml",
+        "views/res_currency_view.xml",
+        "views/res_partner_view.xml",
         "security/ir.model.access.csv",
+        "security/base_security.xml",
     ],
     "qweb": [
     ],

@@ -88,6 +88,8 @@ if not error:
     data['analytic_liquidity'] = analytic_liquidity
     data['analytic_payable'] = analytic_payable
     data['record'] = record
+    data['base_currency'] = partner.em_currency_id
+    data['currency_ids'] = env["account.move.line"].sudo().search([('analytic_account_id', '=', analytic_liquidity.id)]).mapped('currency_id').sorted(key=lambda r: r.id)
         </field>
         <field name="response_template" type="xml">
 <t>
@@ -98,7 +100,7 @@ if not error:
     </t>
     <t t-else="">New record is added! Check or edit it here: /record_<t t-esc="data['record'].id"/>
 New Balance:
-<b t-esc="data['analytic_liquidity'].move_balance"/> — <t t-esc="data['analytic_liquidity'].name"/>
+<b><t t-esc="data['analytic_liquidity'].get_currency_balance(base_currency=data['base_currency'])"/></b> (<t t-esc="data['analytic_liquidity'].get_currency_balance(base_currency=data['base_currency'], currency=data['base_currency'])"/> <t t-esc="data['base_currency'].name"/><t t-foreach="data['analytic_liquidity'].currency_ids" t-as="currency"> <t t-esc="data['analytic_liquidity'].get_currency_balance(base_currency=data['base_currency'], currency=currency)"/> <t t-esc="currency.name"/></t>) — <t t-esc="data['analytic_liquidity'].name"/>
     </t>
 </t>
         </field>
@@ -341,12 +343,14 @@ accounts = env["account.analytic.account"].sudo().search(
      order='id ASC',
 )
 data['accounts'] = accounts
+data['base_currency'] = partner.em_currency_id
+data['currency_ids'] = env["account.move.line"].sudo().search([('analytic_account_id', 'in', accounts.ids)]).mapped('currency_id').sorted(key=lambda r: r.id)
 data['total'] = sum((acc.move_balance for acc in accounts))
         </field>
         <field name="response_template" type="xml">
             <t><t t-foreach="data['accounts']" t-as="acc">
-/account_<t t-esc="acc.id"/> — <t t-esc="acc.move_balance"/> — <t t-esc="acc.name"/></t>
-<b>Total</b>: <t t-esc="data['total']"/></t>
+/account_<t t-esc="acc.id"/> — <t t-esc="acc.get_currency_balance(base_currency=data['base_currency'])"/> (<t t-esc="acc.get_currency_balance(base_currency=data['base_currency'], currency=data['base_currency'])"/> <t t-esc="data['base_currency'].name"/><t t-foreach="acc.currency_ids" t-as="currency"> <t t-esc="acc.get_currency_balance(base_currency=data['base_currency'], currency=currency)"/> <t t-esc="currency.name"/></t>) — <t t-esc="acc.name"/></t>
+<b>Total</b>: <t t-esc="data['accounts'].get_currency_balance(base_currency=data['base_currency'])"/> (<t t-esc="data['accounts'].get_currency_balance(base_currency=data['base_currency'], currency=data['base_currency'])"/> <t t-esc="data['base_currency'].name"/> <t t-foreach="data['currency_ids']" t-as="currency"> <t t-esc="data['accounts'].get_currency_balance(base_currency=data['base_currency'], currency=currency)"/> <t t-esc="currency.name"/></t>)</t>
         </field>
     </record>
 

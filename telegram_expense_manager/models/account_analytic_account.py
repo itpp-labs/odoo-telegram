@@ -52,3 +52,48 @@ class AccountAnalyticAccount(models.Model):
     move_balance = fields.Monetary(compute='_compute_move_debit_credit_balance', string='Balance')
     move_debit = fields.Monetary(compute='_compute_move_debit_credit_balance', string='Debit')
     move_credit = fields.Monetary(compute='_compute_move_debit_credit_balance', string='Credit')
+    currency_ids = fields.Many2many("res.currency", "analytic_account_currency_rel")
+
+    @api.multi
+    def _attach_new_currency(self, currency):
+        for record in self:
+            if currency not in record.currency_ids:
+                record.currency_ids = [(4, currency.id)]
+
+    @api.multi
+    def get_currency_balance(self, base_currency=None, currency=None):
+        # this method runs in sudo() mode - see /account_all telegram command respose_code (acc search)
+        balance = 0.0
+        AccountMoveLine = self.env['account.move.line']
+        domain = [('analytic_account_id', 'in', self.mapped('id'))]
+
+        def get_base_currency_sum():
+            base_currency_sum = 0.0
+            domain.append(('currency_id', '=', False))
+            line_ids = AccountMoveLine.search(domain)
+            base_currency_sum += sum(line_ids.mapped('balance'))
+            return base_currency_sum
+
+        if self._context.get('from_date', False):
+            domain.append(('date', '>=', self._context['from_date']))
+        if self._context.get('to_date', False):
+            domain.append(('date', '<=', self._context['to_date']))
+
+        if currency and currency != base_currency:
+            domain.append(('currency_id', '=', currency.id))
+            balance = sum(AccountMoveLine.search(domain).mapped('balance'))
+        elif currency and currency == base_currency:
+            balance = get_base_currency_sum()
+        else:
+            # this is for tatal sum
+            currency_domain = domain[:]
+            currency_domain.append(('currency_id', '!=', False))
+            all_currencies_line_ids = AccountMoveLine.search(currency_domain)
+            currency_ids = all_currencies_line_ids.mapped('currency_id')
+            for currency_id in currency_ids:
+                rate = self.env['res.currency']._get_conversion_rate(base_currency, currency_id)
+                filtered_line_ids = all_currencies_line_ids.filtered(lambda r: r.currency_id == currency_id)
+                balance += sum(all_currencies_line_ids.filtered(lambda r: r.currency_id == currency_id).mapped('balance')) * rate
+            balance += get_base_currency_sum()
+
+        return round(balance, 1)
