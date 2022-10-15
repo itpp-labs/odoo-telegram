@@ -10,6 +10,7 @@
                     <sheet>
                         <group>
                             <group>
+                              <field name="partner_id"/>
                                 <field name="user_id"/>
                                 <field name="name"/>
                                 <field name="amount"/>
@@ -62,10 +63,10 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-        <menuitem 
-            action="account_schedule_action" 
-            id="account_schedule_menu" 
-            parent="account.menu_finance_entries" 
+        <menuitem
+            action="account_schedule_action"
+            id="account_schedule_menu"
+            parent="account.menu_finance_entries"
             groups="account.group_account_manager"
             sequence="1000"
             />

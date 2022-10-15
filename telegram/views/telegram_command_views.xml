@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<openerp>
+<odoo>
 <data>
 
     <record id="view_telegram_command_tree" model="ir.ui.view">
@@ -51,21 +51,21 @@
                     </group>
 
                     <notebook>
-                        <page String="Response">
+                        <page string="Response">
                             <group>
                                 <field name="response_code"/>
                                 <field name="response_template"/>
                                 <field name="post_response_code"/>
                             </group>
                         </page>
-                        <page String="Notification">
+                        <page string="Notification">
                             <p>Notification can be used in subscriptions or for delayed response</p>
                             <group>
                                 <field name="notification_code"/>
                                 <field name="notification_template"/>
                             </group>
                         </page>
-                        <page String="Subscribers" attrs="{'invisible': [('type', '!=', 'subscription')]}">
+                        <page string="Subscribers" attrs="{'invisible': [('type', '!=', 'subscription')]}">
                             <field name="user_ids"/>
                         </page>
                         <page string="Help">
@@ -82,8 +82,8 @@ Vars that can be updated:
 * data - empty dictonary to be filled with any data for rendering
 * options - dictonary to control processing
   * options['notify_user_ids'] - list interger user ids to be notified in subscription commands (will affect only if user is subscribed). With empty list nobody receives notification. With unspecified value all subscribers receive notification.
-  * options['reply_markup'] 
-    * Values: types.InlineKeyboardMarkup | types.ReplyKeyboardMarkup | types.ReplyKeyboardRemove. 
+  * options['reply_markup']
+    * Values: types.InlineKeyboardMarkup | types.ReplyKeyboardMarkup | types.ReplyKeyboardRemove.
     * See reply_markup in https://core.telegram.org/bots/api#sendmessage
     * Provides low-level access to reply_markup. It's used implicitly in:
       * command.inline_keyboard_buttons, command.keyboard_buttons
@@ -96,28 +96,28 @@ Vars that can be updated:
     * data
     * type = "file"|"base64". Default is "base64".
     * filename
-  * options['editMessageText'] - dictonary with identifier (message_id or inline_message_id). Allows to update existed message instead of sending new one. See https://core.telegram.org/bots/api#editmessagetext. 
+  * options['editMessageText'] - dictonary with identifier (message_id or inline_message_id). Allows to update existed message instead of sending new one. See https://core.telegram.org/bots/api#editmessagetext.
   * options['handle_reply']
-    * dictonary {'replies': {REPLY: DATA}, 'custom_reply': DATA}. 
-    * If user send some value from REPLY, then this command will be called again with telegram['callback_data'] equal to corresponded DATA and and telegram['callback_data'] equal to 'reply'. 
+    * dictonary {'replies': {REPLY: DATA}, 'custom_reply': DATA}.
+    * If user send some value from REPLY, then this command will be called again with telegram['callback_data'] equal to corresponded DATA and and telegram['callback_data'] equal to 'reply'.
     * If custom_reply is present and user send response not from 'replies', then this command is called with telegram['callback_data'] and telegram['callback_data'] equal to 'custom_reply'
 * context - dictonary to save json serializable data between user requests.
 
 Vars that can be used:
 * command - telegram.command record
   * command.inline_keyboard_buttons(options, buttons, row_width=None)
-    * adds set of inline buttons to response. See https://core.telegram.org/bots/api#inlinekeyboardbutton. 
+    * adds set of inline buttons to response. See https://core.telegram.org/bots/api#inlinekeyboardbutton.
     * Argument buttons is a list of dictonary
       * text=TEXT
       * callback_data=ANY_DATA
-  * command.keyboard_buttons(options, buttons, row_width=None, one_time_keyboard=None, resize_keyboard=None) 
+  * command.keyboard_buttons(options, buttons, row_width=None, one_time_keyboard=None, resize_keyboard=None)
     * adds set of reply buttons to response. See https://core.telegram.org/bots/api#keyboardbutton
     * one_time_keyboard and resize_keyboard make sense only for first call of the function. Also, they can be updated later via options['reply_markup'].
     * Argument buttons is a list of dictonary
       * text=TEXT
       * callback_data=ANY_DATA
 * telegram - dictonary with some input data
-  * telegram['tsession'] - telegram.session record. 
+  * telegram['tsession'] - telegram.session record.
     * telegram['tsession'].get_odoo_session() - the same as request.session in odoo
   * telegram['tmessage'] - message from telegram. See https://core.telegram.org/bots/api#message
     * telegram['tmessage'].text - actual UTF-8 text of the message
@@ -170,4 +170,4 @@ Libs that can be used:
     <menuitem id="menu_telegram_command" parent="telegram.menu_telegram" name="Telegram Commands" sequence="10" action="action_telegram_command" />
 
 </data>
-</openerp>
+</odoo>

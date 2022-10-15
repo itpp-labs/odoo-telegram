@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<openerp>
+<odoo>
 <data>
 
     <menuitem id="menu_telegram" parent="base.menu_administration" name="Telegram" sequence="100"/>
 
 </data>
-</openerp>
+</odoo>

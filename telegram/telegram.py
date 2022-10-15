@@ -93,6 +93,17 @@ Check Help Tab for the rest variables.
         ('command_name_uniq', 'unique (name)', 'Command name must be unique!'),
     ]
 
+    @api.multi
+    def copy(self, default=None):
+        if default is None:
+            default = {}
+        if not default.get('name'):
+            default['name'] = _("%s (copy)") % (self.name)
+        telegram_command = super(TelegramCommand, self).copy(default)
+        return telegram_command
+
+
+
     @api.model
     def telegram_listener_message(self, messages, bot):
         for tmessage in messages:  # messages from telegram server
@@ -101,6 +112,7 @@ Check Help Tab for the rest variables.
             cr = self.env.cr
             search_command = tmessage.text
             m = re.match('(/[^ @]*)([^ ]*)(.*)', search_command)
+
             if m:
                 # remove bot name, e.g.
                 # "/command@bot_name text" -> /command text
@@ -275,6 +287,7 @@ Check Help Tab for the rest variables.
     def get_response(self, locals_dict=None, tsession=None):
         self.ensure_one()
         locals_dict = self._eval(self.response_code, locals_dict=locals_dict, tsession=tsession)
+
         return self._render(self.response_template, locals_dict, tsession)
 
     @api.multi
@@ -318,7 +331,7 @@ Check Help Tab for the rest variables.
         context = {}
         if tsession and tsession.context:
             context = simplejson.loads(tsession.context)
-        base_url = self.env['ir.config_parameter'].get_param('web.base.url', '')
+        base_url = self.sudo().env['ir.config_parameter'].get_param('web.base.url', '')
         locals_dict.update({
             'data': {},
             'options': {
@@ -393,7 +406,9 @@ Check Help Tab for the rest variables.
                 f = photo['data']
             else:
                 # type is 'base64' by default
-                f = io.StringIO(base64.b64decode(photo['data']))
+                #f = io.StringIO(base64.b64decode(photo['data']))
+                f = io.BytesIO(base64.b64decode(photo['data']))
+
                 f.name = photo.get('filename', 'item.png')
             res['photos'].append({'file': f})
 
@@ -649,7 +664,7 @@ Check Help Tab for the rest variables.
         context = self._context
         if id_or_xml_id:
             # called by ir.cron
-            if not isinstance(id_or_xml_id, (int, long)):
+            if not isinstance(id_or_xml_id, (int)):
                 subscription_commands = self.env.ref(id_or_xml_id)
             else:
                 subscription_commands = self.env['telegram.command'].browse(id_or_xml_id)

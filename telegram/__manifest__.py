@@ -14,7 +14,7 @@
     "depends": [
         "base",
         "web",
-        "base_action_rule",
+        "base_automation",
     ],
     "external_dependencies": {"python": [
         'telebot',

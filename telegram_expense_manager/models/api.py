@@ -186,7 +186,6 @@ class Partner(models.Model):
             'action': ASK_PERIODICITY_AMOUNT,
             'record_id': record.id,
         }
-
         buttons = [
             {'text': name,
              'callback_data': dict(

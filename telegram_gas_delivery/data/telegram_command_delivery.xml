@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record model="telegram.command" id="command_cancel">
+        <field name="name">/cancel</field>
+        <field name="description">Cancel current command</field>
+        <field name="sequence" eval="900"/>
+        <field name="group_ids" eval="[]"/>
+        <field name="active" eval="True"/>
+        <field name="response_template" type="xml">
+            <t>Canceled</t>
+</field>
+    </record>
+<!--
+    <record model="telegram.command" id="telegram.command_start">
+        <field name="active" eval="False"/>
+        <field name="response_template" type="xml">
+            <t>
+            <t t-if="data['type'] == 'choose_language'">
+            Choose your language
+            </t>
+            <t t-if="data['type'] == 'finish'">
+            Hi! I am a bot to manage Partners
+            I'm at your command!
+            </t>
+            </t>
+        </field>
+        <field name="group_ids" eval="[]"/>
+    </record>
+!-->
+    <record model="telegram.command" id="command_about">
+        <field name="name">/about</field>
+        <field name="description">About me</field>
+        <field name="sequence" eval="910"/>
+        <field name="group_ids" eval="[]"/>
+        <field name="response_template" type="xml">
+            <t>
+I was created as an example of usage odoo-telegram library.
+But my master hopes that I could be helpful for folks.
+        </t></field>
+    </record>
+
+    <record model="telegram.command" id="command_rs_partners">
+        <field name="name">/register</field>
+        <field name="description">Register as Partner</field>
+        <field name="sequence" eval="310"/>
+        <field name="group_ids" eval="[]"/>
+        <field name="response_code">
+callback_data =  telegram.get('callback_data')
+raw_text = telegram['tmessage'].text
+error = None
+partner = env.user.partner_id
+newpartner= None
+chat_id=telegram.get('tsession').chat_ID
+partner_id=telegram.get('tsession').partner_id
+if partner_id:
+   data['type']='is_partner'
+   partner=env['res.partner'].sudo().browse(partner_id)
+   data['partner'] = partner
+elif chat_id:
+   partner=env['res.partner'].sudo().search([('rs_telegram_id','=',chat_id)])
+   if partner:
+      data['type']='found_partner'
+      data['partner'] = partner
+else:
+  if not callback_data:
+     partner.gd_ask_partner_name(options, command, None)
+     data['type'] = 'ask_partner_name'
+  else:
+      newpartner, error = partner.sudo().gd_handle_callback_data(callback_data, raw_text,add_record=chat_id)
+      if not error:
+          if not newpartner.name:
+            data['type'] = 'no_partner_name'
+            partner.sudo().gd_ask_partner_name(options, command, newpartner)
+          elif not newpartner.phone:
+              data['type'] = 'no_phone'
+              partner.sudo().gd_ask_phone(options, command, newpartner)
+          elif not newpartner.mobile:
+              data['type'] = 'no_mobile'
+              partner.sudo().gd_ask_mobile(options, command, newpartner)
+          elif not newpartner.email:
+              data['type'] = 'no_email'
+              partner.sudo().gd_ask_email(options, command, newpartner)
+          else:
+              data['type'] = 'done'
+      data['record'] = newpartner
+
+        </field>
+        <field name="response_template" type="xml">
+          <t>
+            <t t-if="data.get('type') == 'ask_partner_name'">Your Name</t>
+            <t t-if="data.get('type') == 'no_partner_name'">Your Name</t>
+            <t t-if="data.get('type') == 'no_phone'">Your Phone</t>
+            <t t-if="data.get('type') == 'no_mobile'">Your Mobile Phone</t>
+            <t t-if="data.get('type') == 'no_email'">Your Email</t>
+            <t t-if="data.get('type') == 'done'">You have being registered: /partner_<t t-esc="data['record'].id"/>!</t>
+            <t t-if="data.get('type') == 'is_partner'">Welcome
+              <t t-foreach="data['partner']" t-as="p">
+              <t t-esc="p.name"/>
+              </t>
+            </t>
+            <t t-if="data.get('type') == 'found_partner'">Welcome
+              <t t-foreach="data['partner']" t-as="p">
+              <t t-esc="p.name"/>
+              </t>
+            </t>
+          </t>
+        </field>
+    </record>
+
+
+
+
+
+
+
+</odoo>

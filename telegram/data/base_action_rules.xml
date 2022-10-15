@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 <data>
-    <record id="users_command_call_server_action" model="base.action.rule">
+    <record id="users_command_call_server_action" model="base.automation">
         <field name="name">Telegram: Update cache for /users command</field>
         <field name="model_id" ref="base.model_res_users"/>
         <field name="sequence">59</field>
-        <field name="kind">on_create_or_write</field>
+        <field name="trigger">on_create_or_write</field>
         <field name="server_action_ids" eval="[(6, 0, [ref('telegram.action_update_cache')])]"/>
     </record>
-    <record id="manage_threads_on_config_update" model="base.action.rule">
+    <record id="manage_threads_on_config_update" model="base.automation">
         <field name="name">Call server_action when ir config parameter updated</field>
         <field name="model_id" ref="base.model_ir_config_parameter"/>
         <field name="sequence">63</field>
-        <field name="kind">on_create_or_write</field>
+        <field name="trigger">on_create_or_write</field>
         <field name="server_action_ids" eval="[(6, 0, [ref('telegram.action_manage_threads')])]"/>
     </record>
 </data>

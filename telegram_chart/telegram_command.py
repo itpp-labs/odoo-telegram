@@ -36,7 +36,7 @@ class TelegramCommand(models.Model):
         photos = []
 
         for obj in locals_dict['options'].get('charts', []):
-            f = io.StringIO(obj.render_to_png())
+            f = io.BytesIO(obj.render_to_png())
             f.name = 'chart.png'
             photos.append({'file': f})
 

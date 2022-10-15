@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+<!--
+  /form/sheet/notebook/page[3]/group/group[3]/field[1]
+!-->
+<!-- field[@name='res'] !-->
+  <record id="res_partners_telegram_id" model="ir.ui.view">
+    <field name="name">Telegram ID Partner</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_partner_form" />
+    <field name="arch" type="xml">
+      <xpath expr="/form//field[@name='ref']" position="after">
+          <field name="rs_telegram_id" />
+      </xpath>
+
+    </field>
+  </record>
+</odoo>
